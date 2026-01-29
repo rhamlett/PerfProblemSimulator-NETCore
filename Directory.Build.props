@@ -1,0 +1,52 @@
+<Project>
+  <!--
+    Directory.Build.props - Common project properties for Performance Problem Simulator
+    Applied automatically to all projects in this directory and subdirectories.
+    See: https://learn.microsoft.com/en-us/visualstudio/msbuild/customize-your-build
+  -->
+
+  <PropertyGroup>
+    <!-- Target .NET 8.0 LTS for all projects -->
+    <TargetFramework>net8.0</TargetFramework>
+
+    <!-- Enable nullable reference types for defensive programming (Constitution Principle IV) -->
+    <Nullable>enable</Nullable>
+
+    <!-- Enable implicit global usings for cleaner code -->
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Treat warnings as errors in Release builds for code quality (Constitution Principle I) -->
+    <TreatWarningsAsErrors Condition="'$(Configuration)' == 'Release'">true</TreatWarningsAsErrors>
+
+    <!-- Enable latest C# language features (C# 12) -->
+    <LangVersion>latest</LangVersion>
+
+    <!-- Generate XML documentation for public APIs -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- Suppress documentation warnings for non-public members -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Enable code analysis -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+  <!-- Common assembly information -->
+  <PropertyGroup>
+    <Authors>Performance Problem Simulator Team</Authors>
+    <Company>Azure App Service Demo</Company>
+    <Product>Performance Problem Simulator</Product>
+    <Description>An educational tool for demonstrating and diagnosing Azure App Service performance problems.</Description>
+    <Copyright>Copyright © 2026</Copyright>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <!-- Deterministic builds for reproducibility -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

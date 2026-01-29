@@ -1,0 +1,148 @@
+# Performance Problem Simulator - Git Ignore File
+# Generated for .NET 8.0 / ASP.NET Core projects
+
+# =============================================================================
+# .NET Core / C#
+# =============================================================================
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio cache/options directory
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Mono auto generated files
+mono_crash.*
+
+# NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# VS Code directories
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# =============================================================================
+# ASP.NET Core
+# =============================================================================
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+# Test Results
+[Tt]est[Rr]esult*/
+*.trx
+*.coveragexml
+coverage*.xml
+coverage*.json
+*.coverage
+*.coveragexml
+TestResults/
+
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
+
+# User secrets
+secrets.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Local settings (Azure Functions style)
+local.settings.json
+
+# Application Insights
+ApplicationInsights.config
+
+# =============================================================================
+# Publish / Deployment
+# =============================================================================
+
+# Publish output
+[Pp]ublish/
+publish/
+PublishProfiles/
+*.pubxml
+*.publishproj
+
+# Azure
+web.*.config
+*.azurePubxml
+
+# =============================================================================
+# Operating System
+# =============================================================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+
+# =============================================================================
+# Documentation Build
+# =============================================================================
+
+# DocFX
+_site/
+api/

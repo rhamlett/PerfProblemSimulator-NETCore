@@ -1,0 +1,476 @@
+/* ==========================================================================
+   Performance Problem Simulator - Dashboard Styles
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   CSS Variables / Theme
+   -------------------------------------------------------------------------- */
+:root {
+    --color-primary: #0078d4;
+    --color-primary-dark: #005a9e;
+    --color-success: #107c10;
+    --color-warning: #ffb900;
+    --color-danger: #d13438;
+    --color-secondary: #6c757d;
+    
+    --color-bg: #f3f2f1;
+    --color-card: #ffffff;
+    --color-text: #323130;
+    --color-text-muted: #605e5c;
+    
+    --color-cpu: #0078d4;
+    --color-memory: #107c10;
+    --color-threads: #8764b8;
+    --color-queue: #ffb900;
+    
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    
+    --transition-fast: 150ms ease;
+    --transition-normal: 300ms ease;
+}
+
+/* --------------------------------------------------------------------------
+   Reset & Base
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-md);
+}
+
+.header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    transition: background var(--transition-fast);
+}
+
+.indicator.connected {
+    background: var(--color-success);
+    box-shadow: 0 0 8px var(--color-success);
+}
+
+.indicator.disconnected {
+    background: var(--color-danger);
+}
+
+.indicator.connecting {
+    background: var(--color-warning);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* --------------------------------------------------------------------------
+   Dashboard Layout
+   -------------------------------------------------------------------------- */
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Metrics Cards
+   -------------------------------------------------------------------------- */
+.metrics-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.metric-card {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    border-left: 4px solid transparent;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-card.cpu { border-left-color: var(--color-cpu); }
+.metric-card.memory { border-left-color: var(--color-memory); }
+.metric-card.threads { border-left-color: var(--color-threads); }
+.metric-card.queue { border-left-color: var(--color-queue); }
+
+.metric-card .metric-icon {
+    font-size: 1.5rem;
+}
+
+.metric-info {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    width: 100%;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.metric-unit {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+.metric-bar {
+    height: 6px;
+    background: #e1dfdd;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.metric-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width var(--transition-normal);
+}
+
+.metric-card.cpu .metric-bar-fill { background: var(--color-cpu); }
+.metric-card.memory .metric-bar-fill { background: var(--color-memory); }
+.metric-card.threads .metric-bar-fill { background: var(--color-threads); }
+.metric-card.queue .metric-bar-fill { background: var(--color-queue); }
+
+/* High value warning states */
+.metric-card.warning .metric-value { color: var(--color-warning); }
+.metric-card.danger .metric-value { color: var(--color-danger); }
+
+/* --------------------------------------------------------------------------
+   Charts Section
+   -------------------------------------------------------------------------- */
+.charts-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1rem;
+}
+
+.chart-container {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.chart-container h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-muted);
+}
+
+.chart-container canvas {
+    width: 100% !important;
+    height: 200px !important;
+}
+
+/* --------------------------------------------------------------------------
+   Controls Section
+   -------------------------------------------------------------------------- */
+.controls-section {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.controls-section h2 {
+    margin-bottom: 0.5rem;
+}
+
+.warning-text {
+    color: var(--color-danger);
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: #fdf2f2;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--color-danger);
+}
+
+.control-group {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e1dfdd;
+    border-radius: var(--radius-md);
+}
+
+.control-group h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.control-group p {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin-bottom: 1rem;
+}
+
+.control-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.control-inputs label {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-inputs input {
+    width: 80px;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid #c8c6c4;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.control-inputs input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(0, 120, 212, 0.2);
+}
+
+/* Buttons */
+.btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-right: 0.5rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-danger {
+    background: var(--color-danger);
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #a52a2d;
+}
+
+.btn-warning {
+    background: var(--color-warning);
+    color: #323130;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background: #e6a700;
+}
+
+.btn-secondary {
+    background: var(--color-secondary);
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+/* --------------------------------------------------------------------------
+   Active Simulations
+   -------------------------------------------------------------------------- */
+.active-simulations {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.simulations-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.no-simulations {
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+.simulation-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: #f3f2f1;
+    border-radius: var(--radius-lg);
+    font-size: 0.875rem;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.simulation-badge.cpu { border: 2px solid var(--color-cpu); }
+.simulation-badge.memory { border: 2px solid var(--color-memory); }
+.simulation-badge.threadblock { border: 2px solid var(--color-threads); }
+
+.simulation-badge .spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #e1dfdd;
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------------------------------------
+   Event Log
+   -------------------------------------------------------------------------- */
+.event-log {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.log-container {
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.8125rem;
+    background: #faf9f8;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.log-entry {
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #edebe9;
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    color: var(--color-text-muted);
+    margin-right: 0.75rem;
+}
+
+.log-entry.info { color: var(--color-primary); }
+.log-entry.success { color: var(--color-success); }
+.log-entry.warning { color: var(--color-warning); }
+.log-entry.error { color: var(--color-danger); }
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+.footer {
+    text-align: center;
+    padding: 1.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Adjustments
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+    }
+    
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .control-inputs {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+    }
+}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Problem Simulator - Dashboard</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <!-- Chart.js for real-time graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- SignalR client library -->
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+</head>
+<body>
+    <header class="header">
+        <h1>🔥 Performance Problem Simulator</h1>
+        <div class="connection-status">
+            <span id="connectionIndicator" class="indicator disconnected"></span>
+            <span id="connectionText">Disconnected</span>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <!-- Metrics Cards Row -->
+        <section class="metrics-cards">
+            <div class="metric-card cpu">
+                <div class="metric-icon">⚡</div>
+                <div class="metric-info">
+                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-value" id="cpuValue">--</div>
+                    <div class="metric-unit">%</div>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill" id="cpuBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card memory">
+                <div class="metric-icon">📊</div>
+                <div class="metric-info">
+                    <div class="metric-label">Working Set</div>
+                    <div class="metric-value" id="memoryValue">--</div>
+                    <div class="metric-unit">MB</div>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill" id="memoryBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card threads">
+                <div class="metric-icon">🧵</div>
+                <div class="metric-info">
+                    <div class="metric-label">Thread Pool</div>
+                    <div class="metric-value" id="threadsValue">--</div>
+                    <div class="metric-unit">threads</div>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill" id="threadsBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="metric-card queue">
+                <div class="metric-icon">📋</div>
+                <div class="metric-info">
+                    <div class="metric-label">Queue Length</div>
+                    <div class="metric-value" id="queueValue">--</div>
+                    <div class="metric-unit">pending</div>
+                </div>
+                <div class="metric-bar">
+                    <div class="metric-bar-fill" id="queueBar" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="charts-section">
+            <div class="chart-container">
+                <h3>📈 CPU & Memory Over Time</h3>
+                <canvas id="resourceChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>🧵 Thread Pool Activity</h3>
+                <canvas id="threadChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Simulation Controls -->
+        <section class="controls-section">
+            <h2>🎮 Simulation Controls</h2>
+            <p class="warning-text">⚠️ These buttons intentionally cause performance problems for educational purposes!</p>
+            
+            <div class="control-group">
+                <h3>CPU Stress</h3>
+                <p>Creates parallel spin loops to max out all CPU cores.</p>
+                <div class="control-inputs">
+                    <label>Duration (seconds):
+                        <input type="number" id="cpuDuration" value="10" min="1" max="60">
+                    </label>
+                </div>
+                <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
+            </div>
+
+            <div class="control-group">
+                <h3>Memory Pressure</h3>
+                <p>Allocates pinned memory blocks to increase working set.</p>
+                <div class="control-inputs">
+                    <label>Block Size (MB):
+                        <input type="number" id="memorySize" value="100" min="1" max="500">
+                    </label>
+                </div>
+                <button class="btn btn-warning" id="btnAllocateMemory">📊 Allocate Memory</button>
+                <button class="btn btn-secondary" id="btnReleaseMemory">🗑️ Release All Memory</button>
+            </div>
+
+            <div class="control-group">
+                <h3>Thread Pool Starvation</h3>
+                <p>Blocks thread pool threads using sync-over-async anti-pattern.</p>
+                <div class="control-inputs">
+                    <label>Delay (ms):
+                        <input type="number" id="threadDelay" value="5000" min="100" max="30000">
+                    </label>
+                    <label>Concurrent:
+                        <input type="number" id="threadConcurrent" value="100" min="1" max="500">
+                    </label>
+                </div>
+                <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Trigger Thread Blocking</button>
+            </div>
+        </section>
+
+        <!-- Active Simulations -->
+        <section class="active-simulations">
+            <h2>🏃 Active Simulations</h2>
+            <div id="simulationsList" class="simulations-list">
+                <p class="no-simulations">No active simulations</p>
+            </div>
+        </section>
+
+        <!-- Event Log -->
+        <section class="event-log">
+            <h2>📜 Event Log</h2>
+            <div id="eventLog" class="log-container"></div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
+        <p>Last Update: <span id="lastUpdate">--</span></p>
+    </footer>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

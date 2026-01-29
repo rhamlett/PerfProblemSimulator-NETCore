@@ -1,0 +1,588 @@
+openapi: 3.0.3
+info:
+  title: Performance Problem Simulator API
+  description: |
+    API for triggering and monitoring intentional performance problems in an Azure App Service
+    application for educational and diagnostic demonstration purposes.
+    
+    ⚠️ **WARNING**: This API intentionally creates performance problems. It is designed for
+    testing and learning purposes only. Do not use in production environments.
+    
+    ## Endpoint Categories
+    
+    - **Problem Triggers**: Endpoints that start performance problems
+    - **Metrics**: Endpoints that report current application state
+    - **Control**: Endpoints for managing simulations
+    
+    ## API Style
+    
+    This API uses action-oriented RPC-style endpoints (e.g., `/api/trigger-high-cpu`) rather than
+    REST resource-based endpoints, as the operations are actions rather than resource management.
+  version: 1.0.0
+  contact:
+    name: Performance Problem Simulator
+  license:
+    name: MIT
+
+servers:
+  - url: https://localhost:5001
+    description: Local development
+  - url: https://{appname}.azurewebsites.net
+    description: Azure App Service
+    variables:
+      appname:
+        default: perf-problem-simulator
+        description: Azure App Service name
+
+tags:
+  - name: CPU
+    description: CPU stress simulation endpoints
+  - name: Memory
+    description: Memory pressure simulation endpoints
+  - name: ThreadPool
+    description: Thread pool starvation simulation endpoints
+  - name: Metrics
+    description: Application metrics and health endpoints
+  - name: Control
+    description: Simulation control endpoints
+
+paths:
+  /api/trigger-high-cpu:
+    post:
+      tags:
+        - CPU
+      summary: Trigger high CPU usage
+      description: |
+        Starts a CPU-intensive operation that spins all processor cores for the specified duration.
+        The CPU usage will approach 100% and return to baseline when the duration expires.
+        
+        **Educational Note**: This endpoint uses `Parallel.For` with spin loops to saturate all
+        available CPU cores, demonstrating how CPU-bound work affects application responsiveness.
+      operationId: triggerHighCpu
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CpuStressRequest'
+            examples:
+              default:
+                summary: Default 30-second CPU stress
+                value:
+                  durationSeconds: 30
+              short:
+                summary: Quick 10-second test
+                value:
+                  durationSeconds: 10
+              extended:
+                summary: Extended 5-minute stress
+                value:
+                  durationSeconds: 300
+      responses:
+        '200':
+          description: CPU stress simulation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Problem endpoints are disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/allocate-memory:
+    post:
+      tags:
+        - Memory
+      summary: Allocate memory to increase pressure
+      description: |
+        Allocates the specified amount of memory and holds it until explicitly released.
+        Multiple calls are additive - each allocation adds to the total memory held.
+        
+        **Educational Note**: Memory is allocated as pinned byte arrays on the Large Object Heap
+        (LOH), preventing garbage collection until explicitly released.
+      operationId: allocateMemory
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryAllocationRequest'
+            examples:
+              default:
+                summary: Default 100 MB allocation
+                value:
+                  sizeMegabytes: 100
+              large:
+                summary: Large 500 MB allocation
+                value:
+                  sizeMegabytes: 500
+      responses:
+        '200':
+          description: Memory allocated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Problem endpoints are disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/release-memory:
+    post:
+      tags:
+        - Memory
+      summary: Release all allocated memory
+      description: |
+        Releases all memory previously allocated via `/api/allocate-memory` and optionally
+        forces a garbage collection cycle.
+        
+        **Educational Note**: After release, memory may not immediately return to baseline
+        as the GC runs on its own schedule. Forcing GC can help demonstrate memory recovery.
+      operationId: releaseMemory
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forceGarbageCollection:
+                  type: boolean
+                  default: true
+                  description: Whether to force a Gen2 garbage collection
+      responses:
+        '200':
+          description: Memory released
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '503':
+          description: Problem endpoints are disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/trigger-sync-over-async:
+    post:
+      tags:
+        - ThreadPool
+      summary: Trigger thread pool starvation via sync-over-async
+      description: |
+        Demonstrates the sync-over-async anti-pattern by blocking ThreadPool threads.
+        This causes thread pool starvation, leading to increased response times for all
+        requests as the pool struggles to serve incoming work.
+        
+        **Educational Note**: This endpoint intentionally uses `.Result` to block threads,
+        which is a common anti-pattern. Watch the thread pool metrics to see thread count
+        climb while queue depth grows.
+      operationId: triggerSyncOverAsync
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThreadBlockRequest'
+            examples:
+              default:
+                summary: Default blocking scenario
+                value:
+                  delayMilliseconds: 1000
+                  concurrentRequests: 10
+              aggressive:
+                summary: Aggressive starvation
+                value:
+                  delayMilliseconds: 5000
+                  concurrentRequests: 100
+      responses:
+        '200':
+          description: Thread blocking simulation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Problem endpoints are disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Get current application metrics
+      description: |
+        Returns comprehensive metrics about CPU, memory, thread pool, and active simulations.
+        This endpoint remains responsive even under thread pool starvation.
+        
+        **Implementation Note**: Metrics are collected by a dedicated thread that runs
+        independently of the ThreadPool, ensuring availability during starvation scenarios.
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Current metrics snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationHealthStatus'
+
+  /api/metrics/cpu:
+    get:
+      tags:
+        - Metrics
+      summary: Get CPU metrics only
+      operationId: getCpuMetrics
+      responses:
+        '200':
+          description: CPU metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CpuMetrics'
+
+  /api/metrics/memory:
+    get:
+      tags:
+        - Metrics
+      summary: Get memory metrics only
+      operationId: getMemoryMetrics
+      responses:
+        '200':
+          description: Memory metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoryMetrics'
+
+  /api/metrics/threadpool:
+    get:
+      tags:
+        - Metrics
+      summary: Get thread pool metrics only
+      operationId: getThreadPoolMetrics
+      responses:
+        '200':
+          description: Thread pool metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadPoolMetrics'
+
+  /api/reset-all:
+    post:
+      tags:
+        - Control
+      summary: Reset all simulations
+      description: |
+        Stops all active CPU and thread blocking simulations, releases all allocated memory,
+        and optionally forces garbage collection. Use this to return the application to
+        baseline state.
+      operationId: resetAll
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                forceGarbageCollection:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: All simulations reset
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: All simulations have been reset
+                  simulationsStopped:
+                    type: integer
+                    example: 3
+                  memoryReleasedBytes:
+                    type: integer
+                    format: int64
+                    example: 524288000
+
+  /api/health:
+    get:
+      tags:
+        - Metrics
+      summary: Basic health check
+      description: Simple health check endpoint for load balancers and monitoring.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Application is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  schemas:
+    CpuStressRequest:
+      type: object
+      properties:
+        durationSeconds:
+          type: integer
+          minimum: 1
+          maximum: 300
+          default: 30
+          description: Duration in seconds to sustain high CPU usage
+
+    MemoryAllocationRequest:
+      type: object
+      properties:
+        sizeMegabytes:
+          type: integer
+          minimum: 10
+          maximum: 1024
+          default: 100
+          description: Amount of memory to allocate in megabytes
+
+    ThreadBlockRequest:
+      type: object
+      properties:
+        delayMilliseconds:
+          type: integer
+          minimum: 100
+          maximum: 30000
+          default: 1000
+          description: How long each blocked thread waits
+        concurrentRequests:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 10
+          description: Number of concurrent blocking operations
+
+    SimulationResult:
+      type: object
+      required:
+        - simulationId
+        - type
+        - status
+        - message
+        - startedAt
+      properties:
+        simulationId:
+          type: string
+          format: uuid
+          description: Unique identifier for this simulation
+        type:
+          type: string
+          enum: [Cpu, Memory, ThreadBlock]
+          description: Type of simulation
+        status:
+          type: string
+          enum: [Started, Completed, Failed]
+          description: Current status
+        message:
+          type: string
+          description: Human-readable status message
+        actualParameters:
+          type: object
+          additionalProperties: true
+          description: Parameters actually used (may differ from request if values were capped)
+        startedAt:
+          type: string
+          format: date-time
+          description: When the simulation started
+        estimatedEndAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the simulation will complete (null for memory allocations)
+
+    ApplicationHealthStatus:
+      type: object
+      required:
+        - timestamp
+        - cpu
+        - memory
+        - threadPool
+        - activeSimulations
+        - isHealthy
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        cpu:
+          $ref: '#/components/schemas/CpuMetrics'
+        memory:
+          $ref: '#/components/schemas/MemoryMetrics'
+        threadPool:
+          $ref: '#/components/schemas/ThreadPoolMetrics'
+        activeSimulations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveSimulationSummary'
+        isHealthy:
+          type: boolean
+          description: Overall health assessment
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Any warning messages
+
+    CpuMetrics:
+      type: object
+      required:
+        - usagePercent
+        - processorCount
+      properties:
+        usagePercent:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+          description: Current CPU usage percentage
+        processorCount:
+          type: integer
+          description: Number of logical processors
+
+    MemoryMetrics:
+      type: object
+      required:
+        - workingSetBytes
+        - gcHeapBytes
+        - allocatedBlocksCount
+        - allocatedBlocksTotalBytes
+      properties:
+        workingSetBytes:
+          type: integer
+          format: int64
+          description: Process working set in bytes
+        gcHeapBytes:
+          type: integer
+          format: int64
+          description: Managed GC heap size in bytes
+        allocatedBlocksCount:
+          type: integer
+          description: Number of intentionally held memory blocks
+        allocatedBlocksTotalBytes:
+          type: integer
+          format: int64
+          description: Total bytes intentionally allocated
+        memoryLoadPercent:
+          type: number
+          format: double
+          description: System memory pressure percentage
+
+    ThreadPoolMetrics:
+      type: object
+      required:
+        - threadCount
+        - pendingWorkItems
+        - completedWorkItems
+        - availableWorkerThreads
+        - maxWorkerThreads
+      properties:
+        threadCount:
+          type: integer
+          description: Current thread pool thread count
+        pendingWorkItems:
+          type: integer
+          format: int64
+          description: Work items waiting in queue
+        completedWorkItems:
+          type: integer
+          format: int64
+          description: Total completed work items since start
+        availableWorkerThreads:
+          type: integer
+          description: Available worker threads
+        maxWorkerThreads:
+          type: integer
+          description: Maximum worker threads
+        availableIoThreads:
+          type: integer
+          description: Available I/O completion threads
+        maxIoThreads:
+          type: integer
+          description: Maximum I/O completion threads
+
+    ActiveSimulationSummary:
+      type: object
+      required:
+        - id
+        - type
+        - startedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [Cpu, Memory, ThreadBlock]
+        startedAt:
+          type: string
+          format: date-time
+        durationSeconds:
+          type: integer
+          nullable: true
+          description: Configured duration (null for memory)
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Field-level validation errors
+        timestamp:
+          type: string
+          format: date-time
