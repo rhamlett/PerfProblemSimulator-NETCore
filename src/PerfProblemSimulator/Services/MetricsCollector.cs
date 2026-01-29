@@ -12,7 +12,7 @@ namespace PerfProblemSimulator.Services;
 /// <strong>Educational Note (FR-013 Implementation):</strong>
 /// </para>
 /// <para>
-/// This service uses a dedicated <see cref="Thread"/> instead of <see cref="Task.Run"/>
+/// This service uses a dedicated <see cref="Thread"/> instead of <see cref="Task.Run(System.Action)"/>
 /// for metrics collection. This is critical because:
 /// </para>
 /// <list type="number">
