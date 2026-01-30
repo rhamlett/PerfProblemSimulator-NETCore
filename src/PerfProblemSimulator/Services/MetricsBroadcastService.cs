@@ -29,6 +29,7 @@ namespace PerfProblemSimulator.Services;
 public class MetricsBroadcastService : IHostedService
 {
     private readonly IMetricsCollector _metricsCollector;
+    private readonly ISimulationTracker _simulationTracker;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
     private readonly ILogger<MetricsBroadcastService> _logger;
 
@@ -37,10 +38,12 @@ public class MetricsBroadcastService : IHostedService
     /// </summary>
     public MetricsBroadcastService(
         IMetricsCollector metricsCollector,
+        ISimulationTracker simulationTracker,
         IHubContext<MetricsHub, IMetricsClient> hubContext,
         ILogger<MetricsBroadcastService> logger)
     {
         _metricsCollector = metricsCollector ?? throw new ArgumentNullException(nameof(metricsCollector));
+        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -49,6 +52,8 @@ public class MetricsBroadcastService : IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _metricsCollector.MetricsCollected += OnMetricsCollected;
+        _simulationTracker.SimulationStarted += OnSimulationStarted;
+        _simulationTracker.SimulationCompleted += OnSimulationCompleted;
         _metricsCollector.Start();
 
         _logger.LogInformation("Metrics broadcast service started");
@@ -59,6 +64,8 @@ public class MetricsBroadcastService : IHostedService
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _metricsCollector.MetricsCollected -= OnMetricsCollected;
+        _simulationTracker.SimulationStarted -= OnSimulationStarted;
+        _simulationTracker.SimulationCompleted -= OnSimulationCompleted;
         _metricsCollector.Stop();
 
         _logger.LogInformation("Metrics broadcast service stopped");
@@ -74,6 +81,32 @@ public class MetricsBroadcastService : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error broadcasting metrics to clients");
+        }
+    }
+
+    private async void OnSimulationStarted(object? sender, SimulationEventArgs e)
+    {
+        try
+        {
+            await _hubContext.Clients.All.SimulationStarted(e.Type.ToString(), e.SimulationId);
+            _logger.LogDebug("Broadcast SimulationStarted: {Type} {Id}", e.Type, e.SimulationId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting simulation started event");
+        }
+    }
+
+    private async void OnSimulationCompleted(object? sender, SimulationEventArgs e)
+    {
+        try
+        {
+            await _hubContext.Clients.All.SimulationCompleted(e.Type.ToString(), e.SimulationId);
+            _logger.LogDebug("Broadcast SimulationCompleted: {Type} {Id}", e.Type, e.SimulationId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting simulation completed event");
         }
     }
 }

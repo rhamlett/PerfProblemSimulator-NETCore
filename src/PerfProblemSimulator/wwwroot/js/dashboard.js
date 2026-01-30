@@ -360,8 +360,9 @@ async function allocateMemory() {
         
         if (response.ok) {
             const result = await response.json();
-            addActiveSimulation(result.blockId, 'memory', `Memory ${sizeMb}MB`);
-            logEvent('success', `Memory allocated: ${result.blockId} (${result.actualSizeBytes / 1024 / 1024} MB)`);
+            const actualSizeMb = result.actualParameters?.sizeMegabytes ?? sizeMb;
+            addActiveSimulation(result.simulationId, 'memory', `Memory ${actualSizeMb}MB`);
+            logEvent('success', `Memory allocated: ${result.simulationId} (${actualSizeMb} MB)`);
         } else {
             const error = await response.json();
             logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);
@@ -387,7 +388,8 @@ async function releaseMemory() {
                 }
             });
             updateActiveSimulationsUI();
-            logEvent('success', `Released ${result.blocksReleased} blocks (${result.bytesReleased / 1024 / 1024} MB)`);
+            const releasedMb = result.releasedMegabytes ?? (result.releasedBytes / 1024 / 1024);
+            logEvent('success', `Released ${result.releasedBlockCount ?? 0} blocks (${releasedMb.toFixed(1)} MB)`);
         } else {
             const error = await response.json();
             logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);

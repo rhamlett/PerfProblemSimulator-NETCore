@@ -9,6 +9,16 @@ namespace PerfProblemSimulator.Services;
 public interface ISimulationTracker
 {
     /// <summary>
+    /// Event fired when a simulation is registered.
+    /// </summary>
+    event EventHandler<SimulationEventArgs>? SimulationStarted;
+
+    /// <summary>
+    /// Event fired when a simulation is unregistered (completed or cancelled).
+    /// </summary>
+    event EventHandler<SimulationEventArgs>? SimulationCompleted;
+
+    /// <summary>
     /// Registers a new active simulation.
     /// </summary>
     /// <param name="simulationId">Unique identifier for the simulation.</param>
@@ -62,6 +72,31 @@ public interface ISimulationTracker
 }
 
 /// <summary>
+/// Event arguments for simulation lifecycle events.
+/// </summary>
+public class SimulationEventArgs : EventArgs
+{
+    /// <summary>
+    /// Gets the simulation ID.
+    /// </summary>
+    public Guid SimulationId { get; }
+
+    /// <summary>
+    /// Gets the simulation type.
+    /// </summary>
+    public SimulationType Type { get; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SimulationEventArgs"/> class.
+    /// </summary>
+    public SimulationEventArgs(Guid simulationId, SimulationType type)
+    {
+        SimulationId = simulationId;
+        Type = type;
+    }
+}
+
+/// <summary>
 /// Information about an active simulation.
 /// </summary>
 /// <remarks>
@@ -112,6 +147,12 @@ public class SimulationTracker : ISimulationTracker
     private readonly ConcurrentDictionary<Guid, TrackedSimulation> _simulations = new();
     private readonly ILogger<SimulationTracker> _logger;
 
+    /// <inheritdoc />
+    public event EventHandler<SimulationEventArgs>? SimulationStarted;
+
+    /// <inheritdoc />
+    public event EventHandler<SimulationEventArgs>? SimulationCompleted;
+
     /// <summary>
     /// Internal tracking record that includes the cancellation source.
     /// </summary>
@@ -155,6 +196,9 @@ public class SimulationTracker : ISimulationTracker
                 type,
                 simulationId,
                 parameters);
+
+            // Fire the SimulationStarted event
+            SimulationStarted?.Invoke(this, new SimulationEventArgs(simulationId, type));
         }
         else
         {
@@ -174,6 +218,10 @@ public class SimulationTracker : ISimulationTracker
                 tracked.Info.Type,
                 simulationId,
                 DateTimeOffset.UtcNow - tracked.Info.StartedAt);
+
+            // Fire the SimulationCompleted event
+            SimulationCompleted?.Invoke(this, new SimulationEventArgs(simulationId, tracked.Info.Type));
+
             return true;
         }
 
