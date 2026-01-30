@@ -65,9 +65,13 @@ async function initializeSignalR() {
     });
 
     // Register message handlers
+    // Note: SignalR uses camelCase for method names by default
     state.connection.on('ReceiveMetrics', handleMetricsUpdate);
+    state.connection.on('receiveMetrics', handleMetricsUpdate);
     state.connection.on('SimulationStarted', handleSimulationStarted);
+    state.connection.on('simulationStarted', handleSimulationStarted);
     state.connection.on('SimulationCompleted', handleSimulationCompleted);
+    state.connection.on('simulationCompleted', handleSimulationCompleted);
 
     // Start connection
     try {
@@ -355,7 +359,7 @@ async function allocateMemory() {
         const response = await fetch(`${CONFIG.apiBaseUrl}/memory/allocate-memory`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sizeInMegabytes: sizeMb })
+            body: JSON.stringify({ sizeMegabytes: sizeMb })
         });
         
         if (response.ok) {
