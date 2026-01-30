@@ -23,12 +23,6 @@ This application is designed to help developers and DevOps engineers:
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) (optional, for deployment)
-- An Azure subscription (optional, for deployment)
-
 ### Run Locally
 
 ```bash
@@ -270,4 +264,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Designed for educational use in Azure App Service training
 - Inspired by common performance anti-patterns encountered in production
-- Built with .NET 8.0 and ASP.NET Core
+- Built with .NET 10.0 and ASP.NET Core

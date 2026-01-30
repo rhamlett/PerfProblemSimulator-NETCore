@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Problem Simulator - Documentation</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+    <style>
+        /* Documentation-specific styles */
+        .doc-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-nav {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .doc-nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .doc-nav a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            transition: background var(--transition-fast);
+        }
+
+        .doc-nav a:hover {
+            background: rgba(0, 120, 212, 0.1);
+        }
+
+        .doc-section {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .doc-section h2 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-section h3 {
+            color: var(--color-text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section ul, .doc-section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--color-danger);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .command { color: #dcdcaa; }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 185, 0, 0.15) 0%, rgba(209, 52, 56, 0.1) 100%);
+            border-left: 4px solid var(--color-warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--color-danger);
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box ul {
+            margin-left: 1.5rem;
+        }
+
+        .warning-box li {
+            color: var(--color-text);
+        }
+
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .method-get {
+            background: rgba(16, 124, 16, 0.15);
+            color: var(--color-success);
+        }
+
+        .method-post {
+            background: rgba(0, 120, 212, 0.15);
+            color: var(--color-primary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .feature-item {
+            background: var(--color-bg);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+        }
+
+        .feature-text strong {
+            display: block;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-text span {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .architecture-tree {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+
+        .architecture-tree .folder { color: var(--color-primary); font-weight: 600; }
+        .architecture-tree .file { color: var(--color-text-muted); }
+        .architecture-tree .comment { color: var(--color-success); font-style: italic; }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: var(--radius-sm);
+            transition: background var(--transition-fast);
+        }
+
+        .back-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .config-table th, .config-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .config-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .doc-container {
+                padding: 1rem;
+            }
+
+            .doc-nav ul {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .api-table {
+                font-size: 0.875rem;
+            }
+
+            .api-table th, .api-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>📚 Documentation</h1>
+        <a href="/" class="back-link">
+            <span>←</span>
+            <span>Back to Dashboard</span>
+        </a>
+    </header>
+
+    <div class="doc-container">
+        <!-- Navigation -->
+        <nav class="doc-nav">
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#quick-start">Quick Start</a></li>
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#api">API Reference</a></li>
+                <li><a href="#configuration">Configuration</a></li>
+                <li><a href="#azure">Azure Deployment</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#testing">Testing</a></li>
+            </ul>
+        </nav>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+            <h2>🎯 Performance Problem Simulator</h2>
+            <p>An educational Azure App Service application that <strong>intentionally creates performance problems</strong> for learning and demonstration purposes.</p>
+            
+            <h3>Purpose</h3>
+            <p>This application is designed to help developers and DevOps engineers:</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-text">
+                        <strong>Learn</strong>
+                        <span>How to diagnose common performance issues in Azure App Service</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-text">
+                        <strong>Practice</strong>
+                        <span>Using Azure monitoring and diagnostic tools</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-text">
+                        <strong>Demonstrate</strong>
+                        <span>Performance anti-patterns in a controlled environment</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-text">
+                        <strong>Train</strong>
+                        <span>Support teams on identifying and resolving performance problems</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ Warning - This application intentionally creates performance problems!</h4>
+                <ul>
+                    <li>🔥 <strong>CPU stress</strong> - Creates parallel spin loops that consume all CPU cores</li>
+                    <li>📊 <strong>Memory pressure</strong> - Allocates and pins memory blocks to increase working set</li>
+                    <li>🧵 <strong>Thread pool starvation</strong> - Uses sync-over-async anti-patterns to block thread pool threads</li>
+                </ul>
+                <p style="margin-top: 1rem; margin-bottom: 0;"><strong>Only deploy this application in isolated, non-production environments.</strong></p>
+            </div>
+        </section>
+
+        <!-- Quick Start Section -->
+        <section id="quick-start" class="doc-section">
+            <h2>🚀 Quick Start</h2>
+            
+            <h3>Run Locally</h3>
+            <div class="code-block">
+<span class="comment"># Clone the repository</span>
+git clone https://github.com/your-org/perf-problem-simulator.git
+cd perf-problem-simulator
+
+<span class="comment"># Restore and build</span>
+dotnet build
+
+<span class="comment"># Run the application</span>
+dotnet run --project src/PerfProblemSimulator
+
+<span class="comment"># Open in browser</span>
+<span class="comment"># Dashboard: http://localhost:5000</span>
+<span class="comment"># Swagger: http://localhost:5000/swagger</span>
+            </div>
+
+            <h3>Run Tests</h3>
+            <div class="code-block">
+<span class="comment"># Run all tests</span>
+dotnet test
+
+<span class="comment"># Run with coverage</span>
+dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
+            </div>
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="doc-section">
+            <h2>📊 Dashboard</h2>
+            <p>The application includes a real-time dashboard at the root URL that shows:</p>
+            <ul>
+                <li><strong>CPU usage</strong> - Current processor utilization</li>
+                <li><strong>Memory</strong> - Working set and GC heap sizes</li>
+                <li><strong>Thread pool</strong> - Active threads and queue length</li>
+                <li><strong>Active simulations</strong> - Currently running problem simulations</li>
+            </ul>
+            <p>The dashboard uses SignalR for real-time updates and includes controls to trigger each type of simulation.</p>
+        </section>
+
+        <!-- API Reference Section -->
+        <section id="api" class="doc-section">
+            <h2>🔌 API Reference</h2>
+            
+            <h3>Health & Monitoring</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/health</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Basic health check</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/health/status</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Detailed health with active simulations</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/metrics/current</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Latest metrics snapshot</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/metrics/health</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Detailed health status with warnings</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/admin/stats</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Simulation and resource statistics</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>CPU Stress Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/cpu/trigger-high-cpu</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Trigger CPU stress</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body:</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"durationSeconds"</span>: 30
+}
+            </div>
+
+            <h3>Memory Pressure Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/memory/allocate-memory</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Allocate memory block</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/memory/release-memory</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Release all allocated memory</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body (allocate):</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"sizeInMegabytes"</span>: 100
+}
+            </div>
+
+            <h3>Thread Pool Starvation Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/threadblock/trigger-sync-over-async</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Trigger thread blocking</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body:</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"delayMilliseconds"</span>: 5000,
+  <span class="string">"concurrentRequests"</span>: 100
+}
+            </div>
+
+            <h3>Admin Operations</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/admin/reset-all</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Release all memory and reset state</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/admin/stats</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get current simulation statistics</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Configuration Section -->
+        <section id="configuration" class="doc-section">
+            <h2>🔧 Configuration</h2>
+            <p>Configuration is managed through <code>appsettings.json</code>:</p>
+            <div class="code-block">
+{
+  <span class="string">"ProblemSimulator"</span>: {
+    <span class="string">"MaxCpuDurationSeconds"</span>: 300,
+    <span class="string">"MaxMemoryAllocationMb"</span>: 1024,
+    <span class="string">"MaxThreadBlockDelayMs"</span>: 30000,
+    <span class="string">"MaxConcurrentBlockingRequests"</span>: 200,
+    <span class="string">"MetricsCollectionIntervalMs"</span>: 1000,
+    <span class="string">"EnableRequestLogging"</span>: <span class="keyword">true</span>
+  }
+}
+            </div>
+
+            <h3>Environment Variables</h3>
+            <table class="config-table">
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>DISABLE_PROBLEM_ENDPOINTS</code></td>
+                        <td>Set to <code>true</code> to disable all problem-triggering endpoints</td>
+                        <td><code>false</code></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Azure Deployment Section -->
+        <section id="azure" class="doc-section">
+            <h2>☁️ Azure Deployment</h2>
+            
+            <h3>Using Azure CLI</h3>
+            <div class="code-block">
+<span class="comment"># Login to Azure</span>
+az login
+
+<span class="comment"># Create resource group</span>
+az group create --name rg-perf-simulator --location eastus
+
+<span class="comment"># Create App Service plan</span>
+az appservice plan create \
+  --name asp-perf-simulator \
+  --resource-group rg-perf-simulator \
+  --sku B1 \
+  --is-linux
+
+<span class="comment"># Create Web App</span>
+az webapp create \
+  --name your-unique-app-name \
+  --resource-group rg-perf-simulator \
+  --plan asp-perf-simulator \
+  --runtime <span class="string">"DOTNETCORE:8.0"</span>
+
+<span class="comment"># Deploy</span>
+cd src/PerfProblemSimulator
+dotnet publish -c Release
+az webapp deploy \
+  --resource-group rg-perf-simulator \
+  --name your-unique-app-name \
+  --src-path bin/Release/net8.0/publish
+            </div>
+
+            <h3>Safety Recommendation</h3>
+            <p>After deployment, consider disabling problem endpoints:</p>
+            <div class="code-block">
+az webapp config appsettings set \
+  --resource-group rg-perf-simulator \
+  --name your-unique-app-name \
+  --settings DISABLE_PROBLEM_ENDPOINTS=<span class="keyword">true</span>
+            </div>
+
+            <h3>Recommended Diagnostic Tools</h3>
+            <ul>
+                <li><strong>Diagnose and Solve Problems</strong> - App Service blade for automated diagnosis</li>
+                <li><strong>Application Insights</strong> - For detailed telemetry and performance monitoring</li>
+                <li><strong>Process Explorer</strong> - For real-time process monitoring</li>
+                <li><strong>CPU Profiling</strong> - Capture and analyze CPU traces</li>
+                <li><strong>Memory Dumps</strong> - Analyze memory allocations</li>
+            </ul>
+            <p>See <a href="docs/azure-monitoring-guide.md">azure-monitoring-guide.md</a> for detailed instructions.</p>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="doc-section">
+            <h2>📐 Architecture</h2>
+            <div class="architecture-tree">
+<span class="folder">src/PerfProblemSimulator/</span>
+├── <span class="folder">Controllers/</span>          <span class="comment"># API endpoints</span>
+│   ├── <span class="file">CpuController.cs</span>
+│   ├── <span class="file">MemoryController.cs</span>
+│   ├── <span class="file">ThreadBlockController.cs</span>
+│   ├── <span class="file">MetricsController.cs</span>
+│   ├── <span class="file">HealthController.cs</span>
+│   └── <span class="file">AdminController.cs</span>
+├── <span class="folder">Services/</span>             <span class="comment"># Business logic</span>
+│   ├── <span class="file">CpuStressService.cs</span>
+│   ├── <span class="file">MemoryPressureService.cs</span>
+│   ├── <span class="file">ThreadBlockService.cs</span>
+│   ├── <span class="file">SimulationTracker.cs</span>
+│   ├── <span class="file">MetricsCollector.cs</span>
+│   └── <span class="file">MetricsBroadcastService.cs</span>
+├── <span class="folder">Hubs/</span>                 <span class="comment"># SignalR for real-time updates</span>
+│   └── <span class="file">MetricsHub.cs</span>
+├── <span class="folder">Models/</span>               <span class="comment"># Data transfer objects</span>
+├── <span class="folder">Middleware/</span>           <span class="comment"># Request pipeline</span>
+│   └── <span class="file">ProblemEndpointGuard.cs</span>
+└── <span class="folder">wwwroot/</span>              <span class="comment"># SPA dashboard</span>
+    ├── <span class="file">index.html</span>
+    ├── <span class="folder">css/</span><span class="file">dashboard.css</span>
+    └── <span class="folder">js/</span><span class="file">dashboard.js</span>
+            </div>
+        </section>
+
+        <!-- Testing Section -->
+        <section id="testing" class="doc-section">
+            <h2>🧪 Testing</h2>
+            <p>The project includes comprehensive unit and integration tests:</p>
+            <div class="code-block">
+<span class="comment"># Run all tests</span>
+dotnet test
+
+<span class="comment"># Run with verbose output</span>
+dotnet test --logger <span class="string">"console;verbosity=detailed"</span>
+
+<span class="comment"># Run specific test category</span>
+dotnet test --filter <span class="string">"Category=Unit"</span>
+            </div>
+
+            <h3>Contributing</h3>
+            <ol>
+                <li>Fork the repository</li>
+                <li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
+                <li>Commit your changes (<code>git commit -m 'Add amazing feature'</code>)</li>
+                <li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
+                <li>Open a Pull Request</li>
+            </ol>
+        </section>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
+            <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
+            <p>Built with .NET 8.0 and ASP.NET Core | <a href="/">Return to Dashboard</a></p>
+        </footer>
+    </div>
+</body>
+</html>
