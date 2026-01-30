@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: rhamlettDotNetWebApp
+  AZURE_WEBAPP_NAME: PerfSimDotNet
   AZURE_WEBAPP_PACKAGE_PATH: './publish'
   DOTNET_VERSION: '8.0.x'
 
