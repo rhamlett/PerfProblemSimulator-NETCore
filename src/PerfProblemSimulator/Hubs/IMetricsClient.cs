@@ -1,4 +1,5 @@
 using PerfProblemSimulator.Models;
+using PerfProblemSimulator.Services;
 
 namespace PerfProblemSimulator.Hubs;
 
@@ -41,4 +42,17 @@ public interface IMetricsClient
     /// <param name="simulationType">Type of simulation that completed.</param>
     /// <param name="simulationId">ID of the simulation.</param>
     Task SimulationCompleted(string simulationType, Guid simulationId);
+
+    /// <summary>
+    /// Receives a latency measurement from the server-side probe.
+    /// </summary>
+    /// <param name="measurement">The latency measurement data.</param>
+    /// <remarks>
+    /// <para>
+    /// <strong>Educational Note:</strong> This measurement shows real request processing
+    /// latency. Compare baseline latency (~5-20ms) with latency during thread pool
+    /// starvation (can exceed 30 seconds!) to see the impact of blocking threads.
+    /// </para>
+    /// </remarks>
+    Task ReceiveLatency(LatencyMeasurement measurement);
 }

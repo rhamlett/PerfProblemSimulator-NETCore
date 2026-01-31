@@ -87,6 +87,47 @@
             </div>
         </section>
 
+        <!-- Latency Monitor Section -->
+        <section class="latency-section">
+            <h2>⏱️ Request Latency Monitor</h2>
+            <p class="info-text">Measures response time to a lightweight probe endpoint. During thread pool starvation, latency increases dramatically.</p>
+            
+            <div class="latency-stats">
+                <div class="latency-stat current">
+                    <div class="latency-label">Current</div>
+                    <div class="latency-value" id="latencyCurrent">--</div>
+                    <div class="latency-unit">ms</div>
+                </div>
+                <div class="latency-stat average">
+                    <div class="latency-label">Avg (60s)</div>
+                    <div class="latency-value" id="latencyAverage">--</div>
+                    <div class="latency-unit">ms</div>
+                </div>
+                <div class="latency-stat max">
+                    <div class="latency-label">Max (60s)</div>
+                    <div class="latency-value" id="latencyMax">--</div>
+                    <div class="latency-unit">ms</div>
+                </div>
+                <div class="latency-stat timeouts">
+                    <div class="latency-label">Timeouts</div>
+                    <div class="latency-value" id="latencyTimeouts">0</div>
+                    <div class="latency-unit">count</div>
+                </div>
+            </div>
+
+            <div class="chart-container latency-chart-container">
+                <h3>📊 Response Latency Over Time</h3>
+                <canvas id="latencyChart"></canvas>
+            </div>
+
+            <div class="latency-legend">
+                <span class="legend-item good">● &lt;50ms (Good)</span>
+                <span class="legend-item warning">● 50-500ms (Degraded)</span>
+                <span class="legend-item danger">● &gt;500ms (Critical)</span>
+                <span class="legend-item timeout">● Timeout (30s)</span>
+            </div>
+        </section>
+
         <!-- Simulation Controls -->
         <section class="controls-section">
             <h2>🎮 Simulation Controls</h2>

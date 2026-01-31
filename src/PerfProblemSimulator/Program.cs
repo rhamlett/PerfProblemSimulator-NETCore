@@ -114,6 +114,13 @@ builder.Services.AddSingleton<IMetricsCollector, MetricsCollector>();
 // This bridges the MetricsCollector (which fires events) with SignalR (which pushes to clients).
 builder.Services.AddHostedService<MetricsBroadcastService>();
 
+// LatencyProbeService - Hosted service that measures request latency on a dedicated thread
+// Educational Note: This service demonstrates how thread pool starvation affects request
+// processing time. It runs on a dedicated thread (not the thread pool) to ensure it can
+// always measure latency, even during severe starvation conditions.
+builder.Services.AddHttpClient("LatencyProbe");
+builder.Services.AddHostedService<LatencyProbeService>();
+
 // -----------------------------------------------------------------------------
 // CORS Configuration
 // -----------------------------------------------------------------------------

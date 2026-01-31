@@ -100,6 +100,34 @@ public class HealthController : ControllerBase
                 .ToList()
         });
     }
+
+    /// <summary>
+    /// Lightweight probe endpoint for latency measurement.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Educational Note:</strong> This endpoint is designed for measuring
+    /// request processing latency. It does minimal work - just returns a timestamp.
+    /// During thread pool starvation, even this simple endpoint will show increased
+    /// latency because the request must wait for a thread pool thread to process it.
+    /// </para>
+    /// <para>
+    /// Compare the response time of this endpoint before and during thread pool
+    /// starvation to see the dramatic impact on user-perceived performance.
+    /// </para>
+    /// </remarks>
+    /// <response code="200">Returns probe timestamp for latency calculation.</response>
+    [HttpGet("probe")]
+    [ProducesResponseType(typeof(ProbeResponse), StatusCodes.Status200OK)]
+    public IActionResult Probe()
+    {
+        return Ok(new ProbeResponse
+        {
+            ServerTimestamp = DateTimeOffset.UtcNow,
+            ThreadPoolThreads = ThreadPool.ThreadCount,
+            PendingWorkItems = ThreadPool.PendingWorkItemCount
+        });
+    }
 }
 
 /// <summary>
@@ -158,4 +186,32 @@ public class ActiveSimulationSummary
     /// How long the simulation has been running in seconds.
     /// </summary>
     public int RunningDurationSeconds { get; init; }
+}
+
+/// <summary>
+/// Response from the latency probe endpoint.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <strong>Educational Note:</strong> This response includes thread pool information
+/// to help correlate latency with thread pool state. During starvation, you'll see
+/// high pending work items and latency increasing together.
+/// </para>
+/// </remarks>
+public class ProbeResponse
+{
+    /// <summary>
+    /// Server timestamp when the probe was processed.
+    /// </summary>
+    public DateTimeOffset ServerTimestamp { get; init; }
+
+    /// <summary>
+    /// Current number of thread pool threads.
+    /// </summary>
+    public int ThreadPoolThreads { get; init; }
+
+    /// <summary>
+    /// Number of work items waiting in the thread pool queue.
+    /// </summary>
+    public long PendingWorkItems { get; init; }
 }

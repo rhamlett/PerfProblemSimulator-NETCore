@@ -451,6 +451,121 @@ body {
 }
 
 /* --------------------------------------------------------------------------
+   Latency Monitor Section
+   -------------------------------------------------------------------------- */
+.latency-section {
+    background: var(--color-card);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin: 1rem 2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.latency-section h2 {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.latency-section .info-text {
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+.latency-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.latency-stat {
+    background: var(--color-bg);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: border-color var(--transition-fast);
+}
+
+.latency-stat.current {
+    border-color: var(--color-primary);
+}
+
+.latency-label {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.latency-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-text);
+    transition: color var(--transition-fast);
+}
+
+.latency-value.good {
+    color: var(--color-success);
+}
+
+.latency-value.warning {
+    color: var(--color-warning);
+}
+
+.latency-value.danger {
+    color: var(--color-danger);
+}
+
+.latency-value.timeout {
+    color: var(--color-danger);
+    animation: pulse 1s infinite;
+}
+
+.latency-unit {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.latency-chart-container {
+    margin-top: 1rem;
+    height: 250px;
+}
+
+.latency-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.legend-item.good {
+    color: var(--color-success);
+}
+
+.legend-item.warning {
+    color: var(--color-warning);
+}
+
+.legend-item.danger {
+    color: var(--color-danger);
+}
+
+.legend-item.timeout {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
    Responsive Adjustments
    -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
@@ -472,5 +587,17 @@ body {
         width: 100%;
         margin-right: 0;
         margin-bottom: 0.5rem;
+    }
+
+    .latency-section {
+        margin: 1rem;
+    }
+
+    .latency-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .latency-chart-container {
+        height: 200px;
     }
 }

@@ -13,6 +13,9 @@
 
 const CONFIG = {
     maxDataPoints: 60,  // 1 minute of data at 1-second intervals
+    maxLatencyDataPoints: 600, // 60 seconds at 100ms intervals
+    latencyProbeIntervalMs: 100,
+    latencyTimeoutMs: 30000,
     reconnectDelayMs: 2000,
     apiBaseUrl: '/api'
 };
@@ -27,6 +30,16 @@ const state = {
         threads: [],
         queue: []
     },
+    latencyHistory: {
+        timestamps: [],
+        values: [],
+        isTimeout: [],
+        isError: []
+    },
+    latencyStats: {
+        timeoutCount: 0
+    },
+    clientProbeInterval: null,
     activeSimulations: new Map()
 };
 
@@ -72,6 +85,8 @@ async function initializeSignalR() {
     state.connection.on('simulationStarted', handleSimulationStarted);
     state.connection.on('SimulationCompleted', handleSimulationCompleted);
     state.connection.on('simulationCompleted', handleSimulationCompleted);
+    state.connection.on('ReceiveLatency', handleLatencyUpdate);
+    state.connection.on('receiveLatency', handleLatencyUpdate);
 
     // Start connection
     try {
@@ -79,6 +94,9 @@ async function initializeSignalR() {
         await state.connection.start();
         updateConnectionStatus('connected', 'Connected');
         logEvent('success', 'Connected to metrics hub');
+        
+        // Start client-side probe as backup/additional measurement
+        startClientProbe();
     } catch (err) {
         updateConnectionStatus('disconnected', 'Failed to connect');
         logEvent('error', `Connection failed: ${err.message}`);
@@ -304,6 +322,80 @@ function initializeCharts() {
             }
         }
     });
+
+    // Latency chart
+    const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+    state.charts.latency = new Chart(latencyCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Latency (ms)',
+                    data: [],
+                    borderColor: '#0078d4',
+                    backgroundColor: 'rgba(0, 120, 212, 0.1)',
+                    tension: 0.2,
+                    fill: true,
+                    pointRadius: 0, // Hide points for performance with many data points
+                    borderWidth: 1.5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false, // Disable animation for better performance
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    display: true,
+                    ticks: {
+                        maxTicksLimit: 10,
+                        callback: (value, index) => {
+                            const date = state.latencyHistory.timestamps[index];
+                            return date ? date.toLocaleTimeString() : '';
+                        }
+                    }
+                },
+                y: {
+                    type: 'logarithmic',
+                    display: true,
+                    position: 'left',
+                    min: 1,
+                    title: { display: true, text: 'Latency (ms) - Log Scale' },
+                    ticks: {
+                        callback: (value) => {
+                            if (value === 1 || value === 10 || value === 100 || value === 1000 || value === 10000 || value === 30000) {
+                                return value >= 1000 ? `${value/1000}s` : `${value}ms`;
+                            }
+                            return '';
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const index = context.dataIndex;
+                            const latency = context.raw;
+                            const isTimeout = state.latencyHistory.isTimeout[index];
+                            const isError = state.latencyHistory.isError[index];
+                            
+                            if (isTimeout) return `Timeout: ${latency}ms (30s)`;
+                            if (isError) return `Error: ${latency}ms`;
+                            return `Latency: ${latency}ms`;
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 function updateCharts() {
@@ -321,6 +413,191 @@ function updateCharts() {
     state.charts.threads.data.datasets[0].data = history.threads;
     state.charts.threads.data.datasets[1].data = history.queue;
     state.charts.threads.update('none');
+}
+
+// ==========================================================================
+// Latency Monitoring
+// ==========================================================================
+
+/**
+ * Handle incoming latency measurement from server-side probe.
+ * This shows the impact of thread pool starvation on request processing time.
+ */
+function handleLatencyUpdate(measurement) {
+    const timestamp = new Date(measurement.timestamp);
+    const latencyMs = measurement.latencyMs;
+    const isTimeout = measurement.isTimeout;
+    const isError = measurement.isError;
+
+    addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
+    updateLatencyDisplay(latencyMs, isTimeout, isError);
+    updateLatencyChart();
+}
+
+/**
+ * Add latency measurement to history.
+ */
+function addLatencyToHistory(timestamp, latencyMs, isTimeout, isError) {
+    const history = state.latencyHistory;
+    
+    history.timestamps.push(timestamp);
+    history.values.push(latencyMs);
+    history.isTimeout.push(isTimeout);
+    history.isError.push(isError);
+    
+    // Track timeout count
+    if (isTimeout) {
+        state.latencyStats.timeoutCount++;
+    }
+    
+    // Trim to max data points (60 seconds at 100ms = 600 points)
+    while (history.timestamps.length > CONFIG.maxLatencyDataPoints) {
+        history.timestamps.shift();
+        const wasTimeout = history.isTimeout.shift();
+        history.values.shift();
+        history.isError.shift();
+        
+        // Adjust timeout count when old timeouts scroll out
+        if (wasTimeout) {
+            state.latencyStats.timeoutCount = Math.max(0, state.latencyStats.timeoutCount - 1);
+        }
+    }
+}
+
+/**
+ * Update the latency stat displays.
+ */
+function updateLatencyDisplay(currentLatency, isTimeout, isError) {
+    const history = state.latencyHistory;
+    
+    // Current latency with color coding
+    const currentEl = document.getElementById('latencyCurrent');
+    currentEl.textContent = formatLatency(currentLatency);
+    currentEl.className = `latency-value ${getLatencyClass(currentLatency, isTimeout)}`;
+    
+    // Calculate average
+    if (history.values.length > 0) {
+        const avg = history.values.reduce((a, b) => a + b, 0) / history.values.length;
+        document.getElementById('latencyAverage').textContent = formatLatency(avg);
+    }
+    
+    // Calculate max
+    if (history.values.length > 0) {
+        const max = Math.max(...history.values);
+        document.getElementById('latencyMax').textContent = formatLatency(max);
+    }
+    
+    // Update timeout count
+    document.getElementById('latencyTimeouts').textContent = state.latencyStats.timeoutCount;
+}
+
+/**
+ * Format latency value for display.
+ */
+function formatLatency(ms) {
+    if (ms >= 10000) {
+        return (ms / 1000).toFixed(1) + 's';
+    } else if (ms >= 1000) {
+        return (ms / 1000).toFixed(2) + 's';
+    } else if (ms >= 100) {
+        return Math.round(ms);
+    } else {
+        return ms.toFixed(1);
+    }
+}
+
+/**
+ * Get CSS class based on latency value.
+ */
+function getLatencyClass(ms, isTimeout) {
+    if (isTimeout) return 'timeout';
+    if (ms > 500) return 'danger';
+    if (ms > 50) return 'warning';
+    return 'good';
+}
+
+/**
+ * Update the latency chart.
+ */
+function updateLatencyChart() {
+    if (!state.charts.latency) return;
+    
+    const history = state.latencyHistory;
+    
+    // Create gradient based on latency values
+    const ctx = state.charts.latency.ctx;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(209, 52, 56, 0.3)');   // Red at top (high latency)
+    gradient.addColorStop(0.5, 'rgba(255, 185, 0, 0.2)'); // Yellow in middle
+    gradient.addColorStop(1, 'rgba(16, 124, 16, 0.1)');   // Green at bottom (low latency)
+    
+    // Map data points to colors based on latency
+    const pointColors = history.values.map((v, i) => {
+        if (history.isTimeout[i]) return '#d13438';
+        if (v > 500) return '#d13438';
+        if (v > 50) return '#ffb900';
+        return '#107c10';
+    });
+    
+    state.charts.latency.data.labels = history.timestamps.map(t => t.toLocaleTimeString());
+    state.charts.latency.data.datasets[0].data = history.values;
+    state.charts.latency.data.datasets[0].backgroundColor = gradient;
+    state.charts.latency.data.datasets[0].borderColor = pointColors;
+    state.charts.latency.data.datasets[0].segment = {
+        borderColor: ctx => {
+            const index = ctx.p0DataIndex;
+            const latency = history.values[index];
+            const isTimeout = history.isTimeout[index];
+            if (isTimeout) return '#d13438';
+            if (latency > 500) return '#d13438';
+            if (latency > 50) return '#ffb900';
+            return '#107c10';
+        }
+    };
+    state.charts.latency.update('none');
+}
+
+/**
+ * Start client-side probe as a backup/additional measurement.
+ * This runs independently in the browser and won't be affected by server thread pool issues.
+ */
+function startClientProbe() {
+    // Client probe at same interval as server for comparison
+    state.clientProbeInterval = setInterval(async () => {
+        try {
+            const start = performance.now();
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), CONFIG.latencyTimeoutMs);
+            
+            try {
+                await fetch(`${CONFIG.apiBaseUrl}/health/probe`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                
+                const latency = performance.now() - start;
+                // Client probe data could be shown separately or compared
+                // For now, we rely on server-side probe which is more accurate for thread pool measurement
+            } catch (e) {
+                clearTimeout(timeoutId);
+                if (e.name === 'AbortError') {
+                    // Timeout - handled by server probe
+                }
+            }
+        } catch (err) {
+            // Network error - server probe will detect this
+        }
+    }, CONFIG.latencyProbeIntervalMs);
+}
+
+/**
+ * Stop client-side probe.
+ */
+function stopClientProbe() {
+    if (state.clientProbeInterval) {
+        clearInterval(state.clientProbeInterval);
+        state.clientProbeInterval = null;
+    }
 }
 
 // ==========================================================================
