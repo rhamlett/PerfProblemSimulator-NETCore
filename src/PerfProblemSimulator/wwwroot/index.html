@@ -27,9 +27,11 @@
         <!-- Metrics Cards Row -->
         <section class="metrics-cards">
             <div class="metric-card cpu">
-                <div class="metric-icon">⚡</div>
-                <div class="metric-info">
+                <div class="metric-header">
+                    <div class="metric-icon">⚡</div>
                     <div class="metric-label">CPU Usage</div>
+                </div>
+                <div class="metric-info">
                     <div class="metric-value" id="cpuValue">--</div>
                     <div class="metric-unit">%</div>
                 </div>
@@ -39,9 +41,11 @@
             </div>
 
             <div class="metric-card memory">
-                <div class="metric-icon">📊</div>
-                <div class="metric-info">
+                <div class="metric-header">
+                    <div class="metric-icon">📊</div>
                     <div class="metric-label">Working Set</div>
+                </div>
+                <div class="metric-info">
                     <div class="metric-value" id="memoryValue">--</div>
                     <div class="metric-unit">MB</div>
                 </div>
@@ -51,9 +55,11 @@
             </div>
 
             <div class="metric-card threads">
-                <div class="metric-icon">🧵</div>
-                <div class="metric-info">
+                <div class="metric-header">
+                    <div class="metric-icon">🧵</div>
                     <div class="metric-label">Thread Pool</div>
+                </div>
+                <div class="metric-info">
                     <div class="metric-value" id="threadsValue">--</div>
                     <div class="metric-unit">threads</div>
                 </div>
@@ -63,9 +69,11 @@
             </div>
 
             <div class="metric-card queue">
-                <div class="metric-icon">📋</div>
-                <div class="metric-info">
+                <div class="metric-header">
+                    <div class="metric-icon">📋</div>
                     <div class="metric-label">Queue Length</div>
+                </div>
+                <div class="metric-info">
                     <div class="metric-value" id="queueValue">--</div>
                     <div class="metric-unit">pending</div>
                 </div>
@@ -94,26 +102,22 @@
             
             <div class="latency-stats">
                 <div class="latency-stat current">
-                    <div class="latency-label">Current</div>
-                    <div class="latency-value" id="latencyCurrent">--</div>
-                    <div class="latency-unit">ms</div>
+                    <span class="latency-label">Current</span>
+                    <span class="latency-value" id="latencyCurrent">--</span><span class="latency-unit">ms</span>
                 </div>
-                <div class="latency-stat average">
-                    <div class="latency-label">Avg (60s)</div>
-                    <div class="latency-value" id="latencyAverage">--</div>
-                    <div class="latency-unit">ms</div>
+                <div class="latency-stat">
+                    <span class="latency-label">Avg (60s)</span>
+                    <span class="latency-value" id="latencyAverage">--</span><span class="latency-unit">ms</span>
                 </div>
-                <div class="latency-stat max">
-                    <div class="latency-label">Max (60s)</div>
-                    <div class="latency-value" id="latencyMax">--</div>
-                    <div class="latency-unit">ms</div>
+                <div class="latency-stat">
+                    <span class="latency-label">Max (60s)</span>
+                    <span class="latency-value" id="latencyMax">--</span><span class="latency-unit">ms</span>
                 </div>
-                <div class="latency-stat timeouts">
-                    <div class="latency-label">Timeouts</div>
-                    <div class="latency-value" id="latencyTimeouts">0</div>
-                    <div class="latency-unit">count</div>
+                <div class="latency-stat">
+                    <span class="latency-label">Timeouts</span>
+                    <span class="latency-value" id="latencyTimeouts">0</span>
                 </div>
-            </div>-->
+            </div>
 
             <div class="chart-container latency-chart-container">
                 <h3>📊 Response Latency Over Time</h3>
