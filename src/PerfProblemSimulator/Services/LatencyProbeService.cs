@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using PerfProblemSimulator.Hubs;
 using System.Diagnostics;
 using System.Net.Http;
@@ -44,10 +46,12 @@ public class LatencyProbeService : IHostedService, IDisposable
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<LatencyProbeService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IServer _server;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
     private bool _disposed;
+    private string? _baseUrl;
 
     /// <summary>
     /// Probe interval in milliseconds. 100ms provides good granularity for
@@ -68,18 +72,23 @@ public class LatencyProbeService : IHostedService, IDisposable
         IHubContext<MetricsHub, IMetricsClient> hubContext,
         IHttpClientFactory httpClientFactory,
         ILogger<LatencyProbeService> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IServer server)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _server = server ?? throw new ArgumentNullException(nameof(server));
     }
 
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _cts = new CancellationTokenSource();
+
+        // Get the server's actual listening address
+        _baseUrl = GetProbeBaseUrl();
 
         // Create a dedicated thread (not from thread pool) for reliable probing
         _probeThread = new Thread(ProbeLoop)
@@ -90,9 +99,10 @@ public class LatencyProbeService : IHostedService, IDisposable
         _probeThread.Start(_cts.Token);
 
         _logger.LogInformation(
-            "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms",
+            "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms, Target: {BaseUrl}",
             ProbeIntervalMs,
-            RequestTimeoutMs);
+            RequestTimeoutMs,
+            _baseUrl);
 
         return Task.CompletedTask;
     }
@@ -116,8 +126,11 @@ public class LatencyProbeService : IHostedService, IDisposable
     {
         var cancellationToken = (CancellationToken)state!;
 
-        // Get the base URL from configuration or use default
-        var baseUrl = GetProbeBaseUrl();
+        // Wait a moment for the server to fully start
+        Thread.Sleep(2000);
+
+        // Get the base URL (may need to refresh after server starts)
+        var baseUrl = _baseUrl ?? GetProbeBaseUrl();
         _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe", baseUrl);
 
         // Create HttpClient with timeout
@@ -228,15 +241,37 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// </summary>
     private string GetProbeBaseUrl()
     {
-        // Try to get from configuration, otherwise use sensible defaults
+        // Try to get the actual server addresses from IServer
+        try
+        {
+            var addressFeature = _server.Features.Get<IServerAddressesFeature>();
+            if (addressFeature?.Addresses.Count > 0)
+            {
+                // Prefer http over https for local probing (avoid SSL overhead)
+                var httpAddress = addressFeature.Addresses.FirstOrDefault(a => a.StartsWith("http://"));
+                if (!string.IsNullOrEmpty(httpAddress))
+                {
+                    // Replace wildcard with localhost
+                    return httpAddress.Replace("*", "localhost").Replace("+", "localhost").Replace("[::]", "localhost");
+                }
+                
+                var firstAddress = addressFeature.Addresses.First();
+                return firstAddress.Replace("*", "localhost").Replace("+", "localhost").Replace("[::]", "localhost");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not get server addresses from IServer feature");
+        }
+
+        // Try to get from configuration
         var urls = _configuration["Urls"];
         if (!string.IsNullOrEmpty(urls))
         {
-            // Take the first URL if multiple are configured
             var firstUrl = urls.Split(';')[0].Trim();
             if (!string.IsNullOrEmpty(firstUrl))
             {
-                return firstUrl;
+                return firstUrl.Replace("*", "localhost").Replace("+", "localhost");
             }
         }
 
@@ -247,12 +282,19 @@ public class LatencyProbeService : IHostedService, IDisposable
             var firstUrl = envUrls.Split(';')[0].Trim();
             if (!string.IsNullOrEmpty(firstUrl))
             {
-                return firstUrl;
+                return firstUrl.Replace("*", "localhost").Replace("+", "localhost");
             }
         }
 
-        // Default to localhost on standard ports
-        return "http://localhost:5000";
+        // Check applicationUrl from launchSettings (common development scenario)
+        var appUrl = _configuration["applicationUrl"];
+        if (!string.IsNullOrEmpty(appUrl))
+        {
+            return appUrl.Split(';')[0].Trim();
+        }
+
+        // Default to localhost on the common development port
+        return "http://localhost:5221";
     }
 
     /// <inheritdoc />
