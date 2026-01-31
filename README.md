@@ -124,6 +124,28 @@ The dashboard uses SignalR for real-time updates and includes controls to trigge
 | `/api/admin/reset-all` | POST | Release all memory and reset state |
 | `/api/admin/stats` | GET | Get current simulation statistics |
 
+## ⏱️ Request Latency Monitor
+
+The dashboard includes a **Request Latency Monitor** that demonstrates how thread pool starvation affects real-world request processing.
+
+### How It Works
+
+- A dedicated background thread (not from the thread pool) continuously probes `/api/health/probe`
+- Latency is measured end-to-end: request sent → response received
+- Results are broadcast via SignalR to the dashboard in real-time
+
+### What You'll Observe
+
+| Scenario | Expected Latency | Explanation |
+|----------|-----------------|-------------|
+| Normal operation | < 50ms | Thread pool threads available |
+| Thread pool starvation | 100ms - 30s | Requests queued waiting for threads |
+| Timeout | 30s | No thread became available |
+
+### Why This Matters
+
+During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem **visible** - you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.
+
 ## 🔧 Configuration
 
 Configuration is managed through `appsettings.json`:
@@ -170,7 +192,7 @@ az webapp create \
   --name your-unique-app-name \
   --resource-group rg-perf-simulator \
   --plan asp-perf-simulator \
-  --runtime "DOTNETCORE:8.0"
+  --runtime "DOTNETCORE:10.0"
 
 # Deploy
 cd src/PerfProblemSimulator
@@ -178,7 +200,7 @@ dotnet publish -c Release
 az webapp deploy \
   --resource-group rg-perf-simulator \
   --name your-unique-app-name \
-  --src-path bin/Release/net8.0/publish
+  --src-path bin/Release/net10.0/publish
 ```
 
 ### Safety Recommendation
@@ -204,7 +226,7 @@ This application is designed to work with Azure App Service diagnostics:
 4. **CPU Profiling** - Capture and analyze CPU traces
 5. **Memory Dumps** - Analyze memory allocations
 
-See [azure-monitoring-guide.md](docs/azure-monitoring-guide.md) for detailed instructions.
+See [Azure Monitoring Guide](./docs/azure-monitoring-guide.md) for detailed instructions.
 
 ## 📐 Architecture
 

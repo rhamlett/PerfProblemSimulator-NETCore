@@ -283,6 +283,7 @@
                 <li><a href="#overview">Overview</a></li>
                 <li><a href="#quick-start">Quick Start</a></li>
                 <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#latency">Latency Monitor</a></li>
                 <li><a href="#api">API Reference</a></li>
                 <li><a href="#configuration">Configuration</a></li>
                 <li><a href="#azure">Azure Deployment</a></li>
@@ -379,9 +380,54 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <li><strong>CPU usage</strong> - Current processor utilization</li>
                 <li><strong>Memory</strong> - Working set and GC heap sizes</li>
                 <li><strong>Thread pool</strong> - Active threads and queue length</li>
+                <li><strong>Request latency</strong> - Real-time probe response time (shows impact of thread pool starvation)</li>
                 <li><strong>Active simulations</strong> - Currently running problem simulations</li>
             </ul>
             <p>The dashboard uses SignalR for real-time updates and includes controls to trigger each type of simulation.</p>
+        </section>
+
+        <!-- Latency Monitor Section -->
+        <section id="latency" class="doc-section">
+            <h2>⏱️ Request Latency Monitor</h2>
+            <p>The dashboard includes a <strong>Request Latency Monitor</strong> that demonstrates how thread pool starvation affects real-world request processing.</p>
+            
+            <h3>How It Works</h3>
+            <ul>
+                <li>A dedicated background thread (not from the thread pool) continuously probes <code>/api/health/probe</code></li>
+                <li>Latency is measured end-to-end: request sent → response received</li>
+                <li>Results are broadcast via SignalR to the dashboard in real-time</li>
+            </ul>
+
+            <h3>What You'll Observe</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Expected Latency</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Normal operation</td>
+                        <td>&lt; 50ms</td>
+                        <td>Thread pool threads available</td>
+                    </tr>
+                    <tr>
+                        <td>Thread pool starvation</td>
+                        <td>100ms - 30s</td>
+                        <td>Requests queued waiting for threads</td>
+                    </tr>
+                    <tr>
+                        <td>Timeout</td>
+                        <td>30s</td>
+                        <td>No thread became available</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Why This Matters</h3>
+            <p>During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem <strong>visible</strong> — you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.</p>
         </section>
 
         <!-- API Reference Section -->
@@ -407,6 +453,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                         <td><code>/api/health/status</code></td>
                         <td><span class="method-badge method-get">GET</span></td>
                         <td>Detailed health with active simulations</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/health/probe</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Lightweight probe for latency measurement</td>
                     </tr>
                     <tr>
                         <td><code>/api/metrics/current</code></td>
@@ -475,7 +526,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p><strong>Request body (allocate):</strong></p>
             <div class="code-block">
 {
-  <span class="string">"sizeInMegabytes"</span>: 100
+  <span class="string">"sizeMegabytes"</span>: 100
 }
             </div>
 
@@ -588,7 +639,7 @@ az webapp create \
   --name your-unique-app-name \
   --resource-group rg-perf-simulator \
   --plan asp-perf-simulator \
-  --runtime <span class="string">"DOTNETCORE:8.0"</span>
+  --runtime <span class="string">"DOTNETCORE:10.0"</span>
 
 <span class="comment"># Deploy</span>
 cd src/PerfProblemSimulator
@@ -596,7 +647,7 @@ dotnet publish -c Release
 az webapp deploy \
   --resource-group rg-perf-simulator \
   --name your-unique-app-name \
-  --src-path bin/Release/net8.0/publish
+  --src-path bin/Release/net10.0/publish
             </div>
 
             <h3>Safety Recommendation</h3>
@@ -616,7 +667,7 @@ az webapp config appsettings set \
                 <li><strong>CPU Profiling</strong> - Capture and analyze CPU traces</li>
                 <li><strong>Memory Dumps</strong> - Analyze memory allocations</li>
             </ul>
-            <p>See <a href="docs/azure-monitoring-guide.md">azure-monitoring-guide.md</a> for detailed instructions.</p>
+            <p>See the <a href="https://github.com/rhamlett-mms/NETCoreApp/blob/main/docs/azure-monitoring-guide.md">Azure Monitoring Guide</a> for detailed instructions.</p>
         </section>
 
         <!-- Architecture Section -->
@@ -637,7 +688,8 @@ az webapp config appsettings set \
 │   ├── <span class="file">ThreadBlockService.cs</span>
 │   ├── <span class="file">SimulationTracker.cs</span>
 │   ├── <span class="file">MetricsCollector.cs</span>
-│   └── <span class="file">MetricsBroadcastService.cs</span>
+│   ├── <span class="file">MetricsBroadcastService.cs</span>
+│   └── <span class="file">LatencyProbeService.cs</span>
 ├── <span class="folder">Hubs/</span>                 <span class="comment"># SignalR for real-time updates</span>
 │   └── <span class="file">MetricsHub.cs</span>
 ├── <span class="folder">Models/</span>               <span class="comment"># Data transfer objects</span>
@@ -678,7 +730,7 @@ dotnet test --filter <span class="string">"Category=Unit"</span>
         <!-- Footer -->
         <footer style="text-align: center; padding: 2rem; color: var(--color-text-muted);">
             <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
-            <p>Built with .NET 8.0 and ASP.NET Core | <a href="/">Return to Dashboard</a></p>
+            <p>Built with .NET 10.0 and ASP.NET Core | <a href="/">Return to Dashboard</a></p>
         </footer>
     </div>
 </body>
