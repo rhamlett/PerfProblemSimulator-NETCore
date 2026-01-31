@@ -49,7 +49,12 @@ builder.Services.AddControllers()
 // Add SignalR for real-time dashboard updates
 // Educational Note: SignalR provides WebSocket-based real-time communication,
 // which is essential for showing live metrics on the dashboard.
-builder.Services.AddSignalR();
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options =>
+    {
+        // Use camelCase to match controller JSON serialization
+        options.PayloadSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // Add API documentation with Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
