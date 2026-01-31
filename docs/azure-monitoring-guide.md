@@ -188,6 +188,46 @@ Task.Run(async () =>
 
 ---
 
+## ⏱️ Using the Request Latency Monitor
+
+The dashboard includes a **Request Latency Monitor** that demonstrates how thread pool starvation affects request processing time.
+
+### How It Works
+
+1. A dedicated background thread (not from the thread pool) continuously sends probe requests to `/api/health/probe`
+2. The probe endpoint is lightweight - it simply returns a timestamp
+3. Latency is measured from request start to response received
+4. Results are broadcast via SignalR to the dashboard
+
+### What to Observe
+
+| Scenario | Expected Latency | What's Happening |
+|----------|-----------------|------------------|
+| Normal operation | < 50ms | Thread pool threads are available |
+| Thread pool starvation | 100ms - 30s+ | Requests queued waiting for threads |
+| Timeout | 30s | No thread available within timeout |
+
+### Key Insight
+
+The probe runs on a **dedicated thread** (not from the thread pool), so it can always send requests. However, the ASP.NET Core server uses the thread pool to process incoming requests. During starvation:
+
+1. The probe request is sent immediately
+2. The request sits in the ASP.NET Core queue
+3. It waits for a thread pool thread to become available
+4. Latency = time spent waiting + processing time
+
+This directly demonstrates how sync-over-async anti-patterns impact end-user response times.
+
+### Correlating with Azure Metrics
+
+Compare the dashboard's latency chart with:
+
+- **Application Insights** > Live Metrics > Request Duration
+- **App Service Metrics** > Response Time
+- **Thread Pool** section showing blocked threads
+
+---
+
 ## 🛠️ Recommended Monitoring Setup
 
 ### 1. Enable Application Insights

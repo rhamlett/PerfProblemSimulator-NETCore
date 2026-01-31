@@ -58,6 +58,7 @@ The application includes a real-time dashboard at the root URL that shows:
 - **CPU usage** - Current processor utilization
 - **Memory** - Working set and GC heap sizes
 - **Thread pool** - Active threads and queue length
+- **Request latency** - Real-time probe response time (shows impact of thread pool starvation)
 - **Active simulations** - Currently running problem simulations
 
 The dashboard uses SignalR for real-time updates and includes controls to trigger each type of simulation.
@@ -70,6 +71,7 @@ The dashboard uses SignalR for real-time updates and includes controls to trigge
 |----------|--------|-------------|
 | `/api/health` | GET | Basic health check |
 | `/api/health/status` | GET | Detailed health with active simulations |
+| `/api/health/probe` | GET | Lightweight probe for latency measurement |
 | `/api/metrics/current` | GET | Latest metrics snapshot |
 | `/api/metrics/health` | GET | Detailed health status with warnings |
 | `/api/admin/stats` | GET | Simulation and resource statistics |
@@ -97,7 +99,7 @@ The dashboard uses SignalR for real-time updates and includes controls to trigge
 **Request body (allocate):**
 ```json
 {
-  "sizeInMegabytes": 100
+  "sizeMegabytes": 100
 }
 ```
 
@@ -221,7 +223,8 @@ src/PerfProblemSimulator/
 │   ├── ThreadBlockService.cs
 │   ├── SimulationTracker.cs
 │   ├── MetricsCollector.cs
-│   └── MetricsBroadcastService.cs
+│   ├── MetricsBroadcastService.cs
+│   └── LatencyProbeService.cs
 ├── Hubs/                 # SignalR for real-time updates
 │   └── MetricsHub.cs
 ├── Models/               # Data transfer objects
