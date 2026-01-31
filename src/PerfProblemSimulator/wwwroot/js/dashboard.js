@@ -466,30 +466,37 @@ function addLatencyToHistory(timestamp, latencyMs, isTimeout, isError) {
 }
 
 /**
- * Update the latency stat displays.
+ * Update the latency stat displays (if present).
  */
 function updateLatencyDisplay(currentLatency, isTimeout, isError) {
     const history = state.latencyHistory;
     
-    // Current latency with color coding
+    // Current latency with color coding (check if element exists)
     const currentEl = document.getElementById('latencyCurrent');
-    currentEl.textContent = formatLatency(currentLatency);
-    currentEl.className = `latency-value ${getLatencyClass(currentLatency, isTimeout)}`;
+    if (currentEl) {
+        currentEl.textContent = formatLatency(currentLatency);
+        currentEl.className = `latency-value ${getLatencyClass(currentLatency, isTimeout)}`;
+    }
     
     // Calculate average
-    if (history.values.length > 0) {
+    const avgEl = document.getElementById('latencyAverage');
+    if (avgEl && history.values.length > 0) {
         const avg = history.values.reduce((a, b) => a + b, 0) / history.values.length;
-        document.getElementById('latencyAverage').textContent = formatLatency(avg);
+        avgEl.textContent = formatLatency(avg);
     }
     
     // Calculate max
-    if (history.values.length > 0) {
+    const maxEl = document.getElementById('latencyMax');
+    if (maxEl && history.values.length > 0) {
         const max = Math.max(...history.values);
-        document.getElementById('latencyMax').textContent = formatLatency(max);
+        maxEl.textContent = formatLatency(max);
     }
     
     // Update timeout count
-    document.getElementById('latencyTimeouts').textContent = state.latencyStats.timeoutCount;
+    const timeoutsEl = document.getElementById('latencyTimeouts');
+    if (timeoutsEl) {
+        timeoutsEl.textContent = state.latencyStats.timeoutCount;
+    }
 }
 
 /**
