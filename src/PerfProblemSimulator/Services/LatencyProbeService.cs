@@ -227,8 +227,11 @@ public class LatencyProbeService : IHostedService, IDisposable
     {
         try
         {
-            // Fire and forget - we're on a dedicated thread, don't block
-            _hubContext.Clients.All.ReceiveLatency(measurement);
+            // We're on a dedicated thread, so we can block waiting for the broadcast
+            _hubContext.Clients.All.ReceiveLatency(measurement)
+                .ConfigureAwait(false)
+                .GetAwaiter()
+                .GetResult();
         }
         catch (Exception ex)
         {
