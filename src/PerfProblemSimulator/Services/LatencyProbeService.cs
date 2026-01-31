@@ -131,14 +131,19 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         // Get the base URL (may need to refresh after server starts)
         var baseUrl = _baseUrl ?? GetProbeBaseUrl();
-        _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe", baseUrl);
+        var isAzure = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME"));
+        _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe (Azure: {IsAzure})", baseUrl, isAzure);
 
-        // Create a handler that doesn't pool connections to avoid socket reuse issues
+        // Create a handler configured for the environment
         var handler = new SocketsHttpHandler
         {
-            PooledConnectionLifetime = TimeSpan.Zero,
-            PooledConnectionIdleTimeout = TimeSpan.Zero,
-            ConnectTimeout = TimeSpan.FromSeconds(5)
+            // For Azure, allow connection pooling for better performance
+            // For local, disable pooling to avoid socket reuse issues
+            PooledConnectionLifetime = isAzure ? TimeSpan.FromMinutes(2) : TimeSpan.Zero,
+            PooledConnectionIdleTimeout = isAzure ? TimeSpan.FromMinutes(1) : TimeSpan.Zero,
+            ConnectTimeout = TimeSpan.FromSeconds(10),
+            // Enable automatic decompression
+            AutomaticDecompression = System.Net.DecompressionMethods.All
         };
 
         using var httpClient = new HttpClient(handler)
@@ -146,6 +151,9 @@ public class LatencyProbeService : IHostedService, IDisposable
             BaseAddress = new Uri(baseUrl),
             Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs)
         };
+
+        // Add a user agent for Azure (some proxies require it)
+        httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LatencyProbe/1.0");
 
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -172,7 +180,6 @@ public class LatencyProbeService : IHostedService, IDisposable
             }
         }
     }
-
     /// <summary>
     /// Measures latency to the probe endpoint.
     /// </summary>
@@ -253,7 +260,25 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// </summary>
     private string GetProbeBaseUrl()
     {
-        // Try to get the actual server addresses from IServer
+        // Check if running in Azure App Service
+        var websiteHostname = Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME");
+        if (!string.IsNullOrEmpty(websiteHostname))
+        {
+            // Running in Azure App Service - use the public hostname
+            // Azure provides HTTPS by default
+            _logger.LogInformation("Detected Azure App Service environment: {Hostname}", websiteHostname);
+            return $"https://{websiteHostname}";
+        }
+
+        // Check if running in a container with a custom hostname
+        var containerHostname = Environment.GetEnvironmentVariable("CONTAINER_APP_HOSTNAME");
+        if (!string.IsNullOrEmpty(containerHostname))
+        {
+            _logger.LogInformation("Detected Container Apps environment: {Hostname}", containerHostname);
+            return $"https://{containerHostname}";
+        }
+
+        // Try to get the actual server addresses from IServer (works for local development)
         try
         {
             var addressFeature = _server.Features.Get<IServerAddressesFeature>();
