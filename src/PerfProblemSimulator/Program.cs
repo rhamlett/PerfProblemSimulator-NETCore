@@ -123,7 +123,15 @@ builder.Services.AddHostedService<MetricsBroadcastService>();
 // Educational Note: This service demonstrates how thread pool starvation affects request
 // processing time. It runs on a dedicated thread (not the thread pool) to ensure it can
 // always measure latency, even during severe starvation conditions.
-builder.Services.AddHttpClient("LatencyProbe");
+builder.Services.AddHttpClient("LatencyProbe")
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        // Disable connection pooling to avoid socket reuse issues on localhost
+        PooledConnectionLifetime = TimeSpan.Zero,
+        PooledConnectionIdleTimeout = TimeSpan.Zero,
+        // Allow connections to localhost
+        ConnectTimeout = TimeSpan.FromSeconds(5)
+    });
 builder.Services.AddHostedService<LatencyProbeService>();
 
 // -----------------------------------------------------------------------------

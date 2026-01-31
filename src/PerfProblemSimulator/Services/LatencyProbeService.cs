@@ -126,17 +126,26 @@ public class LatencyProbeService : IHostedService, IDisposable
     {
         var cancellationToken = (CancellationToken)state!;
 
-        // Wait a moment for the server to fully start
-        Thread.Sleep(2000);
+        // Wait for the server to fully start and accept connections
+        Thread.Sleep(5000);
 
         // Get the base URL (may need to refresh after server starts)
         var baseUrl = _baseUrl ?? GetProbeBaseUrl();
         _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe", baseUrl);
 
-        // Create HttpClient with timeout
-        using var httpClient = _httpClientFactory.CreateClient("LatencyProbe");
-        httpClient.BaseAddress = new Uri(baseUrl);
-        httpClient.Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs);
+        // Create a handler that doesn't pool connections to avoid socket reuse issues
+        var handler = new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = TimeSpan.Zero,
+            PooledConnectionIdleTimeout = TimeSpan.Zero,
+            ConnectTimeout = TimeSpan.FromSeconds(5)
+        };
+
+        using var httpClient = new HttpClient(handler)
+        {
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs)
+        };
 
         while (!cancellationToken.IsCancellationRequested)
         {

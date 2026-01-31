@@ -424,7 +424,11 @@ function updateCharts() {
  * This shows the impact of thread pool starvation on request processing time.
  */
 function handleLatencyUpdate(measurement) {
-    console.log('Received latency update:', measurement);
+    // Only log errors or significant latency, not every update
+    if (measurement.isError || measurement.isTimeout || measurement.latencyMs > 500) {
+        console.log('Latency update:', measurement);
+    }
+    
     const timestamp = new Date(measurement.timestamp);
     const latencyMs = measurement.latencyMs;
     const isTimeout = measurement.isTimeout;
