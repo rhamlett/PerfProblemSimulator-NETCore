@@ -156,6 +156,15 @@ function handleMetricsUpdate(snapshot) {
     updateMetricCard('threads', snapshot.threadPoolThreads, 'threads', 100);
     updateMetricCard('queue', snapshot.threadPoolQueueLength, 'pending', 100);
 
+    // Update total memory display
+    const totalMemoryEl = document.getElementById('memoryTotal');
+    if (totalMemoryEl && snapshot.totalAvailableMemoryMb) {
+        const totalFormatted = snapshot.totalAvailableMemoryMb >= 1024 
+            ? (snapshot.totalAvailableMemoryMb / 1024).toFixed(1) + ' GB'
+            : Math.round(snapshot.totalAvailableMemoryMb) + ' MB';
+        totalMemoryEl.textContent = `of ${totalFormatted}`;
+    }
+
     // Update history for charts
     const timestamp = new Date(snapshot.timestamp);
     addToHistory(timestamp, snapshot);

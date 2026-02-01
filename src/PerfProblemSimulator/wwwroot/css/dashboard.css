@@ -178,6 +178,12 @@ body {
     color: var(--color-text-muted);
 }
 
+.metric-total {
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    margin-left: 0.25rem;
+}
+
 .metric-bar {
     height: 4px;
     background: #e1dfdd;

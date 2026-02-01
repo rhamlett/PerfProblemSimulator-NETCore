@@ -257,22 +257,27 @@ public class CrashService : ICrashService
         {
             while (true)
             {
-                // Allocate pinned memory to prevent GC from moving or reclaiming it
-                var block = GC.AllocateArray<byte>(allocationSize, pinned: true);
-                
-                // Touch the memory to ensure it's committed
-                for (int i = 0; i < block.Length; i += 4096)
+                try
                 {
-                    block[i] = 0xFF;
+                    // Allocate pinned memory to prevent GC from moving or reclaiming it
+                    var block = GC.AllocateArray<byte>(allocationSize, pinned: true);
+                    
+                    // Touch the memory to ensure it's committed
+                    for (int i = 0; i < block.Length; i += 4096)
+                    {
+                        block[i] = 0xFF;
+                    }
+                    
+                    allocations.Add(block);
+                    totalAllocated += allocationSize;
+                    
+                    _logger.LogWarning("Allocated {TotalMB} MB (pinned)...", totalAllocated / (1024 * 1024));
                 }
-                
-                allocations.Add(block);
-                totalAllocated += allocationSize;
-                
-                _logger.LogWarning("Allocated {TotalMB} MB (pinned)...", totalAllocated / (1024 * 1024));
-
-                // Prevent GC from running during allocation loop
-                GC.TryStartNoGCRegion(allocationSize, disallowFullBlockingGC: false);
+                catch (OutOfMemoryException)
+                {
+                    // Re-throw to be caught by outer handler
+                    throw;
+                }
             }
         }
         catch (OutOfMemoryException)
@@ -289,10 +294,6 @@ public class CrashService : ICrashService
                 $"Intentional OutOfMemory crash: Allocated {totalAllocated / (1024 * 1024)} MB before running out of memory. " +
                 "This crash was triggered by the Performance Problem Simulator to demonstrate OOM conditions.",
                 new OutOfMemoryException($"Process exhausted memory after allocating {totalAllocated / (1024 * 1024)} MB"));
-        }
-        catch (InvalidOperationException)
-        {
-            // TryStartNoGCRegion can throw if already in a no-GC region - ignore and continue
         }
     }
 
