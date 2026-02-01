@@ -254,14 +254,25 @@ public class MemoryPressureService : IMemoryPressureService
 
         if (forceGc)
         {
-            _logger.LogInformation("Forcing garbage collection...");
+            _logger.LogInformation("Forcing garbage collection with LOH compaction...");
 
-            // Collect all generations
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true);
+            // Request LOH compaction on the next blocking GC
+            // This helps reduce fragmentation and allows more memory to be returned to the OS
+            System.Runtime.GCSettings.LargeObjectHeapCompactionMode = System.Runtime.GCLargeObjectHeapCompactionMode.CompactOnce;
+
+            // Collect all generations with compacting mode
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
             GC.WaitForPendingFinalizers();
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true);
+            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true, compacting: true);
 
-            _logger.LogInformation("Garbage collection completed");
+            // Trim the working set - this tells the OS to release physical pages
+            // back to the system, reducing the process's working set immediately
+            if (OperatingSystem.IsWindows())
+            {
+                TrimWorkingSet();
+            }
+
+            _logger.LogInformation("Garbage collection and working set trim completed");
         }
 
         return new MemoryReleaseResult
@@ -304,4 +315,48 @@ public class MemoryPressureService : IMemoryPressureService
             return _allocatedBlocks.Sum(b => b.SizeBytes) / (1024.0 * 1024.0);
         }
     }
+
+    /// <summary>
+    /// Trims the working set of the current process by calling the Windows API.
+    /// This releases physical memory pages back to the OS immediately.
+    /// </summary>
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private void TrimWorkingSet()
+    {
+        try
+        {
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            
+            // SetProcessWorkingSetSizeEx with -1, -1 tells Windows to trim the working set
+            // to its minimum, releasing physical pages back to the system
+            bool success = SetProcessWorkingSetSizeEx(
+                process.Handle,
+                (nint)(-1),
+                (nint)(-1),
+                0);
+
+            if (success)
+            {
+                _logger.LogInformation(
+                    "Working set trimmed. Before: {Before} MB",
+                    process.WorkingSet64 / (1024.0 * 1024.0));
+            }
+            else
+            {
+                _logger.LogWarning("Failed to trim working set. Error code: {Error}", Marshal.GetLastWin32Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to trim working set");
+        }
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+    private static extern bool SetProcessWorkingSetSizeEx(
+        nint hProcess,
+        nint dwMinimumWorkingSetSize,
+        nint dwMaximumWorkingSetSize,
+        uint flags);
 }
