@@ -44,6 +44,32 @@ const state = {
 };
 
 // ==========================================================================
+// UTC Time Formatting
+// ==========================================================================
+
+/**
+ * Formats a Date object as UTC time string (HH:MM:SS)
+ * All times in the dashboard use UTC to match Azure diagnostics data.
+ * @param {Date} date - The date to format
+ * @returns {string} UTC time string in HH:MM:SS format
+ */
+function formatUtcTime(date) {
+    if (!date || !(date instanceof Date)) return '';
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Gets the current UTC time as a formatted string
+ * @returns {string} Current UTC time in HH:MM:SS format
+ */
+function getCurrentUtcTime() {
+    return formatUtcTime(new Date());
+}
+
+// ==========================================================================
 // SignalR Connection
 // ==========================================================================
 
@@ -136,7 +162,7 @@ function handleMetricsUpdate(snapshot) {
     updateCharts();
     
     // Update last update time
-    document.getElementById('lastUpdate').textContent = timestamp.toLocaleTimeString();
+    document.getElementById('lastUpdate').textContent = formatUtcTime(timestamp) + ' UTC';
 }
 
 function updateMetricCard(type, value, unit, maxForBar) {
@@ -229,7 +255,7 @@ function initializeCharts() {
                         maxTicksLimit: 10,
                         callback: (value, index) => {
                             const date = state.metricsHistory.timestamps[index];
-                            return date ? date.toLocaleTimeString() : '';
+                            return date ? formatUtcTime(date) : '';
                         }
                     }
                 },
@@ -297,7 +323,7 @@ function initializeCharts() {
                         maxTicksLimit: 10,
                         callback: (value, index) => {
                             const date = state.metricsHistory.timestamps[index];
-                            return date ? date.toLocaleTimeString() : '';
+                            return date ? formatUtcTime(date) : '';
                         }
                     }
                 },
@@ -357,7 +383,7 @@ function initializeCharts() {
                         maxTicksLimit: 10,
                         callback: (value, index) => {
                             const date = state.latencyHistory.timestamps[index];
-                            return date ? date.toLocaleTimeString() : '';
+                            return date ? formatUtcTime(date) : '';
                         }
                     }
                 },
@@ -400,7 +426,7 @@ function initializeCharts() {
 
 function updateCharts() {
     const history = state.metricsHistory;
-    const labels = history.timestamps.map(t => t.toLocaleTimeString());
+    const labels = history.timestamps.map(t => formatUtcTime(t));
     
     // Update resource chart
     state.charts.resource.data.labels = labels;
@@ -551,7 +577,7 @@ function updateLatencyChart() {
         return '#107c10';
     });
     
-    state.charts.latency.data.labels = history.timestamps.map(t => t.toLocaleTimeString());
+    state.charts.latency.data.labels = history.timestamps.map(t => formatUtcTime(t));
     state.charts.latency.data.datasets[0].data = history.values;
     state.charts.latency.data.datasets[0].backgroundColor = gradient;
     state.charts.latency.data.datasets[0].borderColor = pointColors;
@@ -847,11 +873,11 @@ function updateActiveSimulationsUI() {
 
 function logEvent(level, message) {
     const log = document.getElementById('eventLog');
-    const time = new Date().toLocaleTimeString();
+    const time = getCurrentUtcTime();
     
     const entry = document.createElement('div');
     entry.className = `log-entry ${level}`;
-    entry.innerHTML = `<span class="log-time">${time}</span>${message}`;
+    entry.innerHTML = `<span class="log-time">${time} UTC</span>${message}`;
     
     log.insertBefore(entry, log.firstChild);
     
