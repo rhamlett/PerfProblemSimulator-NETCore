@@ -8,6 +8,13 @@
   <PropertyGroup>
     <!-- Enable unsafe code for AccessViolation crash simulation -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    
+    <!-- 
+      Use InProcess hosting for Azure App Service.
+      This runs the app inside w3wp.exe (IIS worker process) instead of a separate dotnet.exe.
+      Azure Crash Monitoring monitors w3wp.exe, so InProcess is required for crash dump collection.
+    -->
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
   </PropertyGroup>
 
   <ItemGroup>
