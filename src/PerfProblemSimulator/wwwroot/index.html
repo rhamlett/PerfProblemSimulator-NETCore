@@ -206,14 +206,9 @@
                     <label>Delay (s):
                         <input type="number" id="crashDelay" value="0" min="0" max="60">
                     </label>
-                    <label class="checkbox-label" title="Crash during request (required for Azure Crash Monitoring to capture dumps)">
-                        <input type="checkbox" id="crashSynchronous" checked>
-                        Azure Mode (sync)
-                    </label>
                 </div>
                 <button class="btn btn-crash" id="btnTriggerCrash">💀 Trigger Crash</button>
                 <p class="crash-warning">⚠️ This will TERMINATE the application! Azure will auto-restart.</p>
-                <p class="crash-info">💡 Keep "Azure Mode" checked for crash dumps to be captured by Azure Crash Monitoring.</p>
             </div>
         </section>
     </main>

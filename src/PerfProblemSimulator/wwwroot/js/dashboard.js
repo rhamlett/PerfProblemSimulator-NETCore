@@ -753,21 +753,14 @@ async function triggerThreadBlock() {
 async function triggerCrash() {
     const crashType = document.getElementById('crashType').value;
     const delaySeconds = parseInt(document.getElementById('crashDelay').value) || 0;
-    const synchronous = document.getElementById('crashSynchronous').checked;
     
-    // Confirmation dialog
-    const modeText = synchronous 
-        ? "SYNCHRONOUS (Azure Mode) - No response will be received" 
-        : `ASYNC - Response sent, crash in ${delaySeconds}s`;
-    
+    // Confirmation dialog - always synchronous for Azure Crash Monitoring
     const confirmed = confirm(
         `⚠️ WARNING: This will CRASH the application!\n\n` +
         `Crash Type: ${crashType}\n` +
-        `Mode: ${modeText}\n\n` +
+        `Delay: ${delaySeconds} seconds\n\n` +
         `The application will terminate and Azure will auto-restart it.\n` +
-        (synchronous 
-            ? `✓ Azure Crash Monitoring WILL capture this crash.\n` 
-            : `⚠️ Azure Crash Monitoring may NOT capture this crash (async mode).\n`) +
+        `✓ Azure Crash Monitoring will capture this crash.\n` +
         `\nAre you sure you want to proceed?`
     );
     
@@ -777,19 +770,15 @@ async function triggerCrash() {
     }
     
     try {
-        if (synchronous) {
-            logEvent('danger', `💥 SYNCHRONOUS CRASH: ${crashType} - Connection will be lost!`);
-        } else {
-            logEvent('warning', `💥 CRASH TRIGGERED: ${crashType} in ${delaySeconds}s...`);
-        }
+        logEvent('danger', `💥 CRASH: ${crashType}${delaySeconds > 0 ? ` in ${delaySeconds}s` : ''} - Connection will be lost!`);
         
         const response = await fetch(`${CONFIG.apiBaseUrl}/crash/trigger`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 crashType: crashType,
-                delaySeconds: synchronous ? 0 : delaySeconds,
-                synchronous: synchronous,
+                delaySeconds: delaySeconds,
+                synchronous: true,
                 message: `Crash triggered from dashboard at ${new Date().toISOString()}`
             })
         });
