@@ -52,5 +52,11 @@ public enum SimulationType
     /// Thread pool starvation simulation using sync-over-async anti-patterns.
     /// Diagnosis tools: ThreadPool.GetAvailableThreads(), dotnet-counters, Application Insights request queuing.
     /// </summary>
-    ThreadBlock
+    ThreadBlock,
+
+    /// <summary>
+    /// Application crash simulation that terminates the process.
+    /// Diagnosis tools: Azure Crash Monitoring, Windows Error Reporting, crash dump analysis with WinDbg.
+    /// </summary>
+    Crash
 }

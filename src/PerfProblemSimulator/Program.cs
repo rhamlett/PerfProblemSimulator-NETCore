@@ -108,6 +108,11 @@ builder.Services.AddSingleton<IMemoryPressureService, MemoryPressureService>();
 // its own simulation, and state is tracked by the singleton SimulationTracker.
 builder.Services.AddTransient<IThreadBlockService, ThreadBlockService>();
 
+// CrashService - Transient service for triggering intentional application crashes
+// Educational Note: This service demonstrates various crash scenarios for learning
+// how to use Azure crash monitoring and memory dump collection.
+builder.Services.AddTransient<ICrashService, CrashService>();
+
 // MetricsCollector - Singleton service for collecting system metrics
 // Educational Note: This service runs on a DEDICATED THREAD (not the thread pool)
 // so it remains responsive even during thread pool starvation scenarios.

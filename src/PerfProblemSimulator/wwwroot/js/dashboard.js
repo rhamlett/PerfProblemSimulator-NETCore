@@ -720,6 +720,67 @@ async function triggerThreadBlock() {
     }
 }
 
+/**
+ * Triggers an application crash.
+ * WARNING: This will terminate the application!
+ */
+async function triggerCrash() {
+    const crashType = document.getElementById('crashType').value;
+    const delaySeconds = parseInt(document.getElementById('crashDelay').value) || 3;
+    
+    // Confirmation dialog
+    const confirmed = confirm(
+        `⚠️ WARNING: This will CRASH the application!\n\n` +
+        `Crash Type: ${crashType}\n` +
+        `Delay: ${delaySeconds} seconds\n\n` +
+        `The application will terminate and Azure will auto-restart it.\n` +
+        `Make sure Azure Crash Monitoring is enabled to collect the dump.\n\n` +
+        `Are you sure you want to proceed?`
+    );
+    
+    if (!confirmed) {
+        logEvent('info', 'Crash cancelled by user');
+        return;
+    }
+    
+    try {
+        logEvent('warning', `💥 CRASH TRIGGERED: ${crashType} in ${delaySeconds}s...`);
+        const response = await fetch(`${CONFIG.apiBaseUrl}/crash/trigger`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                crashType: crashType,
+                delaySeconds: delaySeconds,
+                message: `Crash triggered from dashboard at ${new Date().toISOString()}`
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('danger', `💀 ${result.message}`);
+            
+            // Show countdown
+            if (delaySeconds > 0) {
+                let countdown = delaySeconds;
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdown > 0) {
+                        logEvent('warning', `💥 Crash in ${countdown}...`);
+                    } else {
+                        logEvent('danger', '💥 CRASHING NOW!');
+                        clearInterval(countdownInterval);
+                    }
+                }, 1000);
+            }
+        } else {
+            const error = await response.json();
+            logEvent('error', `Failed: ${error.message || 'Unknown error'}`);
+        }
+    } catch (err) {
+        logEvent('error', `Request failed: ${err.message}`);
+    }
+}
+
 // ==========================================================================
 // Active Simulations UI
 // ==========================================================================
@@ -797,6 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnAllocateMemory').addEventListener('click', allocateMemory);
     document.getElementById('btnReleaseMemory').addEventListener('click', releaseMemory);
     document.getElementById('btnTriggerThreadBlock').addEventListener('click', triggerThreadBlock);
+    document.getElementById('btnTriggerCrash').addEventListener('click', triggerCrash);
     
     logEvent('info', 'Dashboard initialized');
 });

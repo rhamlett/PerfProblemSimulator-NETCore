@@ -5,6 +5,11 @@
     Common properties (TargetFramework, Nullable, ImplicitUsings) are inherited from Directory.Build.props
   -->
 
+  <PropertyGroup>
+    <!-- Enable unsafe code for AccessViolation crash simulation -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />

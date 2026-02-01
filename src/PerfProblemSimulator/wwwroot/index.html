@@ -174,6 +174,27 @@
                 </div>
                 <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Trigger Thread Blocking</button>
             </div>
+
+            <div class="control-group crash-group">
+                <h3>💥 Application Crash</h3>
+                <p>Triggers a fatal crash for testing Azure crash monitoring and memory dumps.</p>
+                <div class="control-inputs">
+                    <label>Crash Type:
+                        <select id="crashType">
+                            <option value="FailFast">FailFast (Recommended)</option>
+                            <option value="StackOverflow">Stack Overflow</option>
+                            <option value="UnhandledException">Unhandled Exception</option>
+                            <option value="AccessViolation">Access Violation</option>
+                            <option value="OutOfMemory">Out of Memory</option>
+                        </select>
+                    </label>
+                    <label>Delay (s):
+                        <input type="number" id="crashDelay" value="3" min="0" max="60">
+                    </label>
+                </div>
+                <button class="btn btn-crash" id="btnTriggerCrash">💀 Trigger Crash</button>
+                <p class="crash-warning">⚠️ This will TERMINATE the application! Azure will auto-restart.</p>
+            </div>
         </section>
 
         <!-- Active Simulations -->
