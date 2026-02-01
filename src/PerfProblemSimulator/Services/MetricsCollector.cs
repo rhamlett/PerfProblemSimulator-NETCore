@@ -244,6 +244,8 @@ public class MetricsCollector : IMetricsCollector
         // Get memory info
         var workingSetMb = _currentProcess.WorkingSet64 / (1024.0 * 1024.0);
         var gcHeapMb = GC.GetTotalMemory(false) / (1024.0 * 1024.0);
+        var gcMemoryInfo = GC.GetGCMemoryInfo();
+        var totalAvailableMemoryMb = gcMemoryInfo.TotalAvailableMemoryBytes / (1024.0 * 1024.0);
 
         // Get thread pool info
         ThreadPool.GetAvailableThreads(out var availableWorker, out _);
@@ -260,6 +262,7 @@ public class MetricsCollector : IMetricsCollector
             CpuPercent = Math.Max(0, Math.Min(100, cpuPercent)),
             WorkingSetMb = workingSetMb,
             GcHeapMb = gcHeapMb,
+            TotalAvailableMemoryMb = totalAvailableMemoryMb,
             ThreadPoolThreads = threadPoolThreads,
             ThreadPoolQueueLength = queueLength,
             ActiveSimulationCount = activeCount

@@ -64,6 +64,18 @@ The application includes a real-time dashboard at the root URL that shows:
 
 The dashboard uses SignalR for real-time updates and includes controls to trigger each type of simulation.
 
+### Metric Color Indicators
+
+The CPU and Memory metric tiles use dynamic color coding based on utilization percentage:
+
+| Color | Utilization | Status |
+|-------|-------------|--------|
+| Black (default) | 0-60% | Normal |
+| Yellow | 60-80% | Warning - elevated usage |
+| Red | >80% | Danger - potential resource exhaustion |
+
+**Note:** Memory thresholds are calculated dynamically based on the actual total available memory reported by the server, ensuring accurate warnings regardless of the machine's RAM configuration.
+
 ## 🔌 API Endpoints
 
 ### Health & Monitoring

@@ -390,6 +390,36 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <li><strong>Active simulations</strong> - Currently running problem simulations</li>
             </ul>
             <p>The dashboard uses SignalR for real-time updates and includes controls to trigger each type of simulation.</p>
+
+            <h3>Metric Color Indicators</h3>
+            <p>The CPU and Memory metric tiles use dynamic color coding to indicate resource utilization levels:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Color</th>
+                        <th>Utilization</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Black (default)</td>
+                        <td>0-60%</td>
+                        <td>Normal - resources are within acceptable range</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #ffb900; font-weight: bold;">Yellow</td>
+                        <td>60-80%</td>
+                        <td>Warning - elevated usage, approaching concerning levels</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #d13438; font-weight: bold;">Red</td>
+                        <td>&gt;80%</td>
+                        <td>Danger - high usage, potential resource exhaustion</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Note:</strong> Memory thresholds are calculated dynamically based on the actual total available memory reported by the server, not a hardcoded value. This ensures accurate warnings regardless of the machine's RAM configuration.</p>
         </section>
 
         <!-- Latency Monitor Section -->

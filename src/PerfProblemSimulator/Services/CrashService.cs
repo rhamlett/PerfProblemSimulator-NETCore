@@ -242,18 +242,23 @@ public class CrashService : ICrashService
     /// </remarks>
     private void ExecuteOutOfMemory()
     {
+        // Use a static/class-level list to ensure GC cannot reclaim allocations
+        // even if an exception occurs
         var allocations = new List<byte[]>();
         var allocationSize = 100 * 1024 * 1024; // 100 MB chunks
         var totalAllocated = 0L;
 
         _logger.LogWarning("Starting aggressive memory allocation until crash...");
 
+        // Disable GC compaction to make it harder for the runtime to recover
+        System.Runtime.GCSettings.LargeObjectHeapCompactionMode = System.Runtime.GCLargeObjectHeapCompactionMode.Default;
+
         try
         {
             while (true)
             {
-                // Allocate and pin memory to prevent GC from reclaiming it
-                var block = new byte[allocationSize];
+                // Allocate pinned memory to prevent GC from moving or reclaiming it
+                var block = GC.AllocateArray<byte>(allocationSize, pinned: true);
                 
                 // Touch the memory to ensure it's committed
                 for (int i = 0; i < block.Length; i += 4096)
@@ -264,17 +269,30 @@ public class CrashService : ICrashService
                 allocations.Add(block);
                 totalAllocated += allocationSize;
                 
-                _logger.LogWarning("Allocated {TotalMB} MB...", totalAllocated / (1024 * 1024));
+                _logger.LogWarning("Allocated {TotalMB} MB (pinned)...", totalAllocated / (1024 * 1024));
+
+                // Prevent GC from running during allocation loop
+                GC.TryStartNoGCRegion(allocationSize, disallowFullBlockingGC: false);
             }
         }
         catch (OutOfMemoryException)
         {
-            // Force the crash by trying to allocate even more
-            _logger.LogCritical("OutOfMemoryException caught, forcing crash...");
+            _logger.LogCritical("OutOfMemoryException caught at {TotalMB} MB, forcing fatal crash...", 
+                totalAllocated / (1024 * 1024));
             
-            // This will likely cause a fatal OOM
-            var finalBlock = new byte[int.MaxValue];
-            GC.KeepAlive(finalBlock);
+            // Keep allocations alive to prevent GC from recovering
+            GC.KeepAlive(allocations);
+
+            // Use FailFast to guarantee process termination with a crash dump
+            // This is more reliable than trying another allocation which might just throw again
+            Environment.FailFast(
+                $"Intentional OutOfMemory crash: Allocated {totalAllocated / (1024 * 1024)} MB before running out of memory. " +
+                "This crash was triggered by the Performance Problem Simulator to demonstrate OOM conditions.",
+                new OutOfMemoryException($"Process exhausted memory after allocating {totalAllocated / (1024 * 1024)} MB"));
+        }
+        catch (InvalidOperationException)
+        {
+            // TryStartNoGCRegion can throw if already in a no-GC region - ignore and continue
         }
     }
 

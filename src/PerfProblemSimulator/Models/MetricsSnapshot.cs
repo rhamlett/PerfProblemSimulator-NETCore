@@ -33,6 +33,16 @@ public readonly record struct MetricsSnapshot
     public double GcHeapMb { get; init; }
 
     /// <summary>
+    /// Total available memory on the machine in megabytes.
+    /// </summary>
+    /// <remarks>
+    /// This value comes from <see cref="GC.GetGCMemoryInfo()"/> and represents
+    /// the total physical memory available to the GC. Used by the dashboard
+    /// to calculate dynamic warning thresholds for memory usage.
+    /// </remarks>
+    public double TotalAvailableMemoryMb { get; init; }
+
+    /// <summary>
     /// Current thread pool thread count.
     /// </summary>
     public int ThreadPoolThreads { get; init; }

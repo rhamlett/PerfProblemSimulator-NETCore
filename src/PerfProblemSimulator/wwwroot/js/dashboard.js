@@ -150,7 +150,9 @@ function updateConnectionStatus(status, text) {
 function handleMetricsUpdate(snapshot) {
     // Update metric cards
     updateMetricCard('cpu', snapshot.cpuPercent, '%', 100);
-    updateMetricCard('memory', snapshot.workingSetMb, 'MB', 1000);
+    // Use actual available memory from server for dynamic thresholds
+    const memoryMax = snapshot.totalAvailableMemoryMb || 1000;
+    updateMetricCard('memory', snapshot.workingSetMb, 'MB', memoryMax);
     updateMetricCard('threads', snapshot.threadPoolThreads, 'threads', 100);
     updateMetricCard('queue', snapshot.threadPoolQueueLength, 'pending', 100);
 
@@ -179,11 +181,12 @@ function updateMetricCard(type, value, unit, maxForBar) {
     const barPercent = Math.min(100, (value / maxForBar) * 100);
     barEl.style.width = `${barPercent}%`;
     
-    // Warning states
+    // Warning states based on percentage of max
     card.classList.remove('warning', 'danger');
     if (type === 'cpu' || type === 'memory') {
-        if (value > 80) card.classList.add('danger');
-        else if (value > 60) card.classList.add('warning');
+        // Use barPercent for threshold comparison (value as % of max)
+        if (barPercent > 80) card.classList.add('danger');
+        else if (barPercent > 60) card.classList.add('warning');
     }
     if (type === 'queue' && value > 10) {
         card.classList.add('warning');
