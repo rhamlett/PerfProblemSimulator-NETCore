@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using PerfProblemSimulator.Models;
 
 namespace PerfProblemSimulator.Services;
@@ -88,7 +87,6 @@ public class ThreadBlockService : IThreadBlockService
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<ThreadBlockService> _logger;
-    private readonly ProblemSimulatorOptions _options;
 
     /// <summary>
     /// Default delay in milliseconds when not specified or invalid.
@@ -110,12 +108,10 @@ public class ThreadBlockService : IThreadBlockService
     /// </summary>
     public ThreadBlockService(
         ISimulationTracker simulationTracker,
-        ILogger<ThreadBlockService> logger,
-        IOptions<ProblemSimulatorOptions> options)
+        ILogger<ThreadBlockService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <inheritdoc />
@@ -125,15 +121,15 @@ public class ThreadBlockService : IThreadBlockService
         CancellationToken cancellationToken)
     {
         // ==========================================================================
-        // STEP 1: Validate and constrain parameters
+        // STEP 1: Validate parameters (no upper limits - app is meant to break)
         // ==========================================================================
         var actualDelay = delayMilliseconds <= 0
             ? DefaultDelayMs
-            : Math.Max(MinimumDelayMs, Math.Min(delayMilliseconds, _options.MaxThreadBlockDelayMs));
+            : Math.Max(MinimumDelayMs, delayMilliseconds);
 
         var actualConcurrent = concurrentRequests <= 0
             ? DefaultConcurrentRequests
-            : Math.Min(concurrentRequests, _options.MaxConcurrentBlockingRequests);
+            : concurrentRequests;
 
         var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;

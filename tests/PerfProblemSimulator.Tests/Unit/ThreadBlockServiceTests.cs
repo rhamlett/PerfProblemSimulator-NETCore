@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -11,7 +10,6 @@ namespace PerfProblemSimulator.Tests.Unit;
 /// </summary>
 /// <remarks>
 /// These tests verify that the thread blocking service correctly handles:
-/// - Delay and concurrency limits
 /// - Parameter validation
 /// - Proper simulation tracking
 /// </remarks>
@@ -19,21 +17,15 @@ public class ThreadBlockServiceTests
 {
     private readonly Mock<ISimulationTracker> _trackerMock;
     private readonly Mock<ILogger<ThreadBlockService>> _loggerMock;
-    private readonly IOptions<ProblemSimulatorOptions> _options;
 
     public ThreadBlockServiceTests()
     {
         _trackerMock = new Mock<ISimulationTracker>();
         _loggerMock = new Mock<ILogger<ThreadBlockService>>();
-        _options = Options.Create(new ProblemSimulatorOptions
-        {
-            MaxThreadBlockDelayMs = 30000,
-            MaxConcurrentBlockingRequests = 200
-        });
     }
 
     private ThreadBlockService CreateService() =>
-        new ThreadBlockService(_trackerMock.Object, _loggerMock.Object, _options);
+        new ThreadBlockService(_trackerMock.Object, _loggerMock.Object);
 
     [Fact]
     public async Task TriggerSyncOverAsyncAsync_WithValidParameters_ReturnsStartedResult()
@@ -52,11 +44,11 @@ public class ThreadBlockServiceTests
     }
 
     [Fact]
-    public async Task TriggerSyncOverAsyncAsync_WithDelayExceedingMax_CapsToMaximum()
+    public async Task TriggerSyncOverAsyncAsync_WithLargeDelay_UsesRequestedDelay()
     {
         // Arrange
         var service = CreateService();
-        var requestedDelay = 60000; // Exceeds MaxThreadBlockDelayMs of 30000
+        var requestedDelay = 60000; // No limits now
 
         // Act
         var result = await service.TriggerSyncOverAsyncAsync(requestedDelay, 1, CancellationToken.None);
@@ -64,15 +56,15 @@ public class ThreadBlockServiceTests
         // Assert
         Assert.NotNull(result.ActualParameters);
         var actualDelay = (int)result.ActualParameters["DelayMilliseconds"];
-        Assert.True(actualDelay <= 30000, $"Delay should be capped to max (30000), was {actualDelay}");
+        Assert.Equal(60000, actualDelay); // Uses requested value
     }
 
     [Fact]
-    public async Task TriggerSyncOverAsyncAsync_WithConcurrencyExceedingMax_CapsToMaximum()
+    public async Task TriggerSyncOverAsyncAsync_WithLargeConcurrency_UsesRequestedConcurrency()
     {
         // Arrange
         var service = CreateService();
-        var requestedConcurrency = 500; // Exceeds MaxConcurrentBlockingRequests of 200
+        var requestedConcurrency = 500; // No limits now
 
         // Act
         var result = await service.TriggerSyncOverAsyncAsync(100, requestedConcurrency, CancellationToken.None);
@@ -80,7 +72,7 @@ public class ThreadBlockServiceTests
         // Assert
         Assert.NotNull(result.ActualParameters);
         var actualConcurrency = (int)result.ActualParameters["ConcurrentRequests"];
-        Assert.True(actualConcurrency <= 200, $"Concurrency should be capped to max (200), was {actualConcurrency}");
+        Assert.Equal(500, actualConcurrency); // Uses requested value
     }
 
     [Fact]
@@ -172,7 +164,7 @@ public class ThreadBlockServiceTests
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new ThreadBlockService(null!, _loggerMock.Object, _options));
+            new ThreadBlockService(null!, _loggerMock.Object));
     }
 
     [Fact]
@@ -180,15 +172,7 @@ public class ThreadBlockServiceTests
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new ThreadBlockService(_trackerMock.Object, null!, _options));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new ThreadBlockService(_trackerMock.Object, _loggerMock.Object, null!));
+            new ThreadBlockService(_trackerMock.Object, null!));
     }
 
     [Fact]

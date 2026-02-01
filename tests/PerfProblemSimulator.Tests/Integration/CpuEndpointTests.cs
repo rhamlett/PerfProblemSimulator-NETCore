@@ -68,7 +68,7 @@ public class CpuEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task TriggerHighCpu_WithExcessiveDuration_CapsToMaximum()
+    public async Task TriggerHighCpu_WithLargeDuration_UsesRequestedDuration()
     {
         // Arrange
         var request = new { DurationSeconds = 9999 };
@@ -86,7 +86,7 @@ public class CpuEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
         var actualParams = result.GetProperty("actualParameters");
         var actualDuration = actualParams.GetProperty("durationSeconds").GetInt32();
-        Assert.True(actualDuration <= 300, $"Duration should be capped to max (300), was {actualDuration}");
+        Assert.Equal(9999, actualDuration); // No limits, uses requested value
     }
 
     [Fact]

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -10,30 +9,24 @@ namespace PerfProblemSimulator.Tests.Unit;
 /// Unit tests for the <see cref="MemoryPressureService"/>.
 /// </summary>
 /// <remarks>
-/// These tests verify that the memory pressure service correctly handles:
-/// - Memory allocation with size limits
-/// - Memory release and cleanup
-/// - Tracking of allocated blocks
-/// - Safety checks for maximum allocation
+/// These tests verify memory allocation behavior including:
+/// - Size validation and defaults
+/// - Allocation tracking
+/// - Release functionality
 /// </remarks>
 public class MemoryPressureServiceTests
 {
     private readonly Mock<ISimulationTracker> _trackerMock;
     private readonly Mock<ILogger<MemoryPressureService>> _loggerMock;
-    private readonly IOptions<ProblemSimulatorOptions> _options;
 
     public MemoryPressureServiceTests()
     {
         _trackerMock = new Mock<ISimulationTracker>();
         _loggerMock = new Mock<ILogger<MemoryPressureService>>();
-        _options = Options.Create(new ProblemSimulatorOptions
-        {
-            MaxMemoryAllocationMb = 1024
-        });
     }
 
     private MemoryPressureService CreateService() =>
-        new MemoryPressureService(_trackerMock.Object, _loggerMock.Object, _options);
+        new MemoryPressureService(_trackerMock.Object, _loggerMock.Object);
 
     [Fact]
     public void AllocateMemory_WithValidSize_ReturnsSuccessResult()
@@ -52,20 +45,19 @@ public class MemoryPressureServiceTests
     }
 
     [Fact]
-    public void AllocateMemory_WithSizeExceedingMax_CapsToMaximum()
+    public void AllocateMemory_WithLargeSize_UsesRequestedSize()
     {
         // Arrange
         var service = CreateService();
-        var requestedSize = 2000; // Exceeds MaxMemoryAllocationMb of 1024
+        var requestedSize = 2000; // No limits now
 
         // Act
         var result = service.AllocateMemory(requestedSize);
 
         // Assert
         Assert.NotNull(result.ActualParameters);
-        // Should be capped to max (1024) or remaining available space
         var actualSize = (int)result.ActualParameters["SizeMegabytes"];
-        Assert.True(actualSize <= 1024, $"Size should be capped to max (1024), was {actualSize}");
+        Assert.Equal(2000, actualSize); // Uses requested value
     }
 
     [Fact]
@@ -180,32 +172,11 @@ public class MemoryPressureServiceTests
     }
 
     [Fact]
-    public void AllocateMemory_WhenWouldExceedMax_ReturnsLimitExceededStatus()
-    {
-        // Arrange
-        var limitedOptions = Options.Create(new ProblemSimulatorOptions
-        {
-            MaxMemoryAllocationMb = 100 // Very limited
-        });
-        var service = new MemoryPressureService(_trackerMock.Object, _loggerMock.Object, limitedOptions);
-
-        // First allocation should work
-        service.AllocateMemory(90);
-
-        // Act - Second allocation would exceed limit
-        var result = service.AllocateMemory(50);
-
-        // Assert - Should either cap or return error status
-        Assert.NotNull(result);
-        // Result should indicate the constraint was applied
-    }
-
-    [Fact]
     public void Constructor_WithNullTracker_ThrowsArgumentNullException()
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new MemoryPressureService(null!, _loggerMock.Object, _options));
+            new MemoryPressureService(null!, _loggerMock.Object));
     }
 
     [Fact]
@@ -213,15 +184,7 @@ public class MemoryPressureServiceTests
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new MemoryPressureService(_trackerMock.Object, null!, _options));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new MemoryPressureService(_trackerMock.Object, _loggerMock.Object, null!));
+            new MemoryPressureService(_trackerMock.Object, null!));
     }
 
     [Fact]

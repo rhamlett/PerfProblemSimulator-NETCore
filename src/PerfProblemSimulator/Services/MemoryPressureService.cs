@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using PerfProblemSimulator.Models;
 using System.Runtime.InteropServices;
 
@@ -63,7 +62,6 @@ public class MemoryPressureService : IMemoryPressureService
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<MemoryPressureService> _logger;
-    private readonly ProblemSimulatorOptions _options;
 
     /// <summary>
     /// Thread-safe list holding all allocated memory blocks.
@@ -96,67 +94,34 @@ public class MemoryPressureService : IMemoryPressureService
     /// </summary>
     /// <param name="simulationTracker">Service for tracking active simulations.</param>
     /// <param name="logger">Logger for diagnostic information.</param>
-    /// <param name="options">Configuration options containing limits.</param>
     public MemoryPressureService(
         ISimulationTracker simulationTracker,
-        ILogger<MemoryPressureService> logger,
-        IOptions<ProblemSimulatorOptions> options)
+        ILogger<MemoryPressureService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <inheritdoc />
     public SimulationResult AllocateMemory(int sizeMegabytes)
     {
         // ==========================================================================
-        // STEP 1: Validate and constrain the allocation size
+        // STEP 1: Validate the allocation size (no upper limits - app is meant to break)
         // ==========================================================================
         var actualSize = sizeMegabytes <= 0
             ? DefaultSizeMegabytes
             : Math.Max(MinimumSizeMegabytes, sizeMegabytes);
 
-        // Check against remaining capacity
         long currentAllocatedBytes;
         lock (_lock)
         {
             currentAllocatedBytes = _allocatedBlocks.Sum(b => b.SizeBytes);
         }
 
-        var maxBytes = (long)_options.MaxMemoryAllocationMb * 1024 * 1024;
-        var remainingCapacity = maxBytes - currentAllocatedBytes;
-        var requestedBytes = (long)actualSize * 1024 * 1024;
-
-        if (requestedBytes > remainingCapacity)
-        {
-            // Cap to remaining capacity (minimum 10MB if any space left)
-            actualSize = (int)(remainingCapacity / (1024 * 1024));
-            if (actualSize < MinimumSizeMegabytes)
-            {
-                actualSize = 0; // Not enough space for minimum allocation
-            }
-        }
-
-        if (actualSize <= 0)
-        {
-            return new SimulationResult
-            {
-                SimulationId = Guid.Empty,
-                Type = SimulationType.Memory,
-                Status = "Failed",
-                Message = $"Cannot allocate memory: Maximum allocation limit ({_options.MaxMemoryAllocationMb} MB) reached. " +
-                          "Release existing allocations first with POST /api/memory/release-memory.",
-                ActualParameters = new Dictionary<string, object>
-                {
-                    ["RequestedSizeMegabytes"] = sizeMegabytes,
-                    ["CurrentAllocatedMegabytes"] = currentAllocatedBytes / (1024.0 * 1024.0),
-                    ["MaxAllowedMegabytes"] = _options.MaxMemoryAllocationMb
-                },
-                StartedAt = DateTimeOffset.UtcNow,
-                EstimatedEndAt = null
-            };
-        }
+        _logger.LogInformation(
+            "Allocating {Size} MB. Current total: {Current} MB",
+            actualSize,
+            currentAllocatedBytes / (1024.0 * 1024.0));
 
         var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;

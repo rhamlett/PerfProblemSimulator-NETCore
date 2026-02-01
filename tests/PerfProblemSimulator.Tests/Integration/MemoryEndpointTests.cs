@@ -166,7 +166,7 @@ public class MemoryEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task AllocateMemory_WithExcessiveSize_CapsToMaximum()
+    public async Task AllocateMemory_WithLargeSize_UsesRequestedSize()
     {
         // Arrange
         var request = new { SizeMegabytes = 9999 };
@@ -184,6 +184,6 @@ public class MemoryEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
         var actualParams = result.GetProperty("actualParameters");
         var actualSize = actualParams.GetProperty("sizeMegabytes").GetInt32();
-        Assert.True(actualSize <= 1024, $"Size should be capped to max (1024), was {actualSize}");
+        Assert.Equal(9999, actualSize); // No limits, uses requested value
     }
 }

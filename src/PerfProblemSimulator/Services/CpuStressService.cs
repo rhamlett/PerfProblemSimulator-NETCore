@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using PerfProblemSimulator.Models;
 using System.Diagnostics;
 
@@ -65,7 +64,6 @@ public class CpuStressService : ICpuStressService
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<CpuStressService> _logger;
-    private readonly ProblemSimulatorOptions _options;
 
     /// <summary>
     /// Default duration in seconds when not specified or invalid.
@@ -77,30 +75,23 @@ public class CpuStressService : ICpuStressService
     /// </summary>
     /// <param name="simulationTracker">Service for tracking active simulations.</param>
     /// <param name="logger">Logger for diagnostic information.</param>
-    /// <param name="options">Configuration options containing limits.</param>
     public CpuStressService(
         ISimulationTracker simulationTracker,
-        ILogger<CpuStressService> logger,
-        IOptions<ProblemSimulatorOptions> options)
+        ILogger<CpuStressService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
     /// <inheritdoc />
     public Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken)
     {
         // ==========================================================================
-        // STEP 1: Validate and cap the duration
+        // STEP 1: Validate the duration (no upper limits - app is meant to break)
         // ==========================================================================
-        // We apply defensive programming here - never trust input, always validate.
-        // This prevents users from accidentally (or intentionally) causing harm by
-        // requesting extremely long durations.
-
         var actualDuration = durationSeconds <= 0
             ? DefaultDurationSeconds
-            : Math.Min(durationSeconds, _options.MaxCpuDurationSeconds);
+            : durationSeconds;
 
         var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;

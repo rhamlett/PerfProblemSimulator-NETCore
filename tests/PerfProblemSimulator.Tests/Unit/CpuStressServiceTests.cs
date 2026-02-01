@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Moq;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -11,7 +10,7 @@ namespace PerfProblemSimulator.Tests.Unit;
 /// </summary>
 /// <remarks>
 /// These tests verify that the CPU stress service correctly handles:
-/// - Duration limits and validation
+/// - Duration validation
 /// - Cancellation token support
 /// - Proper reporting of stress operations
 /// </remarks>
@@ -19,20 +18,15 @@ public class CpuStressServiceTests
 {
     private readonly Mock<ISimulationTracker> _trackerMock;
     private readonly Mock<ILogger<CpuStressService>> _loggerMock;
-    private readonly IOptions<ProblemSimulatorOptions> _options;
 
     public CpuStressServiceTests()
     {
         _trackerMock = new Mock<ISimulationTracker>();
         _loggerMock = new Mock<ILogger<CpuStressService>>();
-        _options = Options.Create(new ProblemSimulatorOptions
-        {
-            MaxCpuDurationSeconds = 300
-        });
     }
 
     private CpuStressService CreateService() =>
-        new CpuStressService(_trackerMock.Object, _loggerMock.Object, _options);
+        new CpuStressService(_trackerMock.Object, _loggerMock.Object);
 
     [Fact]
     public async Task TriggerCpuStressAsync_WithValidDuration_ReturnsStartedResult()
@@ -52,18 +46,18 @@ public class CpuStressServiceTests
     }
 
     [Fact]
-    public async Task TriggerCpuStressAsync_WithDurationExceedingMax_CapsToMaximum()
+    public async Task TriggerCpuStressAsync_WithLargeDuration_UsesRequestedDuration()
     {
         // Arrange
         var service = CreateService();
-        var requestedDuration = 500; // Exceeds MaxCpuDurationSeconds of 300
+        var requestedDuration = 500; // No limits now
 
         // Act
         var result = await service.TriggerCpuStressAsync(requestedDuration, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result.ActualParameters);
-        Assert.Equal(300, result.ActualParameters["DurationSeconds"]); // Should be capped
+        Assert.Equal(500, result.ActualParameters["DurationSeconds"]); // Uses requested value
     }
 
     [Fact]
@@ -190,7 +184,7 @@ public class CpuStressServiceTests
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new CpuStressService(null!, _loggerMock.Object, _options));
+            new CpuStressService(null!, _loggerMock.Object));
     }
 
     [Fact]
@@ -198,14 +192,6 @@ public class CpuStressServiceTests
     {
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new CpuStressService(_trackerMock.Object, null!, _options));
-    }
-
-    [Fact]
-    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
-    {
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
-            new CpuStressService(_trackerMock.Object, _loggerMock.Object, null!));
+            new CpuStressService(_trackerMock.Object, null!));
     }
 }

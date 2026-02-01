@@ -117,7 +117,7 @@ public class ThreadBlockEndpointTests : IClassFixture<WebApplicationFactory<Prog
     }
 
     [Fact]
-    public async Task TriggerSyncOverAsync_WithExcessiveDelay_CapsToMaximum()
+    public async Task TriggerSyncOverAsync_WithLargeDelay_UsesRequestedDelay()
     {
         // Arrange
         var request = new { DelayMilliseconds = 999999 };
@@ -135,11 +135,11 @@ public class ThreadBlockEndpointTests : IClassFixture<WebApplicationFactory<Prog
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
         var actualParams = result.GetProperty("actualParameters");
         var actualDelay = actualParams.GetProperty("delayMilliseconds").GetInt32();
-        Assert.True(actualDelay <= 30000, $"Delay should be capped to max (30000), was {actualDelay}");
+        Assert.Equal(999999, actualDelay); // No limits, uses requested value
     }
 
     [Fact]
-    public async Task TriggerSyncOverAsync_WithExcessiveConcurrency_CapsToMaximum()
+    public async Task TriggerSyncOverAsync_WithLargeConcurrency_UsesRequestedConcurrency()
     {
         // Arrange
         var request = new { ConcurrentRequests = 9999 };
@@ -157,6 +157,6 @@ public class ThreadBlockEndpointTests : IClassFixture<WebApplicationFactory<Prog
         var result = await response.Content.ReadFromJsonAsync<JsonElement>(_jsonOptions);
         var actualParams = result.GetProperty("actualParameters");
         var actualConcurrent = actualParams.GetProperty("concurrentRequests").GetInt32();
-        Assert.True(actualConcurrent <= 200, $"Concurrency should be capped to max (200), was {actualConcurrent}");
+        Assert.Equal(9999, actualConcurrent); // No limits, uses requested value
     }
 }
