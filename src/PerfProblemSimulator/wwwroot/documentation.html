@@ -285,6 +285,7 @@
                 <li><a href="#quick-start">Quick Start</a></li>
                 <li><a href="#dashboard">Dashboard</a></li>
                 <li><a href="#latency">Latency Monitor</a></li>
+                <li><a href="#crash">Crash Simulation</a></li>
                 <li><a href="#api">API Reference</a></li>
                 <li><a href="#configuration">Configuration</a></li>
                 <li><a href="#azure">Azure Deployment</a></li>
@@ -429,6 +430,66 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 
             <h3>Why This Matters</h3>
             <p>During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem <strong>visible</strong> — you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.</p>
+        </section>
+
+        <!-- Crash Simulation Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 Crash Simulation</h2>
+            <p>The dashboard includes a <strong>Crash Simulation</strong> feature for testing Azure crash monitoring and memory dump collection.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ Warning - This will TERMINATE the application!</h4>
+                <p>Crash simulations immediately terminate the process. Azure App Service will automatically restart the application after a crash. Make sure you have Azure Crash Monitoring enabled before triggering a crash.</p>
+            </div>
+
+            <h3>Available Crash Types</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FailFast</strong></td>
+                        <td>Calls <code>Environment.FailFast()</code> which immediately terminates with a Windows Error Report</td>
+                        <td>General crash testing (recommended)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>StackOverflow</strong></td>
+                        <td>Infinite recursion causing stack overflow - cannot be caught</td>
+                        <td>Stack trace analysis practice</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UnhandledException</strong></td>
+                        <td>Throws unhandled exception on background thread</td>
+                        <td>Exception handling education</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AccessViolation</strong></td>
+                        <td>Writes to invalid memory (null pointer)</td>
+                        <td>Native/unsafe code debugging</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OutOfMemory</strong></td>
+                        <td>Allocates memory until the process crashes</td>
+                        <td>Memory dump analysis</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Azure Crash Monitoring Setup</h3>
+            <ol>
+                <li>In Azure Portal, go to your App Service</li>
+                <li>Navigate to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for <strong>"Crash Monitoring"</strong></li>
+                <li>Enable crash monitoring with <strong>"Collect Memory Dump"</strong></li>
+                <li>Trigger a crash using the dashboard or API</li>
+                <li>Download the crash dump from the Azure portal</li>
+                <li>Analyze with Visual Studio or WinDbg</li>
+            </ol>
         </section>
 
         <!-- API Reference Section -->
@@ -578,6 +639,48 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                     </tr>
                 </tbody>
             </table>
+
+            <h3>Crash Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/crash/trigger</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Trigger a crash of specified type</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/crash/types</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>List available crash types</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/crash/failfast</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Quick FailFast crash trigger</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/crash/stackoverflow</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Quick StackOverflow crash trigger</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body (trigger):</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"crashType"</span>: <span class="string">"FailFast"</span>,
+  <span class="string">"delaySeconds"</span>: 3,
+  <span class="string">"message"</span>: <span class="string">"Optional crash message"</span>
+}
+            </div>
+            <p><strong>Available crash types:</strong> <code>FailFast</code>, <code>StackOverflow</code>, <code>UnhandledException</code>, <code>AccessViolation</code>, <code>OutOfMemory</code></p>
         </section>
 
         <!-- Configuration Section -->
@@ -680,6 +783,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">CpuController.cs</span>
 │   ├── <span class="file">MemoryController.cs</span>
 │   ├── <span class="file">ThreadBlockController.cs</span>
+│   ├── <span class="file">CrashController.cs</span>
 │   ├── <span class="file">MetricsController.cs</span>
 │   ├── <span class="file">HealthController.cs</span>
 │   └── <span class="file">AdminController.cs</span>
@@ -687,6 +791,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">CpuStressService.cs</span>
 │   ├── <span class="file">MemoryPressureService.cs</span>
 │   ├── <span class="file">ThreadBlockService.cs</span>
+│   ├── <span class="file">CrashService.cs</span>
 │   ├── <span class="file">SimulationTracker.cs</span>
 │   ├── <span class="file">MetricsCollector.cs</span>
 │   ├── <span class="file">MetricsBroadcastService.cs</span>
