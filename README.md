@@ -18,6 +18,7 @@ This application is designed to help developers and DevOps engineers:
 - 🔥 **CPU stress** - Creates parallel spin loops that consume all CPU cores
 - 📊 **Memory pressure** - Allocates and pins memory blocks to increase working set
 - 🧵 **Thread pool starvation** - Uses sync-over-async anti-patterns to block thread pool threads
+- 💥 **Application crashes** - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps
 
 **Only deploy this application in isolated, non-production environments.**
 
@@ -153,15 +154,12 @@ Configuration is managed through `appsettings.json`:
 ```json
 {
   "ProblemSimulator": {
-    "MaxCpuDurationSeconds": 300,
-    "MaxMemoryAllocationMb": 1024,
-    "MaxThreadBlockDelayMs": 30000,
-    "MaxConcurrentBlockingRequests": 200,
-    "MetricsCollectionIntervalMs": 1000,
-    "EnableRequestLogging": true
+    "MetricsCollectionIntervalMs": 1000
   }
 }
 ```
+
+**Note:** This application is designed to be fully breakable for educational purposes. There are no safety limits on resource consumption — simulations can run until the application crashes or resources are exhausted.
 
 ### Environment Variables
 

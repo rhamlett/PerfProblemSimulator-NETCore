@@ -209,11 +209,13 @@
             font-family: 'Cascadia Code', 'Consolas', monospace;
             font-size: 0.875rem;
             overflow-x: auto;
+            white-space: pre;
+            line-height: 1.8;
         }
 
         .architecture-tree .folder { color: var(--color-primary); font-weight: 600; }
         .architecture-tree .file { color: var(--color-text-muted); }
-        .architecture-tree .comment { color: var(--color-success); font-style: italic; }
+        .architecture-tree .comment { color: var(--color-success); font-style: italic; opacity: 0.8; margin-left: 1rem; }
 
         .back-link {
             display: inline-flex;
@@ -338,6 +340,7 @@
                     <li>🔥 <strong>CPU stress</strong> - Creates parallel spin loops that consume all CPU cores</li>
                     <li>📊 <strong>Memory pressure</strong> - Allocates and pins memory blocks to increase working set</li>
                     <li>🧵 <strong>Thread pool starvation</strong> - Uses sync-over-async anti-patterns to block thread pool threads</li>
+                    <li>💥 <strong>Application crashes</strong> - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps</li>
                 </ul>
                 <p style="margin-top: 1rem; margin-bottom: 0;"><strong>Only deploy this application in isolated, non-production environments.</strong></p>
             </div>
@@ -690,15 +693,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <div class="code-block">
 {
   <span class="string">"ProblemSimulator"</span>: {
-    <span class="string">"MaxCpuDurationSeconds"</span>: 300,
-    <span class="string">"MaxMemoryAllocationMb"</span>: 1024,
-    <span class="string">"MaxThreadBlockDelayMs"</span>: 30000,
-    <span class="string">"MaxConcurrentBlockingRequests"</span>: 200,
-    <span class="string">"MetricsCollectionIntervalMs"</span>: 1000,
-    <span class="string">"EnableRequestLogging"</span>: <span class="keyword">true</span>
+    <span class="string">"MetricsCollectionIntervalMs"</span>: 1000
   }
 }
             </div>
+            <p><strong>Note:</strong> This application is designed to be fully breakable for educational purposes. There are no safety limits on resource consumption — simulations can run until the application crashes or resources are exhausted.</p>
 
             <h3>Environment Variables</h3>
             <table class="config-table">
@@ -771,41 +770,67 @@ az webapp config appsettings set \
                 <li><strong>CPU Profiling</strong> - Capture and analyze CPU traces</li>
                 <li><strong>Memory Dumps</strong> - Analyze memory allocations</li>
             </ul>
-            <p>See the <a href="https://github.com/rhamlett-mms/NETCoreApp/blob/main/docs/azure-monitoring-guide.md">Azure Monitoring Guide</a> for detailed instructions.</p>
+            <p>See the <a href="/azure-monitoring-guide.html">Azure Monitoring Guide</a> for detailed instructions.</p>
         </section>
 
         <!-- Architecture Section -->
         <section id="architecture" class="doc-section">
             <h2>📐 Architecture</h2>
-            <div class="architecture-tree">
-<span class="folder">src/PerfProblemSimulator/</span>
-├── <span class="folder">Controllers/</span>          <span class="comment"># API endpoints</span>
+            <div class="architecture-tree"><span class="folder">src/PerfProblemSimulator/</span>
+├── <span class="folder">Controllers/</span>              <span class="comment"># API endpoints</span>
+│   ├── <span class="file">AdminController.cs</span>
 │   ├── <span class="file">CpuController.cs</span>
-│   ├── <span class="file">MemoryController.cs</span>
-│   ├── <span class="file">ThreadBlockController.cs</span>
 │   ├── <span class="file">CrashController.cs</span>
-│   ├── <span class="file">MetricsController.cs</span>
 │   ├── <span class="file">HealthController.cs</span>
-│   └── <span class="file">AdminController.cs</span>
-├── <span class="folder">Services/</span>             <span class="comment"># Business logic</span>
+│   ├── <span class="file">MemoryController.cs</span>
+│   ├── <span class="file">MetricsController.cs</span>
+│   └── <span class="file">ThreadBlockController.cs</span>
+│
+├── <span class="folder">Services/</span>                 <span class="comment"># Business logic</span>
 │   ├── <span class="file">CpuStressService.cs</span>
-│   ├── <span class="file">MemoryPressureService.cs</span>
-│   ├── <span class="file">ThreadBlockService.cs</span>
 │   ├── <span class="file">CrashService.cs</span>
-│   ├── <span class="file">SimulationTracker.cs</span>
-│   ├── <span class="file">MetricsCollector.cs</span>
+│   ├── <span class="file">LatencyProbeService.cs</span>
+│   ├── <span class="file">MemoryPressureService.cs</span>
 │   ├── <span class="file">MetricsBroadcastService.cs</span>
-│   └── <span class="file">LatencyProbeService.cs</span>
-├── <span class="folder">Hubs/</span>                 <span class="comment"># SignalR for real-time updates</span>
-│   └── <span class="file">MetricsHub.cs</span>
-├── <span class="folder">Models/</span>               <span class="comment"># Data transfer objects</span>
-├── <span class="folder">Middleware/</span>           <span class="comment"># Request pipeline</span>
+│   ├── <span class="file">MetricsCollector.cs</span>
+│   ├── <span class="file">SimulationTracker.cs</span>
+│   ├── <span class="file">ThreadBlockService.cs</span>
+│   ├── <span class="file">ICpuStressService.cs</span>       <span class="comment"># Interfaces</span>
+│   ├── <span class="file">ICrashService.cs</span>
+│   ├── <span class="file">IMemoryPressureService.cs</span>
+│   ├── <span class="file">IMetricsCollector.cs</span>
+│   └── <span class="file">IThreadBlockService.cs</span>
+│
+├── <span class="folder">Hubs/</span>                     <span class="comment"># SignalR for real-time updates</span>
+│   ├── <span class="file">MetricsHub.cs</span>
+│   └── <span class="file">IMetricsClient.cs</span>
+│
+├── <span class="folder">Models/</span>                   <span class="comment"># Data transfer objects</span>
+│   ├── <span class="file">AllocatedMemoryBlock.cs</span>
+│   ├── <span class="file">CpuStressRequest.cs</span>
+│   ├── <span class="file">CrashRequest.cs</span>
+│   ├── <span class="file">DetailedMetrics.cs</span>
+│   ├── <span class="file">ErrorResponse.cs</span>
+│   ├── <span class="file">MemoryAllocationRequest.cs</span>
+│   ├── <span class="file">MemoryReleaseResult.cs</span>
+│   ├── <span class="file">MetricsSnapshot.cs</span>
+│   ├── <span class="file">ProblemSimulatorOptions.cs</span>
+│   ├── <span class="file">SimulationResult.cs</span>
+│   ├── <span class="file">SimulationType.cs</span>
+│   └── <span class="file">ThreadBlockRequest.cs</span>
+│
+├── <span class="folder">Middleware/</span>               <span class="comment"># Request pipeline</span>
 │   └── <span class="file">ProblemEndpointGuard.cs</span>
-└── <span class="folder">wwwroot/</span>              <span class="comment"># SPA dashboard</span>
+│
+└── <span class="folder">wwwroot/</span>                  <span class="comment"># SPA dashboard</span>
     ├── <span class="file">index.html</span>
-    ├── <span class="folder">css/</span><span class="file">dashboard.css</span>
-    └── <span class="folder">js/</span><span class="file">dashboard.js</span>
-            </div>
+    ├── <span class="file">documentation.html</span>
+    ├── <span class="file">azure-monitoring-guide.html</span>
+    ├── <span class="file">favicon.svg</span>
+    ├── <span class="folder">css/</span>
+    │   └── <span class="file">dashboard.css</span>
+    └── <span class="folder">js/</span>
+        └── <span class="file">dashboard.js</span></div>
         </section>
 
         <!-- Testing Section -->
