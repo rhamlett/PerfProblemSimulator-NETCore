@@ -85,11 +85,19 @@ public class CrashController : ControllerBase
         }
 
         _logger.LogCritical(
-            "🚨 CRASH REQUESTED: Type={CrashType}, Delay={DelaySeconds}s",
-            request.CrashType, request.DelaySeconds);
+            "🚨 CRASH REQUESTED: Type={CrashType}, Delay={DelaySeconds}s, Synchronous={Synchronous}",
+            request.CrashType, request.DelaySeconds, request.Synchronous);
 
-        // Trigger the crash
-        _crashService.TriggerCrash(request.CrashType, request.DelaySeconds, request.Message);
+        // If synchronous, crash immediately (no response will be sent)
+        if (request.Synchronous)
+        {
+            _crashService.TriggerCrash(request.CrashType, 0, request.Message, synchronous: true);
+            // This line is never reached - the process crashes above
+            return StatusCode(500, "Crash failed");
+        }
+
+        // Trigger the crash asynchronously
+        _crashService.TriggerCrash(request.CrashType, request.DelaySeconds, request.Message, synchronous: false);
 
         var crashMessage = $"💥 {request.CrashType} crash scheduled! " +
                       (request.DelaySeconds > 0 
@@ -105,9 +113,40 @@ public class CrashController : ControllerBase
             ActualParameters = new Dictionary<string, object>
             {
                 ["CrashType"] = request.CrashType.ToString(),
-                ["DelaySeconds"] = request.DelaySeconds
+                ["DelaySeconds"] = request.DelaySeconds,
+                ["Synchronous"] = request.Synchronous
             }
         });
+    }
+
+    /// <summary>
+    /// Triggers a synchronous crash optimized for Azure Crash Monitoring.
+    /// </summary>
+    /// <param name="crashType">Type of crash (default: FailFast)</param>
+    /// <returns>No response - the process crashes before responding.</returns>
+    /// <remarks>
+    /// <para>
+    /// <strong>USE THIS ENDPOINT FOR AZURE CRASH MONITORING!</strong>
+    /// </para>
+    /// <para>
+    /// This endpoint crashes the process during the HTTP request, before any response is sent.
+    /// This is the most reliable way to trigger Azure Crash Monitoring to capture a dump.
+    /// </para>
+    /// <para>
+    /// The browser/client will receive a connection error because no response is sent.
+    /// </para>
+    /// </remarks>
+    /// <response code="500">Never returned - process crashes before response</response>
+    [HttpGet("now")]
+    [HttpPost("now")]
+    public IActionResult CrashNow([FromQuery] CrashType crashType = CrashType.FailFast)
+    {
+        _logger.LogCritical("🚨💥 IMMEDIATE CRASH REQUESTED: Type={CrashType} - NO RESPONSE WILL BE SENT", crashType);
+        
+        _crashService.TriggerCrash(crashType, 0, "Immediate crash via /api/crash/now endpoint", synchronous: true);
+        
+        // Never reached
+        return StatusCode(500, "Crash failed");
     }
 
     /// <summary>

@@ -362,6 +362,26 @@ body {
     font-weight: 600;
 }
 
+.crash-info {
+    font-size: 0.7rem;
+    color: var(--color-primary);
+    margin-top: 0.25rem;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+}
+
 .btn-warning {
     background: var(--color-warning);
     color: #323130;

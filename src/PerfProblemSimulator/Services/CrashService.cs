@@ -39,14 +39,23 @@ public class CrashService : ICrashService
     }
 
     /// <inheritdoc />
-    public void TriggerCrash(CrashType crashType, int delaySeconds = 0, string? message = null)
+    public void TriggerCrash(CrashType crashType, int delaySeconds = 0, string? message = null, bool synchronous = false)
     {
         var crashMessage = message ?? $"Intentional {crashType} crash triggered by Performance Problem Simulator";
 
         _logger.LogCritical(
-            "⚠️ CRASH TRIGGERED: Type={CrashType}, Delay={DelaySeconds}s, Message={Message}",
-            crashType, delaySeconds, crashMessage);
+            "⚠️ CRASH TRIGGERED: Type={CrashType}, Delay={DelaySeconds}s, Synchronous={Synchronous}, Message={Message}",
+            crashType, delaySeconds, synchronous, crashMessage);
 
+        // Synchronous mode: crash immediately during the request (best for Azure Crash Monitoring)
+        if (synchronous)
+        {
+            _logger.LogCritical("💥 SYNCHRONOUS CRASH - No response will be sent!");
+            ExecuteCrash(crashType, crashMessage);
+            return; // Never reached
+        }
+
+        // Async mode: crash on background thread after response is sent
         if (delaySeconds > 0)
         {
             _logger.LogWarning("Crash will occur in {DelaySeconds} seconds...", delaySeconds);

@@ -25,12 +25,29 @@ public class CrashRequest
     /// Allows time to observe the application state before crash.
     /// Default: 0 (immediate)
     /// </summary>
+    /// <remarks>
+    /// Note: When Synchronous is true, delay is ignored.
+    /// </remarks>
     public int DelaySeconds { get; set; } = 0;
 
     /// <summary>
     /// Custom message to include in the crash (for FailFast and UnhandledException types).
     /// </summary>
     public string? Message { get; set; }
+
+    /// <summary>
+    /// If true, crash happens during the HTTP request (no response sent).
+    /// This is more likely to be captured by Azure Crash Monitoring.
+    /// Default: false (crash after response for better UX)
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Azure Crash Monitoring Note:</strong> Set this to true for Azure Crash Monitoring
+    /// to properly capture the crash. When false, the crash happens on a background thread
+    /// after the HTTP response is sent, which Azure may not associate with a request.
+    /// </para>
+    /// </remarks>
+    public bool Synchronous { get; set; } = false;
 }
 
 /// <summary>
