@@ -188,6 +188,89 @@ Task.Run(async () =>
 
 ---
 
+## 💥 Diagnosing Application Crashes
+
+### Symptoms
+
+- Application suddenly becomes unavailable
+- HTTP 502/503 errors returned to clients
+- Azure auto-restarts the application
+- Event logs show process termination
+
+### Azure Crash Monitoring
+
+Azure App Service includes built-in Crash Monitoring that can automatically capture memory dumps when your application crashes.
+
+#### Enabling Crash Monitoring
+
+1. Navigate to your App Service in the Azure Portal
+2. Go to **Diagnose and solve problems**
+3. Search for "Crash Monitoring"
+4. Enable crash dump collection
+
+> **⚠️ Important: Storage Account Restrictions**
+>
+> In some Azure environments, Crash Monitoring may not work due to security restrictions on storage accounts. If you cannot use Crash Monitoring, you can collect memory dumps manually using **ProcDump** from the Kudu console.
+
+### Using ProcDump for Manual Dump Collection
+
+[ProcDump](https://learn.microsoft.com/en-us/sysinternals/downloads/procdump) is a Sysinternals command-line utility that can monitor applications and generate crash dumps. It's available on Azure App Service through the Kudu console.
+
+#### Accessing the Kudu Console
+
+1. Navigate to your App Service
+2. Go to **Development Tools** > **Advanced Tools**
+3. Click **Go** to open Kudu
+4. Select **Debug console** > **CMD** or **PowerShell**
+
+#### Common ProcDump Commands
+
+```bash
+# Write a full memory dump of a process by name
+procdump -ma w3wp.exe
+
+# Write a full dump when an unhandled exception occurs
+procdump -ma -e w3wp.exe
+
+# Write a full dump on 1st or 2nd chance exception
+procdump -ma -e 1 w3wp.exe
+
+# Write up to 10 dumps, one per exception
+procdump -ma -n 10 -e 1 w3wp.exe
+
+# Write a dump when CPU exceeds 80% for 10 seconds
+procdump -ma -c 80 -s 10 w3wp.exe
+
+# Write a dump when memory exceeds 1GB
+procdump -ma -m 1024 w3wp.exe
+
+# Write a dump when a hung window is detected
+procdump -ma -h w3wp.exe
+```
+
+#### ProcDump Options Reference
+
+| Option | Description |
+|--------|-------------|
+| `-ma` | Full dump (all memory) |
+| `-mm` | Mini dump (default, smaller size) |
+| `-mp` | MiniPlus dump (detailed but 10-75% smaller than full) |
+| `-e` | Dump on unhandled exception (add `1` for first-chance) |
+| `-c` | CPU threshold percentage |
+| `-m` | Memory commit threshold in MB |
+| `-n` | Number of dumps to write before exiting |
+| `-s` | Consecutive seconds before dump (default 10) |
+| `-h` | Dump on hung window |
+| `-t` | Dump on process termination |
+
+#### Downloading the Dump File
+
+1. In Kudu, navigate to the folder where the dump was created
+2. Click the download icon next to the `.dmp` file
+3. Open the dump in Visual Studio, WinDbg, or another debugger
+
+---
+
 ## ⏱️ Using the Request Latency Monitor
 
 The dashboard includes a **Request Latency Monitor** that demonstrates how thread pool starvation affects request processing time.

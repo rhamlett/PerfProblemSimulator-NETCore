@@ -107,6 +107,7 @@
             font-family: 'Cascadia Code', 'Consolas', monospace;
             font-size: 0.875rem;
             line-height: 1.6;
+            white-space: pre;
         }
 
         .code-block .comment { color: #6a9955; }
@@ -291,6 +292,7 @@
                 <li><a href="#cpu">Diagnosing High CPU</a></li>
                 <li><a href="#memory">Diagnosing Memory Pressure</a></li>
                 <li><a href="#threads">Diagnosing Thread Pool Starvation</a></li>
+                <li><a href="#crash">Diagnosing Application Crashes</a></li>
                 <li><a href="#latency">Latency Monitor</a></li>
                 <li><a href="#setup">Monitoring Setup</a></li>
                 <li><a href="#best-practices">Best Practices</a></li>
@@ -493,6 +495,129 @@ Task.Run(<span class="keyword">async</span> () =>
     <span class="comment">// the thread pool becomes exhausted and new requests must wait.</span>
 });
             </div>
+        </section>
+
+        <!-- Diagnosing Application Crashes Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 Diagnosing Application Crashes</h2>
+            
+            <h3>Symptoms</h3>
+            <ul>
+                <li>Application suddenly becomes unavailable</li>
+                <li>HTTP 502/503 errors returned to clients</li>
+                <li>Azure auto-restarts the application</li>
+                <li>Event logs show process termination</li>
+            </ul>
+
+            <h3>Azure Crash Monitoring</h3>
+            <p>Azure App Service includes built-in Crash Monitoring that can automatically capture memory dumps when your application crashes.</p>
+
+            <h4>Enabling Crash Monitoring</h4>
+            <ol>
+                <li>Navigate to your App Service in the Azure Portal</li>
+                <li>Go to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for "Crash Monitoring"</li>
+                <li>Enable crash dump collection</li>
+            </ol>
+
+            <div class="info-box">
+                <h4>⚠️ Important: Storage Account Restrictions</h4>
+                <p>In some Azure environments, Crash Monitoring may not work due to security restrictions on storage accounts. If you cannot use Crash Monitoring, you can collect memory dumps manually using <strong>ProcDump</strong> from the Kudu console.</p>
+            </div>
+
+            <h3>Using ProcDump for Manual Dump Collection</h3>
+            <p><a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump" target="_blank">ProcDump</a> is a Sysinternals command-line utility that can monitor applications and generate crash dumps. It's available on Azure App Service through the Kudu console.</p>
+
+            <h4>Accessing the Kudu Console</h4>
+            <ol>
+                <li>Navigate to your App Service</li>
+                <li>Go to <strong>Development Tools</strong> &gt; <strong>Advanced Tools</strong></li>
+                <li>Click <strong>Go</strong> to open Kudu</li>
+                <li>Select <strong>Debug console</strong> &gt; <strong>CMD</strong> or <strong>PowerShell</strong></li>
+            </ol>
+
+            <h4>Common ProcDump Commands</h4>
+            <div class="code-block">
+<span class="comment"># Write a full memory dump of a process by name</span>
+procdump -ma w3wp.exe
+
+<span class="comment"># Write a full dump when an unhandled exception occurs</span>
+procdump -ma -e w3wp.exe
+
+<span class="comment"># Write a full dump on 1st or 2nd chance exception</span>
+procdump -ma -e 1 w3wp.exe
+
+<span class="comment"># Write up to 10 dumps, one per exception</span>
+procdump -ma -n 10 -e 1 w3wp.exe
+
+<span class="comment"># Write a dump when CPU exceeds 80% for 10 seconds</span>
+procdump -ma -c 80 -s 10 w3wp.exe
+
+<span class="comment"># Write a dump when memory exceeds 1GB</span>
+procdump -ma -m 1024 w3wp.exe
+
+<span class="comment"># Write a dump when a hung window is detected</span>
+procdump -ma -h w3wp.exe
+            </div>
+
+            <h4>ProcDump Options Reference</h4>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Option</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>-ma</code></td>
+                        <td>Full dump (all memory)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mm</code></td>
+                        <td>Mini dump (default, smaller size)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mp</code></td>
+                        <td>MiniPlus dump (detailed but 10-75% smaller than full)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-e</code></td>
+                        <td>Dump on unhandled exception (add <code>1</code> for first-chance)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-c</code></td>
+                        <td>CPU threshold percentage</td>
+                    </tr>
+                    <tr>
+                        <td><code>-m</code></td>
+                        <td>Memory commit threshold in MB</td>
+                    </tr>
+                    <tr>
+                        <td><code>-n</code></td>
+                        <td>Number of dumps to write before exiting</td>
+                    </tr>
+                    <tr>
+                        <td><code>-s</code></td>
+                        <td>Consecutive seconds before dump (default 10)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-h</code></td>
+                        <td>Dump on hung window</td>
+                    </tr>
+                    <tr>
+                        <td><code>-t</code></td>
+                        <td>Dump on process termination</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Downloading the Dump File</h4>
+            <ol>
+                <li>In Kudu, navigate to the folder where the dump was created</li>
+                <li>Click the download icon next to the <code>.dmp</code> file</li>
+                <li>Open the dump in Visual Studio, WinDbg, or another debugger</li>
+            </ol>
         </section>
 
         <!-- Using the Request Latency Monitor Section -->
