@@ -596,7 +596,7 @@ body {
 .latency-legend {
     display: flex;
     justify-content: center;
-    gap: 1.5rem;
+    gap: 2.5rem;
     padding-top: 1.5rem;
     flex-wrap: wrap;
     font-size: 0.75rem;
