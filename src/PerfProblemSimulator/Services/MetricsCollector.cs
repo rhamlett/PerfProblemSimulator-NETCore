@@ -265,7 +265,8 @@ public class MetricsCollector : IMetricsCollector
             TotalAvailableMemoryMb = totalAvailableMemoryMb,
             ThreadPoolThreads = threadPoolThreads,
             ThreadPoolQueueLength = queueLength,
-            ActiveSimulationCount = activeCount
+            ActiveSimulationCount = activeCount,
+            ProcessId = _currentProcess.Id
         };
     }
 

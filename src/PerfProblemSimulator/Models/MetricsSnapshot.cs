@@ -56,4 +56,14 @@ public readonly record struct MetricsSnapshot
     /// Number of currently active simulations.
     /// </summary>
     public int ActiveSimulationCount { get; init; }
+
+    /// <summary>
+    /// The process ID of the running application.
+    /// </summary>
+    /// <remarks>
+    /// Used by the dashboard to detect application restarts. When the process ID
+    /// changes between metrics updates, it indicates the application crashed and
+    /// was restarted (e.g., due to OOM, StackOverflow, or Azure auto-restart).
+    /// </remarks>
+    public int ProcessId { get; init; }
 }

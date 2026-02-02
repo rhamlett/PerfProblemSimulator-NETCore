@@ -40,7 +40,8 @@ const state = {
         timeoutCount: 0
     },
     clientProbeInterval: null,
-    activeSimulations: new Map()
+    activeSimulations: new Map(),
+    lastProcessId: null
 };
 
 // ==========================================================================
@@ -148,6 +149,14 @@ function updateConnectionStatus(status, text) {
  * Updates all dashboard elements with the latest data.
  */
 function handleMetricsUpdate(snapshot) {
+    // Check for application restart (process ID change)
+    if (snapshot.processId) {
+        if (state.lastProcessId !== null && state.lastProcessId !== snapshot.processId) {
+            logEvent('danger', `🔄 APPLICATION RESTARTED! Process ID changed from ${state.lastProcessId} to ${snapshot.processId}. This may indicate an unexpected crash (OOM, StackOverflow, etc.)`);
+        }
+        state.lastProcessId = snapshot.processId;
+    }
+
     // Update metric cards
     updateMetricCard('cpu', snapshot.cpuPercent, '%', 100);
     // Use actual available memory from server for dynamic thresholds
