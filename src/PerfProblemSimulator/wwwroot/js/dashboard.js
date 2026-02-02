@@ -926,7 +926,6 @@ function initializeSidePanel() {
     const btnToggle = document.getElementById('btnTogglePanel');
     const btnClose = document.getElementById('btnClosePanel');
     const sidePanel = document.getElementById('sidePanel');
-    const overlay = document.getElementById('sidePanelOverlay');
     
     if (btnToggle) {
         btnToggle.addEventListener('click', toggleSidePanel);
@@ -934,10 +933,6 @@ function initializeSidePanel() {
     
     if (btnClose) {
         btnClose.addEventListener('click', closeSidePanel);
-    }
-    
-    if (overlay) {
-        overlay.addEventListener('click', closeSidePanel);
     }
     
     // Close panel on Escape key
@@ -950,25 +945,21 @@ function initializeSidePanel() {
 
 function toggleSidePanel() {
     const sidePanel = document.getElementById('sidePanel');
-    const overlay = document.getElementById('sidePanelOverlay');
     const btnToggle = document.getElementById('btnTogglePanel');
     
     if (sidePanel.classList.contains('open')) {
         closeSidePanel();
     } else {
         sidePanel.classList.add('open');
-        overlay.classList.add('visible');
         btnToggle.classList.add('active');
     }
 }
 
 function closeSidePanel() {
     const sidePanel = document.getElementById('sidePanel');
-    const overlay = document.getElementById('sidePanelOverlay');
     const btnToggle = document.getElementById('btnTogglePanel');
     
     sidePanel.classList.remove('open');
-    overlay.classList.remove('visible');
     btnToggle.classList.remove('active');
 }
 

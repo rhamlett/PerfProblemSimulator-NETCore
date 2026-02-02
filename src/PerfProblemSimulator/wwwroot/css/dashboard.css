@@ -629,24 +629,6 @@ body {
     padding: 0.5rem 0.75rem;
 }
 
-.side-panel-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.side-panel-overlay.visible {
-    opacity: 1;
-    visibility: visible;
-}
-
 .reset-group {
     border-color: var(--color-primary);
     background: rgba(0, 120, 212, 0.05);
