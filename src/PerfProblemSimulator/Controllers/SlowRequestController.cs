@@ -127,14 +127,14 @@ public class SlowRequestController : ControllerBase
         {
             ["SimpleSyncOverAsync"] = new ScenarioInfo
             {
-                Name = "Simple Sync-Over-Async",
-                Description = "Direct .Result and .Wait() calls on async methods",
-                WhatProfilerShows = "Time blocked at Task.Result, Task.Wait(), and ManualResetEventSlim.Wait",
+                Name = "Simple Blocking",
+                Description = "Direct Thread.Sleep blocking calls that consume time in profiler",
+                WhatProfilerShows = "Time spent in Thread.Sleep - clearly visible as method self-time",
                 MethodsToLookFor = new[]
                 {
-                    "FetchDataAsync_BLOCKING_HERE",
-                    "ProcessDataAsync_BLOCKING_HERE",
-                    "SaveDataAsync_BLOCKING_HERE"
+                    "FetchDataSync_BLOCKING_HERE",
+                    "ProcessDataSync_BLOCKING_HERE",
+                    "SaveDataSync_BLOCKING_HERE"
                 }
             },
             ["NestedSyncOverAsync"] = new ScenarioInfo
@@ -153,15 +153,15 @@ public class SlowRequestController : ControllerBase
             ["DatabasePattern"] = new ScenarioInfo
             {
                 Name = "Database/HTTP Pattern",
-                Description = "GetAwaiter().GetResult() pattern common in legacy code migrations",
-                WhatProfilerShows = "Multiple GetAwaiter().GetResult() calls simulating database and HTTP calls",
+                Description = "Simulated database and HTTP blocking calls",
+                WhatProfilerShows = "Time spent in methods simulating database queries and HTTP calls",
                 MethodsToLookFor = new[]
                 {
-                    "GetCustomerFromDatabaseAsync_SYNC_BLOCK",
-                    "GetOrderHistoryFromDatabaseAsync_SYNC_BLOCK",
-                    "CheckInventoryServiceAsync_SYNC_BLOCK",
-                    "GetRecommendationsFromMLServiceAsync_SYNC_BLOCK",
-                    "BuildResponseAsync_SYNC_BLOCK"
+                    "GetCustomerFromDatabaseSync_SYNC_BLOCK",
+                    "GetOrderHistoryFromDatabaseSync_SYNC_BLOCK",
+                    "CheckInventoryServiceSync_SYNC_BLOCK",
+                    "GetRecommendationsFromMLServiceSync_SYNC_BLOCK",
+                    "BuildResponseSync_SYNC_BLOCK"
                 }
             }
         };

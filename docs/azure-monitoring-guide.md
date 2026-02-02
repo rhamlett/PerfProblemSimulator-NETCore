@@ -218,13 +218,13 @@ This simulation is designed for **training developers to identify blocking calls
 
 The service uses three different sync-over-async patterns with **intentionally descriptive method names**:
 
-#### Scenario 1: Simple Sync-Over-Async
-Look for method: `FetchDataAsync_BLOCKING_HERE`
+#### Scenario 1: Simple Blocking
+Look for methods: `FetchDataSync_BLOCKING_HERE`, `ProcessDataSync_BLOCKING_HERE`, `SaveDataSync_BLOCKING_HERE`
 ```
-This shows a direct .Wait() call on the async method.
-In the profiler, you'll see threads blocked at:
-  → SlowRequestService.FetchDataAsync_BLOCKING_HERE
-    → Task.Wait()
+These methods use Thread.Sleep to block - clearly visible in profiler.
+In the profiler, you'll see time spent at:
+  → SlowRequestService.FetchDataSync_BLOCKING_HERE
+    → Thread.Sleep
 ```
 
 #### Scenario 2: Nested Sync Methods
@@ -238,12 +238,14 @@ These are synchronous methods that internally call .Wait():
 ```
 
 #### Scenario 3: Database/HTTP Pattern
-Look for methods ending in: `_SYNC_BLOCK`
+Look for methods ending in: `Sync_SYNC_BLOCK`
 ```
-Realistic patterns using GetAwaiter().GetResult():
-  → GetCustomerFromDatabaseAsync_SYNC_BLOCK
-  → CallExternalApiAsync_SYNC_BLOCK
-  → SaveAuditLogAsync_SYNC_BLOCK
+Simulated database and HTTP blocking calls:
+  → GetCustomerFromDatabaseSync_SYNC_BLOCK
+  → GetOrderHistoryFromDatabaseSync_SYNC_BLOCK
+  → CheckInventoryServiceSync_SYNC_BLOCK
+  → GetRecommendationsFromMLServiceSync_SYNC_BLOCK
+  → BuildResponseSync_SYNC_BLOCK
 ```
 
 ### Recommended Settings for CLR Profiler (60s trace)

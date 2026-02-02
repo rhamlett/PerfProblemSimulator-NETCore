@@ -150,9 +150,9 @@ The CPU and Memory metric tiles use dynamic color coding based on utilization pe
 ```
 
 The slow request simulator generates requests using three different sync-over-async patterns:
-- **SimpleSyncOverAsync**: Direct `.Wait()` blocking - look for `FetchDataAsync_BLOCKING_HERE` in traces
+- **SimpleSyncOverAsync**: Blocking calls - look for `FetchDataSync_BLOCKING_HERE`, `ProcessDataSync_BLOCKING_HERE`, `SaveDataSync_BLOCKING_HERE` in traces
 - **NestedSyncOverAsync**: Sync methods that block internally - look for `*_BLOCKS_INTERNALLY` methods
-- **DatabasePattern**: Realistic `GetAwaiter().GetResult()` - look for `*_SYNC_BLOCK` methods
+- **DatabasePattern**: Simulated database/HTTP blocking - look for `*Sync_SYNC_BLOCK` methods
 
 ### Admin Operations
 

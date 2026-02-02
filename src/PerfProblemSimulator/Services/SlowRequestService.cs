@@ -37,9 +37,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<SlowRequestService> _logger;
-    private readonly IConfiguration _configuration;
     private readonly Random _random = new();
-    private readonly HttpClient _httpClient;
 
     private CancellationTokenSource? _cts;
     private Thread? _requestSpawnerThread;
@@ -54,28 +52,15 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     private Guid _simulationId;
     private readonly Dictionary<string, int> _scenarioCounts = new();
     private readonly object _lock = new();
-    private string _baseUrl = "http://localhost:5221";
 
     public bool IsRunning => _isRunning;
 
     public SlowRequestService(
         ISimulationTracker simulationTracker,
-        ILogger<SlowRequestService> logger,
-        IConfiguration configuration)
+        ILogger<SlowRequestService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
-        
-        // Create HttpClient with long timeout for slow requests
-        _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-        
-        // Get base URL from configuration
-        var urls = _configuration["ASPNETCORE_URLS"] ?? _configuration["urls"];
-        if (!string.IsNullOrEmpty(urls))
-        {
-            _baseUrl = urls.Split(';')[0];
-        }
     }
 
     public SimulationResult Start(SlowRequestRequest request)
@@ -245,10 +230,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     {
         try
         {
-            // Call the HTTP endpoint so the request shows up in the latency monitor
-            ExecuteHttpSlowRequest(durationSeconds, ct);
-            
-            // Also execute the internal sync-over-async pattern for CLR Profiler
+            // Execute the blocking scenario - uses Thread.Sleep so it shows up in CLR Profiler
             switch (scenario)
             {
                 case SlowRequestScenario.SimpleSyncOverAsync:
@@ -264,7 +246,8 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                     break;
             }
 
-            _logger.LogInformation("🐌 Slow request #{Number} ({Scenario}) completed", requestNumber, scenario);
+            _logger.LogInformation("🐌 Slow request #{Number} ({Scenario}) completed after {Duration}s", 
+                requestNumber, scenario, durationSeconds);
         }
         catch (OperationCanceledException)
         {
@@ -313,43 +296,44 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     // SCENARIO 1: Simple Sync-Over-Async
     // ==========================================================================
     // CLR Profiler will show time blocked at .Result and .Wait()
+    // Using Thread.Sleep to ensure the time shows up in profiler
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void ExecuteSimpleSyncOverAsyncRequest(int totalDurationSeconds, CancellationToken ct)
     {
         var partDuration = totalDurationSeconds * 1000 / 3;
 
-        // BAD: Blocking on async with .Result
-        var data = FetchDataAsync_BLOCKING_HERE(partDuration, ct).Result;
+        // BAD: Blocking the thread - shows up in CLR Profiler
+        FetchDataSync_BLOCKING_HERE(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        // BAD: Blocking on async with .Wait()
-        ProcessDataAsync_BLOCKING_HERE(data, partDuration, ct).Wait();
+        // BAD: More blocking
+        ProcessDataSync_BLOCKING_HERE(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        // BAD: Another .Result call
-        var finalResult = SaveDataAsync_BLOCKING_HERE(data, partDuration, ct).Result;
+        // BAD: Final blocking call
+        SaveDataSync_BLOCKING_HERE(partDuration);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<string> FetchDataAsync_BLOCKING_HERE(int delayMs, CancellationToken ct)
+    private void FetchDataSync_BLOCKING_HERE(int delayMs)
     {
-        // Simulates async I/O operation (e.g., HTTP call, database query)
-        await Task.Delay(delayMs, ct);
-        return "fetched-data-" + Guid.NewGuid().ToString("N")[..8];
+        // Intentional blocking - will show in profiler as Thread.Sleep
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task ProcessDataAsync_BLOCKING_HERE(string data, int delayMs, CancellationToken ct)
+    private void ProcessDataSync_BLOCKING_HERE(int delayMs)
     {
-        // Simulates async processing
-        await Task.Delay(delayMs, ct);
+        // Intentional blocking
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<bool> SaveDataAsync_BLOCKING_HERE(string data, int delayMs, CancellationToken ct)
+    private void SaveDataSync_BLOCKING_HERE(int delayMs)
     {
-        // Simulates async save operation
-        await Task.Delay(delayMs, ct);
-        return true;
+        // Intentional blocking
+        Thread.Sleep(delayMs);
     }
 
     // ==========================================================================
@@ -362,63 +346,45 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     {
         var partDuration = totalDurationSeconds * 1000 / 4;
 
-        // Each method internally blocks on async - creates nested blocking pattern
-        ValidateOrderSync_BLOCKS_INTERNALLY(partDuration, ct);
-        CheckInventorySync_BLOCKS_INTERNALLY(partDuration, ct);
-        ProcessPaymentSync_BLOCKS_INTERNALLY(partDuration, ct);
-        SendConfirmationSync_BLOCKS_INTERNALLY(partDuration, ct);
+        // Each method internally blocks - creates nested blocking pattern
+        ValidateOrderSync_BLOCKS_INTERNALLY(partDuration);
+        ct.ThrowIfCancellationRequested();
+        
+        CheckInventorySync_BLOCKS_INTERNALLY(partDuration);
+        ct.ThrowIfCancellationRequested();
+        
+        ProcessPaymentSync_BLOCKS_INTERNALLY(partDuration);
+        ct.ThrowIfCancellationRequested();
+        
+        SendConfirmationSync_BLOCKS_INTERNALLY(partDuration);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ValidateOrderSync_BLOCKS_INTERNALLY(int delayMs, CancellationToken ct)
+    private void ValidateOrderSync_BLOCKS_INTERNALLY(int delayMs)
     {
-        // BAD: Sync method that blocks on async internally
-        ValidateOrderAsync(delayMs, ct).Wait();
+        // BAD: Blocking internally
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task ValidateOrderAsync(int delayMs, CancellationToken ct)
+    private void CheckInventorySync_BLOCKS_INTERNALLY(int delayMs)
     {
-        await Task.Delay(delayMs, ct);
+        // BAD: Blocking internally
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private void CheckInventorySync_BLOCKS_INTERNALLY(int delayMs, CancellationToken ct)
+    private void ProcessPaymentSync_BLOCKS_INTERNALLY(int delayMs)
     {
-        // BAD: Sync method that blocks on async internally
-        CheckInventoryAsync(delayMs, ct).Wait();
+        // BAD: Blocking internally
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task CheckInventoryAsync(int delayMs, CancellationToken ct)
+    private void SendConfirmationSync_BLOCKS_INTERNALLY(int delayMs)
     {
-        await Task.Delay(delayMs, ct);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ProcessPaymentSync_BLOCKS_INTERNALLY(int delayMs, CancellationToken ct)
-    {
-        // BAD: Sync method that blocks on async internally
-        ProcessPaymentAsync(delayMs, ct).GetAwaiter().GetResult();
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task ProcessPaymentAsync(int delayMs, CancellationToken ct)
-    {
-        await Task.Delay(delayMs, ct);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void SendConfirmationSync_BLOCKS_INTERNALLY(int delayMs, CancellationToken ct)
-    {
-        // BAD: Sync method that blocks on async internally
-        SendConfirmationAsync(delayMs, ct).Wait();
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task SendConfirmationAsync(int delayMs, CancellationToken ct)
-    {
-        await Task.Delay(delayMs, ct);
+        // BAD: Blocking internally
+        Thread.Sleep(delayMs);
     }
 
     // ==========================================================================
@@ -431,96 +397,61 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     {
         var partDuration = totalDurationSeconds * 1000 / 5;
 
-        // This pattern is very common in legacy code or incorrect async usage
-        var customer = GetCustomerFromDatabaseAsync_SYNC_BLOCK(1, partDuration, ct)
-            .GetAwaiter().GetResult();
+        // This pattern is very common in legacy code - method names show what it simulates
+        GetCustomerFromDatabaseSync_SYNC_BLOCK(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        var orders = GetOrderHistoryFromDatabaseAsync_SYNC_BLOCK(customer, partDuration, ct)
-            .GetAwaiter().GetResult();
+        GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        var inventory = CheckInventoryServiceAsync_SYNC_BLOCK(orders, partDuration, ct)
-            .GetAwaiter().GetResult();
+        CheckInventoryServiceSync_SYNC_BLOCK(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        var recommendations = GetRecommendationsFromMLServiceAsync_SYNC_BLOCK(orders, partDuration, ct)
-            .GetAwaiter().GetResult();
+        GetRecommendationsFromMLServiceSync_SYNC_BLOCK(partDuration);
+        ct.ThrowIfCancellationRequested();
 
-        var response = BuildResponseAsync_SYNC_BLOCK(customer, orders, recommendations, partDuration, ct)
-            .GetAwaiter().GetResult();
+        BuildResponseSync_SYNC_BLOCK(partDuration);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<CustomerData> GetCustomerFromDatabaseAsync_SYNC_BLOCK(int customerId, int delayMs, CancellationToken ct)
+    private void GetCustomerFromDatabaseSync_SYNC_BLOCK(int delayMs)
     {
-        // Simulates database query
-        await Task.Delay(delayMs, ct);
-        return new CustomerData { Id = customerId, Name = "Test Customer" };
+        // Simulates blocking database query
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<List<OrderData>> GetOrderHistoryFromDatabaseAsync_SYNC_BLOCK(CustomerData customer, int delayMs, CancellationToken ct)
+    private void GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(int delayMs)
     {
-        // Simulates database query for order history
-        await Task.Delay(delayMs, ct);
-        return new List<OrderData> { new() { Id = 1, CustomerId = customer.Id } };
+        // Simulates blocking database query
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<InventoryData> CheckInventoryServiceAsync_SYNC_BLOCK(List<OrderData> orders, int delayMs, CancellationToken ct)
+    private void CheckInventoryServiceSync_SYNC_BLOCK(int delayMs)
     {
-        // Simulates HTTP call to inventory service
-        await Task.Delay(delayMs, ct);
-        return new InventoryData { Available = true };
+        // Simulates blocking HTTP call
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<List<string>> GetRecommendationsFromMLServiceAsync_SYNC_BLOCK(List<OrderData> orders, int delayMs, CancellationToken ct)
+    private void GetRecommendationsFromMLServiceSync_SYNC_BLOCK(int delayMs)
     {
-        // Simulates HTTP call to ML recommendation service
-        await Task.Delay(delayMs, ct);
-        return new List<string> { "Product A", "Product B" };
+        // Simulates blocking ML service call
+        Thread.Sleep(delayMs);
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private async Task<ResponseData> BuildResponseAsync_SYNC_BLOCK(CustomerData customer, List<OrderData> orders, List<string> recommendations, int delayMs, CancellationToken ct)
+    private void BuildResponseSync_SYNC_BLOCK(int delayMs)
     {
-        // Simulates building a complex response
-        await Task.Delay(delayMs, ct);
-        return new ResponseData { Success = true };
-    }
-
-    // Simple data classes for the database pattern scenario
-    private class CustomerData { public int Id { get; set; } public string Name { get; set; } = ""; }
-    private class OrderData { public int Id { get; set; } public int CustomerId { get; set; } }
-    private class InventoryData { public bool Available { get; set; } }
-    private class ResponseData { public bool Success { get; set; } }
-
-    /// <summary>
-    /// Executes a slow request via HTTP so it shows up in the latency monitor.
-    /// </summary>
-    private void ExecuteHttpSlowRequest(int durationSeconds, CancellationToken ct)
-    {
-        try
-        {
-            var url = $"{_baseUrl}/api/slowrequest/execute-slow?durationSeconds={durationSeconds}";
-            _logger.LogDebug("🐌 Calling HTTP slow endpoint: {Url}", url);
-            
-            // BAD: Blocking HTTP call - this shows up in latency monitor AND CLR Profiler
-            var response = _httpClient.GetAsync(url, ct).GetAwaiter().GetResult();
-            response.EnsureSuccessStatusCode();
-            
-            _logger.LogDebug("🐌 HTTP slow endpoint returned: {StatusCode}", response.StatusCode);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            _logger.LogWarning(ex, "HTTP slow request failed, continuing with internal simulation");
-        }
+        // Simulates response building delay
+        Thread.Sleep(delayMs);
     }
 
     public void Dispose()
     {
         Stop();
         _cts?.Dispose();
-        _httpClient.Dispose();
         GC.SuppressFinalize(this);
     }
 }
