@@ -160,15 +160,15 @@ public class CpuStressService : ICpuStressService
     /// <strong>⚠️ THIS IS AN ANTI-PATTERN - FOR EDUCATIONAL PURPOSES ONLY ⚠️</strong>
     /// </para>
     /// <para>
-    /// This method uses <c>Parallel.For</c> with spin loops to consume all available CPU cores.
-    /// Each iteration of the parallel loop runs a tight <c>while</c> loop that does nothing
-    /// but check the time and cancellation token.
+    /// This method uses dedicated threads with spin loops to consume all available CPU cores.
+    /// Each thread runs a tight <c>while</c> loop that does nothing but check the time 
+    /// and cancellation token.
     /// </para>
     /// <para>
-    /// <strong>Why Parallel.For?</strong>
-    /// A single-threaded spin loop would only consume one CPU core (showing ~12.5% CPU on
-    /// an 8-core machine). By using <c>Parallel.For</c> with <c>Environment.ProcessorCount</c>
-    /// iterations, we ensure all cores are saturated, showing "near 100%" CPU usage.
+    /// <strong>Why Dedicated Threads Instead of Parallel.For?</strong>
+    /// Using <c>Parallel.For</c> would consume thread pool threads, which can interfere with
+    /// ASP.NET Core request handling and SignalR. By using dedicated threads, we ensure the
+    /// thread pool remains available for the dashboard and metrics collection.
     /// </para>
     /// </remarks>
     private void ExecuteCpuStress(Guid simulationId, int durationSeconds, CancellationToken cancellationToken)
@@ -176,39 +176,53 @@ public class CpuStressService : ICpuStressService
         try
         {
             // Calculate the end time using Stopwatch for high precision
-            // Stopwatch.Frequency gives ticks per second, allowing accurate timing
             var endTime = Stopwatch.GetTimestamp() + (durationSeconds * Stopwatch.Frequency);
+            var processorCount = Environment.ProcessorCount;
 
             // ==========================================================================
-            // THE ANTI-PATTERN: Parallel spin loops
+            // THE ANTI-PATTERN: Dedicated thread spin loops
             // ==========================================================================
             // This code intentionally:
-            // 1. Creates one parallel task per CPU core
-            // 2. Each task runs a tight while loop (spin loop)
+            // 1. Creates one dedicated thread per CPU core
+            // 2. Each thread runs a tight while loop (spin loop)
             // 3. The while loop continuously checks the time and does NOTHING useful
             //
-            // In production, you would:
-            // - Use async/await for I/O-bound operations
-            // - Use efficient algorithms for CPU-bound work
-            // - Avoid busy-waiting in favor of events or timers
+            // We use dedicated threads instead of Parallel.For to avoid starving the
+            // thread pool, which would freeze the dashboard and SignalR.
 
-            Parallel.For(0, Environment.ProcessorCount,
-                new ParallelOptions
-                {
-                    CancellationToken = cancellationToken,
-                    MaxDegreeOfParallelism = Environment.ProcessorCount
-                },
-                _ =>
+            var threads = new Thread[processorCount];
+            
+            for (int i = 0; i < processorCount; i++)
+            {
+                var threadIndex = i;
+                threads[i] = new Thread(() =>
                 {
                     // This spin loop is the source of high CPU usage
                     // It does nothing but burn CPU cycles checking conditions
                     while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
                     {
                         // Intentionally empty - this is a spin loop
-                        // Every CPU cycle spent here is a wasted cycle that could be
-                        // doing useful work for other threads/processes
+                        // Every CPU cycle spent here is a wasted cycle
                     }
-                });
+                })
+                {
+                    Name = $"CpuStress-{simulationId:N}-{threadIndex}",
+                    IsBackground = true,
+                    Priority = ThreadPriority.Normal
+                };
+            }
+
+            // Start all threads
+            foreach (var thread in threads)
+            {
+                thread.Start();
+            }
+
+            // Wait for all threads to complete
+            foreach (var thread in threads)
+            {
+                thread.Join();
+            }
 
             _logger.LogInformation(
                 "CPU stress simulation {SimulationId} completed normally after {Duration}s",
