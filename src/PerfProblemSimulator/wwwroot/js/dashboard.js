@@ -153,6 +153,8 @@ function handleMetricsUpdate(snapshot) {
     if (snapshot.processId) {
         if (state.lastProcessId !== null && state.lastProcessId !== snapshot.processId) {
             logEvent('danger', `🔄 APPLICATION RESTARTED! Process ID changed from ${state.lastProcessId} to ${snapshot.processId}. This may indicate an unexpected crash (OOM, StackOverflow, etc.)`);
+            // Clear all active simulations since the app restarted
+            clearAllActiveSimulations();
         }
         state.lastProcessId = snapshot.processId;
     }
@@ -1001,10 +1003,20 @@ async function resetAll() {
         if (response.ok) {
             const result = await response.json();
             logEvent('success', `🔄 Reset complete: ${result.memoryBlocksReleased} memory blocks released`);
+            // Clear all active simulations from the UI
+            clearAllActiveSimulations();
         } else {
             logEvent('error', 'Reset failed');
         }
     } catch (error) {
         logEvent('error', `Reset error: ${error.message}`);
     }
+}
+
+/**
+ * Clear all active simulations from state and UI.
+ */
+function clearAllActiveSimulations() {
+    state.activeSimulations.clear();
+    updateActiveSimulationsUI();
 }
