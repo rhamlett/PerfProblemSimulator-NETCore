@@ -69,7 +69,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             return new SimulationResult
             {
                 SimulationId = _simulationId,
-                Type = SimulationType.ThreadBlock,
+                Type = SimulationType.SlowRequest,
                 Status = "AlreadyRunning",
                 Message = "Slow request simulation is already running. Stop it first."
             };
@@ -93,7 +93,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             ["MaxRequests"] = request.MaxRequests
         };
 
-        _simulationTracker.RegisterSimulation(_simulationId, SimulationType.ThreadBlock, parameters, _cts);
+        _simulationTracker.RegisterSimulation(_simulationId, SimulationType.SlowRequest, parameters, _cts);
 
         // Use dedicated thread (not thread pool) to spawn requests
         _requestSpawnerThread = new Thread(() => SpawnRequestsLoop(request.MaxRequests, _cts.Token))
@@ -112,7 +112,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         return new SimulationResult
         {
             SimulationId = _simulationId,
-            Type = SimulationType.ThreadBlock,
+            Type = SimulationType.SlowRequest,
             Status = "Started",
             Message = $"Slow request simulation started. Sending requests every {_intervalSeconds}s, " +
                       $"each taking ~{_requestDurationSeconds}s. Scenarios: SimpleSyncOverAsync, NestedSyncOverAsync, DatabasePattern. " +
@@ -129,7 +129,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             return new SimulationResult
             {
                 SimulationId = Guid.Empty,
-                Type = SimulationType.ThreadBlock,
+                Type = SimulationType.SlowRequest,
                 Status = "NotRunning",
                 Message = "No slow request simulation is running."
             };
@@ -147,7 +147,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         return new SimulationResult
         {
             SimulationId = _simulationId,
-            Type = SimulationType.ThreadBlock,
+            Type = SimulationType.SlowRequest,
             Status = "Stopped",
             Message = $"Slow request simulation stopped. Total requests: {_requestsSent}, " +
                       $"Completed: {_requestsCompleted}, Still in progress: {_requestsInProgress}",
