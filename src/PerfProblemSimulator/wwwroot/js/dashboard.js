@@ -935,6 +935,16 @@ function initializeSidePanel() {
         btnClose.addEventListener('click', closeSidePanel);
     }
     
+    // Close panel when clicking outside (on main content)
+    document.addEventListener('click', (e) => {
+        if (sidePanel.classList.contains('open')) {
+            // Check if click is outside the panel and not on the toggle button
+            if (!sidePanel.contains(e.target) && !btnToggle.contains(e.target)) {
+                closeSidePanel();
+            }
+        }
+    });
+    
     // Close panel on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && sidePanel.classList.contains('open')) {
