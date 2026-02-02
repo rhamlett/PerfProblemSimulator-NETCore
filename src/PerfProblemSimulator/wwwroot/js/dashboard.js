@@ -906,5 +906,89 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnTriggerThreadBlock').addEventListener('click', triggerThreadBlock);
     document.getElementById('btnTriggerCrash').addEventListener('click', triggerCrash);
     
+    // Wire up Reset All button
+    const btnResetAll = document.getElementById('btnResetAll');
+    if (btnResetAll) {
+        btnResetAll.addEventListener('click', resetAll);
+    }
+    
+    // Wire up side panel toggle
+    initializeSidePanel();
+    
     logEvent('info', 'Dashboard initialized');
 });
+
+// ==========================================================================
+// Side Panel Management
+// ==========================================================================
+
+function initializeSidePanel() {
+    const btnToggle = document.getElementById('btnTogglePanel');
+    const btnClose = document.getElementById('btnClosePanel');
+    const sidePanel = document.getElementById('sidePanel');
+    const overlay = document.getElementById('sidePanelOverlay');
+    
+    if (btnToggle) {
+        btnToggle.addEventListener('click', toggleSidePanel);
+    }
+    
+    if (btnClose) {
+        btnClose.addEventListener('click', closeSidePanel);
+    }
+    
+    if (overlay) {
+        overlay.addEventListener('click', closeSidePanel);
+    }
+    
+    // Close panel on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && sidePanel.classList.contains('open')) {
+            closeSidePanel();
+        }
+    });
+}
+
+function toggleSidePanel() {
+    const sidePanel = document.getElementById('sidePanel');
+    const overlay = document.getElementById('sidePanelOverlay');
+    const btnToggle = document.getElementById('btnTogglePanel');
+    
+    if (sidePanel.classList.contains('open')) {
+        closeSidePanel();
+    } else {
+        sidePanel.classList.add('open');
+        overlay.classList.add('visible');
+        btnToggle.classList.add('active');
+    }
+}
+
+function closeSidePanel() {
+    const sidePanel = document.getElementById('sidePanel');
+    const overlay = document.getElementById('sidePanelOverlay');
+    const btnToggle = document.getElementById('btnTogglePanel');
+    
+    sidePanel.classList.remove('open');
+    overlay.classList.remove('visible');
+    btnToggle.classList.remove('active');
+}
+
+async function resetAll() {
+    if (!confirm('Reset all active simulations and release all memory?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/admin/reset-all`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('success', `🔄 Reset complete: ${result.memoryBlocksReleased} memory blocks released`);
+        } else {
+            logEvent('error', 'Reset failed');
+        }
+    } catch (error) {
+        logEvent('error', `Reset error: ${error.message}`);
+    }
+}

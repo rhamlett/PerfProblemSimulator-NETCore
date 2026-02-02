@@ -18,12 +18,90 @@
             <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" style="color: white; text-decoration: none; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.15s ease;">🐙 GitHub</a>
             <a href="/azure-monitoring-guide.html" style="color: white; text-decoration: none; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.15s ease;">☁️ Azure Monitoring</a>
             <a href="/documentation.html" style="color: white; text-decoration: none; padding: 0.5rem 1rem; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.15s ease;">📚 Documentation</a>
+            <button class="btn-panel-toggle" id="btnTogglePanel" title="Toggle Simulation Controls">
+                🎮 Controls
+            </button>
             <div class="connection-status">
                 <span id="connectionIndicator" class="indicator disconnected"></span>
                 <span id="connectionText">Disconnected</span>
             </div>
         </div>
     </header>
+
+    <!-- Side Panel for Simulation Controls -->
+    <aside class="side-panel" id="sidePanel">
+        <div class="side-panel-header">
+            <h2>🎮 Simulation Controls</h2>
+            <button class="btn-close-panel" id="btnClosePanel" title="Close Panel">✕</button>
+        </div>
+        <div class="side-panel-content">
+            <p class="warning-text">⚠️ These buttons intentionally cause performance problems!</p>
+            
+            <div class="control-group">
+                <h3>🔥 CPU Stress</h3>
+                <p>Creates parallel spin loops to max out all CPU cores.</p>
+                <div class="control-inputs">
+                    <label>Duration (s):
+                        <input type="number" id="cpuDuration" value="10" min="1" max="60">
+                    </label>
+                </div>
+                <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
+            </div>
+
+            <div class="control-group">
+                <h3>📊 Memory Pressure</h3>
+                <p>Allocates pinned memory blocks to increase working set.</p>
+                <div class="control-inputs">
+                    <label>Size (MB):
+                        <input type="number" id="memorySize" value="100" min="1" max="500">
+                    </label>
+                </div>
+                <button class="btn btn-warning" id="btnAllocateMemory">📊 Allocate</button>
+                <button class="btn btn-secondary" id="btnReleaseMemory">🗑️ Release</button>
+            </div>
+
+            <div class="control-group">
+                <h3>🧵 Thread Pool Starvation</h3>
+                <p>Blocks threads using sync-over-async anti-pattern.</p>
+                <div class="control-inputs">
+                    <label>Delay (ms):
+                        <input type="number" id="threadDelay" value="5000" min="100" max="30000">
+                    </label>
+                    <label>Count:
+                        <input type="number" id="threadConcurrent" value="100" min="1" max="500">
+                    </label>
+                </div>
+                <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Block Threads</button>
+            </div>
+
+            <div class="control-group crash-group">
+                <h3>💥 Application Crash</h3>
+                <p>Triggers a fatal crash for Azure crash monitoring.</p>
+                <div class="control-inputs">
+                    <label>Type:
+                        <select id="crashType">
+                            <option value="FailFast">FailFast</option>
+                            <option value="StackOverflow">Stack Overflow</option>
+                            <option value="UnhandledException">Unhandled Exception</option>
+                            <option value="AccessViolation">Access Violation</option>
+                            <option value="OutOfMemory">Out of Memory</option>
+                        </select>
+                    </label>
+                    <label>Delay (s):
+                        <input type="number" id="crashDelay" value="0" min="0" max="60">
+                    </label>
+                </div>
+                <button class="btn btn-crash" id="btnTriggerCrash">💀 Trigger Crash</button>
+                <p class="crash-warning">⚠️ This will TERMINATE the app!</p>
+            </div>
+
+            <div class="control-group reset-group">
+                <h3>🔄 Reset</h3>
+                <button class="btn btn-secondary" id="btnResetAll" style="width: 100%;">🔄 Reset All Simulations</button>
+            </div>
+        </div>
+    </aside>
+    <div class="side-panel-overlay" id="sidePanelOverlay"></div>
 
     <main class="dashboard">
         <!-- Metrics Cards Row -->
@@ -147,70 +225,6 @@
         <section class="event-log">
             <h2>📜 Event Log</h2>
             <div id="eventLog" class="log-container"></div>
-        </section>
-
-        <!-- Simulation Controls -->
-        <section class="controls-section">
-            <h2>🎮 Simulation Controls</h2>
-            <p class="warning-text">⚠️ These buttons intentionally cause performance problems for educational purposes!</p>
-            
-            <div class="control-group">
-                <h3>CPU Stress</h3>
-                <p>Creates parallel spin loops to max out all CPU cores.</p>
-                <div class="control-inputs">
-                    <label>Duration (seconds):
-                        <input type="number" id="cpuDuration" value="10" min="1" max="60">
-                    </label>
-                </div>
-                <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
-            </div>
-
-            <div class="control-group">
-                <h3>Memory Pressure</h3>
-                <p>Allocates pinned memory blocks to increase working set.</p>
-                <div class="control-inputs">
-                    <label>Block Size (MB):
-                        <input type="number" id="memorySize" value="100" min="1" max="500">
-                    </label>
-                </div>
-                <button class="btn btn-warning" id="btnAllocateMemory">📊 Allocate Memory</button>
-                <button class="btn btn-secondary" id="btnReleaseMemory">🗑️ Release All Memory</button>
-            </div>
-
-            <div class="control-group">
-                <h3>Thread Pool Starvation</h3>
-                <p>Blocks thread pool threads using sync-over-async anti-pattern.</p>
-                <div class="control-inputs">
-                    <label>Delay (ms):
-                        <input type="number" id="threadDelay" value="5000" min="100" max="30000">
-                    </label>
-                    <label>Concurrent:
-                        <input type="number" id="threadConcurrent" value="100" min="1" max="500">
-                    </label>
-                </div>
-                <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Trigger Thread Blocking</button>
-            </div>
-
-            <div class="control-group crash-group">
-                <h3>💥 Application Crash</h3>
-                <p>Triggers a fatal crash for testing Azure crash monitoring and memory dumps.</p>
-                <div class="control-inputs">
-                    <label>Crash Type:
-                        <select id="crashType">
-                            <option value="FailFast">FailFast (Recommended)</option>
-                            <option value="StackOverflow">Stack Overflow</option>
-                            <option value="UnhandledException">Unhandled Exception</option>
-                            <option value="AccessViolation">Access Violation</option>
-                            <option value="OutOfMemory">Out of Memory</option>
-                        </select>
-                    </label>
-                    <label>Delay (s):
-                        <input type="number" id="crashDelay" value="0" min="0" max="60">
-                    </label>
-                </div>
-                <button class="btn btn-crash" id="btnTriggerCrash">💀 Trigger Crash</button>
-                <p class="crash-warning">⚠️ This will TERMINATE the application! Azure will auto-restart.</p>
-            </div>
         </section>
     </main>
 
