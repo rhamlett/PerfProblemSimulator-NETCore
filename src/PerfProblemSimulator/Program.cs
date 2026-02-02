@@ -117,6 +117,12 @@ builder.Services.AddTransient<ICrashService, CrashService>();
 // Educational Note: Singleton lifetime is required because the service maintains
 // state about running simulations and spawns background threads. This service
 // is designed to be used with CLR Profiler to demonstrate sync-over-async patterns.
+builder.Services.AddHttpClient("SlowRequest")
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        // Long timeout for slow requests
+        ConnectTimeout = TimeSpan.FromSeconds(60)
+    });
 builder.Services.AddSingleton<ISlowRequestService, SlowRequestService>();
 
 // MetricsCollector - Singleton service for collecting system metrics

@@ -36,6 +36,11 @@ const state = {
         isTimeout: [],
         isError: []
     },
+    slowRequestHistory: {
+        timestamps: [],
+        values: [],
+        scenarios: []
+    },
     latencyStats: {
         timeoutCount: 0
     },
@@ -114,6 +119,8 @@ async function initializeSignalR() {
     state.connection.on('simulationCompleted', handleSimulationCompleted);
     state.connection.on('ReceiveLatency', handleLatencyUpdate);
     state.connection.on('receiveLatency', handleLatencyUpdate);
+    state.connection.on('ReceiveSlowRequestLatency', handleSlowRequestLatency);
+    state.connection.on('receiveSlowRequestLatency', handleSlowRequestLatency);
 
     // Start connection
     try {
@@ -490,6 +497,40 @@ function handleLatencyUpdate(measurement) {
     addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
     updateLatencyDisplay(latencyMs, isTimeout, isError);
     updateLatencyChart();
+}
+
+/**
+ * Handle incoming slow request latency from server.
+ * This shows the actual duration of slow requests (20+ seconds).
+ */
+function handleSlowRequestLatency(data) {
+    console.log('🐌 Slow request latency:', data);
+    
+    const timestamp = new Date(data.timestamp);
+    const latencyMs = data.latencyMs;
+    const scenario = data.scenario;
+    
+    // Add to slow request history
+    const history = state.slowRequestHistory;
+    history.timestamps.push(timestamp);
+    history.values.push(latencyMs);
+    history.scenarios.push(scenario);
+    
+    // Trim to max data points
+    while (history.timestamps.length > 100) {
+        history.timestamps.shift();
+        history.values.shift();
+        history.scenarios.shift();
+    }
+    
+    // Add as a special latency point on the chart (it will show as a large spike)
+    addLatencyToHistory(timestamp, latencyMs, false, false);
+    updateLatencyDisplay(latencyMs, false, false);
+    updateLatencyChart();
+    
+    // Log the slow request completion
+    const durationSec = (latencyMs / 1000).toFixed(1);
+    logEvent('warning', `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario})`);
 }
 
 /**

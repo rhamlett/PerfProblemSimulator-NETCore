@@ -55,4 +55,42 @@ public interface IMetricsClient
     /// </para>
     /// </remarks>
     Task ReceiveLatency(LatencyMeasurement measurement);
+
+    /// <summary>
+    /// Receives slow request latency data from the server.
+    /// </summary>
+    /// <param name="data">The slow request latency data.</param>
+    /// <remarks>
+    /// <para>
+    /// This is used to track actual slow request durations (typically 20-25 seconds)
+    /// separately from the lightweight probe latency.
+    /// </para>
+    /// </remarks>
+    Task ReceiveSlowRequestLatency(SlowRequestLatencyData data);
+}
+
+/// <summary>
+/// Data about a slow request's latency.
+/// </summary>
+public class SlowRequestLatencyData
+{
+    /// <summary>
+    /// The request number in the simulation.
+    /// </summary>
+    public int RequestNumber { get; set; }
+    
+    /// <summary>
+    /// The scenario used for this request.
+    /// </summary>
+    public string Scenario { get; set; } = "";
+    
+    /// <summary>
+    /// The measured latency in milliseconds.
+    /// </summary>
+    public double LatencyMs { get; set; }
+    
+    /// <summary>
+    /// When this measurement was taken.
+    /// </summary>
+    public DateTimeOffset Timestamp { get; set; }
 }

@@ -1,4 +1,9 @@
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.SignalR;
+using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace PerfProblemSimulator.Services;
@@ -37,6 +42,9 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<SlowRequestService> _logger;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
+    private readonly IServer _server;
     private readonly Random _random = new();
 
     private CancellationTokenSource? _cts;
@@ -52,15 +60,22 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     private Guid _simulationId;
     private readonly Dictionary<string, int> _scenarioCounts = new();
     private readonly object _lock = new();
+    private string? _baseUrl;
 
     public bool IsRunning => _isRunning;
 
     public SlowRequestService(
         ISimulationTracker simulationTracker,
-        ILogger<SlowRequestService> logger)
+        ILogger<SlowRequestService> logger,
+        IHttpClientFactory httpClientFactory,
+        IHubContext<MetricsHub, IMetricsClient> hubContext,
+        IServer server)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
+        _server = server ?? throw new ArgumentNullException(nameof(server));
     }
 
     public SimulationResult Start(SlowRequestRequest request)
@@ -81,12 +96,15 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         _requestsSent = 0;
         _requestsCompleted = 0;
         _requestsInProgress = 0;
-        _intervalSeconds = Math.Max(5, request.IntervalSeconds);
-        _requestDurationSeconds = Math.Max(10, request.RequestDurationSeconds);
+        _intervalSeconds = Math.Max(1, request.IntervalSeconds);  // Allow 1 second minimum
+        _requestDurationSeconds = Math.Max(5, request.RequestDurationSeconds);  // Allow 5 second minimum
         _maxRequests = request.MaxRequests;
         _startedAt = DateTimeOffset.UtcNow;
         _scenarioCounts.Clear();
         _isRunning = true;
+        
+        // Get the base URL for HTTP calls
+        _baseUrl = GetBaseUrl();
 
         var parameters = new Dictionary<string, object>
         {
@@ -108,8 +126,8 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         _logger.LogWarning(
             "🐌 Slow request simulation started: {SimulationId}. " +
             "Duration={Duration}s, Interval={Interval}s. " +
-            "Requests will use random sync-over-async scenarios.",
-            _simulationId, _requestDurationSeconds, _intervalSeconds);
+            "Making HTTP calls to {BaseUrl}/api/slowrequest/execute-slow",
+            _simulationId, _requestDurationSeconds, _intervalSeconds, _baseUrl);
 
         return new SimulationResult
         {
@@ -190,7 +208,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             Interlocked.Increment(ref _requestsSent);
             Interlocked.Increment(ref _requestsInProgress);
 
-            // Randomly select a scenario
+            // Randomly select a scenario for logging purposes
             var scenario = (SlowRequestScenario)_random.Next(1, 4); // 1, 2, or 3 (skip Random=0)
             
             lock (_lock)
@@ -201,11 +219,12 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             }
 
             _logger.LogInformation(
-                "🐌 Spawning slow request #{Number} using scenario: {Scenario}",
-                requestNumber, scenario);
+                "🐌 Spawning slow HTTP request #{Number} to {BaseUrl}/api/slowrequest/execute-slow?durationSeconds={Duration}",
+                requestNumber, _baseUrl, _requestDurationSeconds);
 
-            // Spawn the slow request on a new thread (simulating incoming HTTP request)
-            var requestThread = new Thread(() => ExecuteSlowRequest(scenario, requestNumber, _requestDurationSeconds, ct))
+            // Spawn the slow request on a new thread - this will make an HTTP call
+            var reqNum = requestNumber;
+            var requestThread = new Thread(() => ExecuteSlowHttpRequest(scenario, reqNum, _requestDurationSeconds, ct))
             {
                 Name = $"SlowRequest-{requestNumber}-{scenario}",
                 IsBackground = true
@@ -226,28 +245,38 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         _logger.LogInformation("Slow request spawner loop ended");
     }
 
-    private void ExecuteSlowRequest(SlowRequestScenario scenario, int requestNumber, int durationSeconds, CancellationToken ct)
+    /// <summary>
+    /// Makes an HTTP call to the slow request endpoint - this goes through the ASP.NET pipeline
+    /// and will show up in the Request Latency Monitor.
+    /// </summary>
+    private void ExecuteSlowHttpRequest(SlowRequestScenario scenario, int requestNumber, int durationSeconds, CancellationToken ct)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
-            // Execute the blocking scenario - uses Thread.Sleep so it shows up in CLR Profiler
-            switch (scenario)
+            if (string.IsNullOrEmpty(_baseUrl))
             {
-                case SlowRequestScenario.SimpleSyncOverAsync:
-                    ExecuteSimpleSyncOverAsyncRequest(durationSeconds, ct);
-                    break;
-
-                case SlowRequestScenario.NestedSyncOverAsync:
-                    ExecuteNestedSyncOverAsyncRequest(durationSeconds, ct);
-                    break;
-
-                case SlowRequestScenario.DatabasePattern:
-                    ExecuteDatabasePatternRequest(durationSeconds, ct);
-                    break;
+                _logger.LogError("Base URL not configured for slow request HTTP calls");
+                return;
             }
 
-            _logger.LogInformation("🐌 Slow request #{Number} ({Scenario}) completed after {Duration}s", 
-                requestNumber, scenario, durationSeconds);
+            var client = _httpClientFactory.CreateClient("SlowRequest");
+            client.Timeout = TimeSpan.FromSeconds(durationSeconds + 30); // Extra buffer for network overhead
+            
+            var url = $"{_baseUrl}/api/slowrequest/execute-slow?durationSeconds={durationSeconds}&scenario={scenario}";
+            
+            // Make HTTP call - this blocks the thread and goes through ASP.NET pipeline
+            var response = client.GetAsync(url, ct).GetAwaiter().GetResult();
+            
+            sw.Stop();
+            var latencyMs = sw.Elapsed.TotalMilliseconds;
+            
+            _logger.LogInformation(
+                "🐌 Slow HTTP request #{Number} ({Scenario}) completed in {Latency:F0}ms (expected ~{Expected}s)", 
+                requestNumber, scenario, latencyMs, durationSeconds);
+
+            // Broadcast the slow request latency to the dashboard
+            BroadcastSlowRequestLatency(requestNumber, scenario, latencyMs);
         }
         catch (OperationCanceledException)
         {
@@ -255,7 +284,8 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Slow request #{Number} failed", requestNumber);
+            sw.Stop();
+            _logger.LogError(ex, "Slow HTTP request #{Number} failed after {Elapsed}ms", requestNumber, sw.ElapsedMilliseconds);
         }
         finally
         {
@@ -265,6 +295,53 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             // Check if simulation is naturally complete (all requests done)
             CheckAndCompleteSimulation();
         }
+    }
+    
+    /// <summary>
+    /// Broadcasts slow request latency to connected dashboard clients.
+    /// </summary>
+    private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs)
+    {
+        try
+        {
+            _hubContext.Clients.All.ReceiveSlowRequestLatency(new SlowRequestLatencyData
+            {
+                RequestNumber = requestNumber,
+                Scenario = scenario.ToString(),
+                LatencyMs = latencyMs,
+                Timestamp = DateTimeOffset.UtcNow
+            }).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to broadcast slow request latency");
+        }
+    }
+    
+    /// <summary>
+    /// Gets the base URL for making HTTP calls to ourselves.
+    /// </summary>
+    private string? GetBaseUrl()
+    {
+        try
+        {
+            var addresses = _server.Features.Get<IServerAddressesFeature>();
+            if (addresses != null && addresses.Addresses.Count > 0)
+            {
+                var address = addresses.Addresses.First();
+                // Replace wildcard addresses
+                address = address.Replace("[::]", "localhost").Replace("0.0.0.0", "localhost");
+                _logger.LogDebug("Detected server address for slow requests: {Address}", address);
+                return address;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not detect server address");
+        }
+        
+        // Fallback for Azure/production environments - use relative URL
+        return "http://localhost:5021";
     }
 
     /// <summary>
