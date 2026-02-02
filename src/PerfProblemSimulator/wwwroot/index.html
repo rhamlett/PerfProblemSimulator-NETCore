@@ -74,6 +74,25 @@
                 <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Block Threads</button>
             </div>
 
+            <div class="control-group slowrequest-group">
+                <h3>🐌 Slow Requests</h3>
+                <p>Generates ~25s requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
+                <div class="control-inputs">
+                    <label>Duration (s):
+                        <input type="number" id="slowRequestDuration" value="25" min="5" max="60" title="How long each request takes">
+                    </label>
+                    <label>Interval (s):
+                        <input type="number" id="slowRequestInterval" value="2" min="1" max="30" title="Time between requests">
+                    </label>
+                    <label>Max Requests:
+                        <input type="number" id="slowRequestMax" value="10" min="1" max="100" title="Total requests to generate">
+                    </label>
+                </div>
+                <button class="btn btn-slowrequest" id="btnStartSlowRequests">🐌 Start Slow Requests</button>
+                <button class="btn btn-secondary" id="btnStopSlowRequests">⏹️ Stop</button>
+                <div id="slowRequestStatus" class="slowrequest-status"></div>
+            </div>
+
             <div class="control-group crash-group">
                 <h3>💥 Application Crash</h3>
                 <p>Triggers a fatal crash for Azure crash monitoring.</p>

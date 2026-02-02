@@ -113,6 +113,12 @@ builder.Services.AddTransient<IThreadBlockService, ThreadBlockService>();
 // how to use Azure crash monitoring and memory dump collection.
 builder.Services.AddTransient<ICrashService, CrashService>();
 
+// SlowRequestService - Singleton service for slow request simulation
+// Educational Note: Singleton lifetime is required because the service maintains
+// state about running simulations and spawns background threads. This service
+// is designed to be used with CLR Profiler to demonstrate sync-over-async patterns.
+builder.Services.AddSingleton<ISlowRequestService, SlowRequestService>();
+
 // MetricsCollector - Singleton service for collecting system metrics
 // Educational Note: This service runs on a DEDICATED THREAD (not the thread pool)
 // so it remains responsive even during thread pool starvation scenarios.

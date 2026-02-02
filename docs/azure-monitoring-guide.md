@@ -4,11 +4,12 @@ This guide explains how to use Azure monitoring tools to diagnose the performanc
 
 ## 📊 Overview
 
-The Performance Problem Simulator creates three types of issues:
+The Performance Problem Simulator creates four types of issues:
 
 1. **High CPU** - Parallel spin loops consuming all cores
 2. **Memory Pressure** - Pinned allocations on the Large Object Heap
 3. **Thread Pool Starvation** - Sync-over-async blocking patterns
+4. **Slow Requests** - Long-running requests using sync-over-async for CLR Profiler analysis
 
 Each issue can be diagnosed using specific Azure tools and techniques.
 
@@ -188,7 +189,106 @@ Task.Run(async () =>
 
 ---
 
-## 💥 Diagnosing Application Crashes
+## � Diagnosing Slow Requests with CLR Profiler
+
+The Slow Request Simulator generates long-running requests (~25 seconds each) using sync-over-async patterns specifically designed to be easily identifiable in CLR Profiler traces.
+
+### Purpose
+
+This simulation is designed for **training developers to identify blocking calls** in profiler traces. Unlike the Thread Pool Starvation simulation (which causes many short blocks), this creates individual long requests that are clearly visible in call stacks.
+
+### Azure Tools to Use
+
+#### 1. Azure Auto-Heal with Slow Request Trigger
+
+1. Navigate to your App Service in the Azure Portal
+2. Go to **Diagnose and solve problems**
+3. Search for "Auto-Heal"
+4. Configure slow request trigger (e.g., requests > 20 seconds)
+
+#### 2. CLR Profiler / Azure Profiler
+
+1. In App Service, go to **Diagnose and solve problems**
+2. Search for "Profiler"
+3. Start a **CPU Profiler** trace (60-120 seconds recommended)
+4. Trigger the slow request simulation
+5. Download and analyze the trace
+
+### What to Look For in CLR Profiler
+
+The service uses three different sync-over-async patterns with **intentionally descriptive method names**:
+
+#### Scenario 1: Simple Sync-Over-Async
+Look for method: `FetchDataAsync_BLOCKING_HERE`
+```
+This shows a direct .Wait() call on the async method.
+In the profiler, you'll see threads blocked at:
+  → SlowRequestService.FetchDataAsync_BLOCKING_HERE
+    → Task.Wait()
+```
+
+#### Scenario 2: Nested Sync Methods
+Look for methods ending in: `_BLOCKS_INTERNALLY`
+```
+These are synchronous methods that internally call .Wait():
+  → ValidateOrderSync_BLOCKS_INTERNALLY
+  → CheckInventorySync_BLOCKS_INTERNALLY  
+  → ProcessPaymentSync_BLOCKS_INTERNALLY
+  → SendConfirmationSync_BLOCKS_INTERNALLY
+```
+
+#### Scenario 3: Database/HTTP Pattern
+Look for methods ending in: `_SYNC_BLOCK`
+```
+Realistic patterns using GetAwaiter().GetResult():
+  → GetCustomerFromDatabaseAsync_SYNC_BLOCK
+  → CallExternalApiAsync_SYNC_BLOCK
+  → SaveAuditLogAsync_SYNC_BLOCK
+```
+
+### Recommended Settings for CLR Profiler (60s trace)
+
+| Setting | Value | Reason |
+|---------|-------|--------|
+| Request Duration | 25s | Long enough to capture in trace |
+| Interval | 10s | Multiple requests during 60s trace |
+| Max Requests | 6 | Enough samples without overwhelming |
+
+### Code Pattern (What's Wrong)
+
+```csharp
+// SCENARIO 1: Direct blocking - most obvious in traces
+public void ProcessRequest()
+{
+    // BAD: Blocking on async - thread is blocked for 25 seconds!
+    FetchDataAsync().Wait();
+}
+
+// SCENARIO 2: Hidden blocking inside sync methods
+public void ValidateOrderSync_BLOCKS_INTERNALLY()
+{
+    // BAD: Looks like a sync method but blocks internally
+    ValidateOrderAsync().Wait();
+}
+
+// SCENARIO 3: Common legacy migration pattern
+public Customer GetCustomer(int id)
+{
+    // BAD: GetAwaiter().GetResult() still blocks!
+    return GetCustomerAsync(id).GetAwaiter().GetResult();
+}
+```
+
+### Key Insight
+
+The slow request simulator makes sync-over-async **visible in profiler call stacks** because:
+1. Requests are long enough (25s) to be captured during any reasonable trace period
+2. Method names explicitly indicate where blocking occurs
+3. Multiple scenarios show different blocking patterns commonly found in production code
+
+---
+
+## �💥 Diagnosing Application Crashes
 
 ### Symptoms
 

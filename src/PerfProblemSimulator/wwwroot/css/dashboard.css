@@ -368,6 +368,45 @@ body {
     font-weight: 600;
 }
 
+/* Slow Request Simulator Styles */
+.btn-slowrequest {
+    background: linear-gradient(135deg, #ff8c00 0%, #b84900 100%);
+    color: white;
+    border: 2px solid #ffa500;
+    animation: pulse-slow 3s infinite;
+}
+
+.btn-slowrequest:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ffa500 0%, #d05500 100%);
+    border-color: #ffbb33;
+}
+
+@keyframes pulse-slow {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 140, 0, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(255, 140, 0, 0.5); }
+}
+
+.slowrequest-group {
+    border: 2px dashed #ff8c00;
+    background: rgba(255, 140, 0, 0.05);
+}
+
+.slowrequest-status {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    display: none;
+}
+
+.slowrequest-status.active {
+    display: block;
+    color: #ff8c00;
+    border-left: 3px solid #ff8c00;
+}
+
 .crash-info {
     font-size: 0.7rem;
     color: var(--color-primary);

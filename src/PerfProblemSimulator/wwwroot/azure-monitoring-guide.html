@@ -292,6 +292,7 @@
                 <li><a href="#cpu">Diagnosing High CPU</a></li>
                 <li><a href="#memory">Diagnosing Memory Pressure</a></li>
                 <li><a href="#threads">Diagnosing Thread Pool Starvation</a></li>
+                <li><a href="#slowrequest">Diagnosing Slow Requests</a></li>
                 <li><a href="#crash">Diagnosing Application Crashes</a></li>
                 <li><a href="#latency">Latency Monitor</a></li>
                 <li><a href="#setup">Monitoring Setup</a></li>
@@ -305,11 +306,12 @@
             <h2>📊 Overview</h2>
             <p>This guide explains how to use Azure monitoring tools to diagnose the performance problems created by the Performance Problem Simulator.</p>
             
-            <p>The simulator creates three types of issues:</p>
+            <p>The simulator creates four types of issues:</p>
             <ol>
                 <li><strong>High CPU</strong> - Parallel spin loops consuming all cores</li>
                 <li><strong>Memory Pressure</strong> - Pinned allocations on the Large Object Heap</li>
                 <li><strong>Thread Pool Starvation</strong> - Sync-over-async blocking patterns</li>
+                <li><strong>Slow Requests</strong> - Long-running requests for CLR Profiler analysis</li>
             </ol>
             <p>Each issue can be diagnosed using specific Azure tools and techniques.</p>
         </section>
@@ -494,6 +496,127 @@ Task.Run(<span class="keyword">async</span> () =>
     <span class="comment">// until the delay completes. With enough concurrent requests,</span>
     <span class="comment">// the thread pool becomes exhausted and new requests must wait.</span>
 });
+            </div>
+        </section>
+
+        <!-- Diagnosing Slow Requests Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 Diagnosing Slow Requests with CLR Profiler</h2>
+            
+            <p>The Slow Request Simulator generates long-running requests (~25 seconds each) using sync-over-async patterns specifically designed to be easily identifiable in CLR Profiler traces.</p>
+
+            <h3>Purpose</h3>
+            <p>This simulation is designed for <strong>training developers to identify blocking calls</strong> in profiler traces. Unlike the Thread Pool Starvation simulation (which causes many short blocks), this creates individual long requests that are clearly visible in call stacks.</p>
+
+            <h3>Azure Tools to Use</h3>
+
+            <h4>1. Azure Auto-Heal with Slow Request Trigger</h4>
+            <ol>
+                <li>Navigate to your App Service in the Azure Portal</li>
+                <li>Go to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for "Auto-Heal"</li>
+                <li>Configure slow request trigger (e.g., requests > 20 seconds)</li>
+            </ol>
+
+            <h4>2. CLR Profiler / Azure Profiler</h4>
+            <ol>
+                <li>In App Service, go to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for "Profiler"</li>
+                <li>Start a <strong>CPU Profiler</strong> trace (60-120 seconds recommended)</li>
+                <li>Trigger the slow request simulation</li>
+                <li>Download and analyze the trace</li>
+            </ol>
+
+            <h3>What to Look For in CLR Profiler</h3>
+            <p>The service uses three different sync-over-async patterns with <strong>intentionally descriptive method names</strong>:</p>
+
+            <h4>Scenario 1: Simple Sync-Over-Async</h4>
+            <p>Look for method: <code>FetchDataAsync_BLOCKING_HERE</code></p>
+            <div class="code-block">
+In the profiler, you'll see threads blocked at:
+  → SlowRequestService.FetchDataAsync_BLOCKING_HERE
+    → Task.Wait()
+            </div>
+
+            <h4>Scenario 2: Nested Sync Methods</h4>
+            <p>Look for methods ending in: <code>_BLOCKS_INTERNALLY</code></p>
+            <div class="code-block">
+These are synchronous methods that internally call .Wait():
+  → ValidateOrderSync_BLOCKS_INTERNALLY
+  → CheckInventorySync_BLOCKS_INTERNALLY  
+  → ProcessPaymentSync_BLOCKS_INTERNALLY
+  → SendConfirmationSync_BLOCKS_INTERNALLY
+            </div>
+
+            <h4>Scenario 3: Database/HTTP Pattern</h4>
+            <p>Look for methods ending in: <code>_SYNC_BLOCK</code></p>
+            <div class="code-block">
+Realistic patterns using GetAwaiter().GetResult():
+  → GetCustomerFromDatabaseAsync_SYNC_BLOCK
+  → CallExternalApiAsync_SYNC_BLOCK
+  → SaveAuditLogAsync_SYNC_BLOCK
+            </div>
+
+            <h3>Recommended Settings for CLR Profiler (60s trace)</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Setting</th>
+                        <th>Value</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Request Duration</td>
+                        <td>25s</td>
+                        <td>Long enough to capture in trace</td>
+                    </tr>
+                    <tr>
+                        <td>Interval</td>
+                        <td>10s</td>
+                        <td>Multiple requests during 60s trace</td>
+                    </tr>
+                    <tr>
+                        <td>Max Requests</td>
+                        <td>6</td>
+                        <td>Enough samples without overwhelming</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Code Pattern (What's Wrong)</h3>
+            <div class="code-block">
+<span class="comment">// SCENARIO 1: Direct blocking - most obvious in traces</span>
+<span class="keyword">public void</span> ProcessRequest()
+{
+    <span class="comment">// BAD: Blocking on async - thread is blocked for 25 seconds!</span>
+    FetchDataAsync().Wait();
+}
+
+<span class="comment">// SCENARIO 2: Hidden blocking inside sync methods</span>
+<span class="keyword">public void</span> ValidateOrderSync_BLOCKS_INTERNALLY()
+{
+    <span class="comment">// BAD: Looks like a sync method but blocks internally</span>
+    ValidateOrderAsync().Wait();
+}
+
+<span class="comment">// SCENARIO 3: Common legacy migration pattern</span>
+<span class="keyword">public</span> Customer GetCustomer(<span class="keyword">int</span> id)
+{
+    <span class="comment">// BAD: GetAwaiter().GetResult() still blocks!</span>
+    <span class="keyword">return</span> GetCustomerAsync(id).GetAwaiter().GetResult();
+}
+            </div>
+
+            <div class="info-box">
+                <h4>💡 Key Insight</h4>
+                <p>The slow request simulator makes sync-over-async <strong>visible in profiler call stacks</strong> because:</p>
+                <ul>
+                    <li>Requests are long enough (25s) to be captured during any reasonable trace period</li>
+                    <li>Method names explicitly indicate where blocking occurs</li>
+                    <li>Multiple scenarios show different blocking patterns commonly found in production code</li>
+                </ul>
             </div>
         </section>
 

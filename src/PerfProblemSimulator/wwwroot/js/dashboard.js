@@ -845,6 +845,137 @@ async function triggerCrash() {
 }
 
 // ==========================================================================
+// Slow Request Simulator
+// ==========================================================================
+
+/**
+ * Starts the slow request simulator.
+ * Generates requests with sync-over-async patterns for CLR Profiler analysis.
+ */
+async function startSlowRequests() {
+    const durationSeconds = parseInt(document.getElementById('slowRequestDuration').value) || 25;
+    const intervalSeconds = parseInt(document.getElementById('slowRequestInterval').value) || 2;
+    const maxRequests = parseInt(document.getElementById('slowRequestMax').value) || 10;
+    
+    const statusDiv = document.getElementById('slowRequestStatus');
+    const startBtn = document.getElementById('btnStartSlowRequests');
+    const stopBtn = document.getElementById('btnStopSlowRequests');
+    
+    try {
+        logEvent('info', `🐌 Starting slow request simulator: ${durationSeconds}s requests, ${intervalSeconds}s interval, max ${maxRequests}`);
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        
+        const response = await fetch(`${CONFIG.apiBaseUrl}/slowrequest/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestDurationSeconds: durationSeconds,
+                intervalSeconds: intervalSeconds,
+                maxRequests: maxRequests
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('success', `🐌 ${result.message}`);
+            statusDiv.textContent = `Running: ${durationSeconds}s requests every ${intervalSeconds}s (max ${maxRequests})`;
+            statusDiv.classList.add('active');
+            
+            // Start polling for status
+            pollSlowRequestStatus();
+        } else {
+            const error = await response.json();
+            logEvent('error', `Failed to start: ${error.message || error.title || 'Unknown error'}`);
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            statusDiv.classList.remove('active');
+        }
+    } catch (err) {
+        logEvent('error', `Request failed: ${err.message}`);
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        statusDiv.classList.remove('active');
+    }
+}
+
+/**
+ * Stops the slow request simulator.
+ */
+async function stopSlowRequests() {
+    const statusDiv = document.getElementById('slowRequestStatus');
+    const startBtn = document.getElementById('btnStartSlowRequests');
+    const stopBtn = document.getElementById('btnStopSlowRequests');
+    
+    try {
+        logEvent('info', '🐌 Stopping slow request simulator...');
+        
+        const response = await fetch(`${CONFIG.apiBaseUrl}/slowrequest/stop`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('success', `🐌 ${result.message}`);
+        } else {
+            const error = await response.json();
+            logEvent('warning', `Stop request: ${error.message || 'May have already stopped'}`);
+        }
+    } catch (err) {
+        logEvent('error', `Request failed: ${err.message}`);
+    } finally {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        statusDiv.textContent = '';
+        statusDiv.classList.remove('active');
+    }
+}
+
+/**
+ * Polls the slow request status and updates UI.
+ */
+async function pollSlowRequestStatus() {
+    const statusDiv = document.getElementById('slowRequestStatus');
+    const startBtn = document.getElementById('btnStartSlowRequests');
+    const stopBtn = document.getElementById('btnStopSlowRequests');
+    
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/slowrequest/status`);
+        if (response.ok) {
+            const status = await response.json();
+            
+            if (status.isRunning) {
+                statusDiv.textContent = `Running: ${status.requestsCompleted}/${status.requestsSent} completed, ${status.requestsInProgress} active`;
+                statusDiv.classList.add('active');
+                
+                // Continue polling
+                setTimeout(pollSlowRequestStatus, 1000);
+            } else {
+                // Simulation ended
+                statusDiv.textContent = `Completed: ${status.requestsCompleted}/${status.requestsSent} requests`;
+                setTimeout(() => {
+                    statusDiv.classList.remove('active');
+                    statusDiv.textContent = '';
+                }, 3000);
+                
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                
+                if (status.requestsCompleted > 0) {
+                    logEvent('success', `🐌 Slow request simulation completed: ${status.requestsCompleted} requests`);
+                }
+            }
+        }
+    } catch (err) {
+        // Connection lost - probably a restart
+        statusDiv.classList.remove('active');
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
+// ==========================================================================
 // Active Simulations UI
 // ==========================================================================
 
@@ -922,6 +1053,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnReleaseMemory').addEventListener('click', releaseMemory);
     document.getElementById('btnTriggerThreadBlock').addEventListener('click', triggerThreadBlock);
     document.getElementById('btnTriggerCrash').addEventListener('click', triggerCrash);
+    document.getElementById('btnStartSlowRequests').addEventListener('click', startSlowRequests);
+    document.getElementById('btnStopSlowRequests').addEventListener('click', stopSlowRequests);
+    
+    // Initialize slow request Stop button as disabled
+    document.getElementById('btnStopSlowRequests').disabled = true;
     
     // Wire up Reset All button
     const btnResetAll = document.getElementById('btnResetAll');
@@ -996,6 +1132,17 @@ async function resetAll() {
     }
     
     try {
+        // Also stop slow requests if running
+        await fetch(`${CONFIG.apiBaseUrl}/slowrequest/stop`, { method: 'POST' }).catch(() => {});
+        
+        // Reset slow request UI
+        const statusDiv = document.getElementById('slowRequestStatus');
+        const startBtn = document.getElementById('btnStartSlowRequests');
+        const stopBtn = document.getElementById('btnStopSlowRequests');
+        if (statusDiv) statusDiv.classList.remove('active');
+        if (startBtn) startBtn.disabled = false;
+        if (stopBtn) stopBtn.disabled = true;
+        
         const response = await fetch(`${CONFIG.apiBaseUrl}/admin/reset-all`, {
             method: 'POST'
         });

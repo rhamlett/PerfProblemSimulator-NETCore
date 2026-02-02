@@ -288,6 +288,7 @@
                 <li><a href="#quick-start">Quick Start</a></li>
                 <li><a href="#dashboard">Dashboard</a></li>
                 <li><a href="#latency">Latency Monitor</a></li>
+                <li><a href="#slowrequest">Slow Requests</a></li>
                 <li><a href="#crash">Crash Simulation</a></li>
                 <li><a href="#api">API Reference</a></li>
                 <li><a href="#configuration">Configuration</a></li>
@@ -341,7 +342,8 @@
                     <li>🔥 <strong>CPU stress</strong> - Creates parallel spin loops that consume all CPU cores</li>
                     <li>📊 <strong>Memory pressure</strong> - Allocates and pins memory blocks to increase working set</li>
                     <li>🧵 <strong>Thread pool starvation</strong> - Uses sync-over-async anti-patterns to block thread pool threads</li>
-                    <li>💥 <strong>Application crashes</strong> - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps</li>
+                    <li>� <strong>Slow requests</strong> - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis</li>
+                    <li>�💥 <strong>Application crashes</strong> - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps</li>
                 </ul>
                 <p style="margin-top: 1rem; margin-bottom: 0;"><strong>Only deploy this application in isolated, non-production environments.</strong></p>
             </div>
@@ -464,6 +466,61 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 
             <h3>Why This Matters</h3>
             <p>During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem <strong>visible</strong> — you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.</p>
+        </section>
+
+        <!-- Slow Request Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 Slow Request Simulator</h2>
+            <p>The Slow Request Simulator generates long-running requests (~25 seconds each) using sync-over-async patterns specifically designed for <strong>CLR Profiler training</strong>.</p>
+
+            <h3>Purpose</h3>
+            <p>Unlike the Thread Pool Starvation simulation (which causes many short blocks), this creates individual long requests that are clearly visible in profiler call stacks. The method names are intentionally descriptive to make identifying the blocking patterns easy.</p>
+
+            <h3>Three Sync-Over-Async Scenarios</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>Method Pattern</th>
+                        <th>What to Look For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Simple</strong></td>
+                        <td><code>_BLOCKING_HERE</code></td>
+                        <td>Direct <code>.Wait()</code> blocking</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nested</strong></td>
+                        <td><code>_BLOCKS_INTERNALLY</code></td>
+                        <td>Sync methods that block internally</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Database</strong></td>
+                        <td><code>_SYNC_BLOCK</code></td>
+                        <td><code>GetAwaiter().GetResult()</code> pattern</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Recommended Settings</h3>
+            <p>For a 60-second CLR Profiler trace:</p>
+            <ul>
+                <li><strong>Duration:</strong> 25 seconds (long enough to capture)</li>
+                <li><strong>Interval:</strong> 10 seconds (multiple samples)</li>
+                <li><strong>Max Requests:</strong> 6 (doesn't overwhelm)</li>
+            </ul>
+
+            <h3>Using with CLR Profiler</h3>
+            <ol>
+                <li>Start a CPU Profiler trace (60-120 seconds)</li>
+                <li>Click <strong>🐌 Start Slow Requests</strong> in the dashboard</li>
+                <li>Wait for trace to complete</li>
+                <li>Download and analyze - look for the descriptive method names</li>
+            </ol>
+
+            <p>See the <a href="/azure-monitoring-guide.html#slowrequest">Azure Monitoring Guide</a> for detailed profiler analysis instructions.</p>
         </section>
 
         <!-- Crash Simulation Section -->
@@ -650,6 +707,45 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
   <span class="string">"concurrentRequests"</span>: 100
 }
             </div>
+
+            <h3>Slow Request Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/slowrequest/start</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Start slow request simulation</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/slowrequest/stop</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Stop slow request simulation</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/slowrequest/status</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get current simulation status</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/slowrequest/scenarios</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get scenario descriptions for CLR Profiler</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body (start):</strong></p>
+            <div class="code-block">{
+  <span class="string">"requestDurationSeconds"</span>: 25,
+  <span class="string">"intervalSeconds"</span>: 2,
+  <span class="string">"maxRequests"</span>: 10
+}</div>
 
             <h3>Admin Operations</h3>
             <table class="api-table">

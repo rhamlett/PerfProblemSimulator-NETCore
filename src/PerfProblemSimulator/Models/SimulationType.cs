@@ -58,5 +58,12 @@ public enum SimulationType
     /// Application crash simulation that terminates the process.
     /// Diagnosis tools: Azure Crash Monitoring, Windows Error Reporting, crash dump analysis with WinDbg.
     /// </summary>
-    Crash
+    Crash,
+
+    /// <summary>
+    /// Slow request simulation using sync-over-async patterns.
+    /// Diagnosis tools: CLR Profiler, dotnet-trace, Azure Profiler.
+    /// Shows threads blocked at .Result, .Wait(), or GetAwaiter().GetResult().
+    /// </summary>
+    SlowRequest
 }

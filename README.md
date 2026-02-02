@@ -18,7 +18,8 @@ This application is designed to help developers and DevOps engineers:
 - 🔥 **CPU stress** - Creates parallel spin loops that consume all CPU cores
 - 📊 **Memory pressure** - Allocates and pins memory blocks to increase working set
 - 🧵 **Thread pool starvation** - Uses sync-over-async anti-patterns to block thread pool threads
-- 💥 **Application crashes** - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps
+- � **Slow requests** - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis
+- �💥 **Application crashes** - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps
 
 **Only deploy this application in isolated, non-production environments.**
 
@@ -129,6 +130,29 @@ The CPU and Memory metric tiles use dynamic color coding based on utilization pe
   "concurrentRequests": 100
 }
 ```
+
+### Slow Request Simulation
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/slowrequest/start` | POST | Start slow request simulation |
+| `/api/slowrequest/stop` | POST | Stop slow request simulation |
+| `/api/slowrequest/status` | GET | Get current simulation status |
+| `/api/slowrequest/scenarios` | GET | Get scenario descriptions for CLR Profiler |
+
+**Request body (start):**
+```json
+{
+  "requestDurationSeconds": 25,
+  "intervalSeconds": 2,
+  "maxRequests": 10
+}
+```
+
+The slow request simulator generates requests using three different sync-over-async patterns:
+- **SimpleSyncOverAsync**: Direct `.Wait()` blocking - look for `FetchDataAsync_BLOCKING_HERE` in traces
+- **NestedSyncOverAsync**: Sync methods that block internally - look for `*_BLOCKS_INTERNALLY` methods
+- **DatabasePattern**: Realistic `GetAwaiter().GetResult()` - look for `*_SYNC_BLOCK` methods
 
 ### Admin Operations
 
@@ -253,6 +277,7 @@ src/PerfProblemSimulator/
 │   ├── CpuStressService.cs
 │   ├── MemoryPressureService.cs
 │   ├── ThreadBlockService.cs
+│   ├── SlowRequestService.cs
 │   ├── SimulationTracker.cs
 │   ├── MetricsCollector.cs
 │   ├── MetricsBroadcastService.cs
