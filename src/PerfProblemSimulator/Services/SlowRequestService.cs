@@ -9,32 +9,32 @@ using System.Runtime.CompilerServices;
 namespace PerfProblemSimulator.Services;
 
 /// <summary>
-/// Service that simulates slow requests using sync-over-async anti-patterns.
+/// Service that simulates slow requests with intentional blocking patterns.
 /// </summary>
 /// <remarks>
 /// <para>
 /// <strong>⚠️ EDUCATIONAL PURPOSE ONLY ⚠️</strong>
 /// </para>
 /// <para>
-/// This service intentionally implements sync-over-async anti-patterns to demonstrate
-/// what they look like in a CLR Profiler trace. The method names are deliberately
+/// This service intentionally implements blocking patterns using Thread.Sleep to demonstrate
+/// what slow requests look like in a CLR Profiler trace. The method names are deliberately
 /// descriptive so they're easy to find in profiler output.
 /// </para>
 /// <para>
 /// <strong>What CLR Profiler Will Show:</strong>
 /// <list type="bullet">
-/// <item>Threads blocked at <c>Task.Result</c>, <c>Task.Wait()</c>, or <c>GetAwaiter().GetResult()</c></item>
-/// <item>Low CPU usage despite slow responses (threads are waiting, not working)</item>
-/// <item>Time spent in <c>ManualResetEventSlim.Wait</c> or similar synchronization primitives</item>
+/// <item>Time spent in <c>Thread.Sleep</c> calls - clearly visible as method self-time</item>
+/// <item>Low CPU usage despite slow responses (threads are sleeping, not working)</item>
+/// <item>Blocking calls that consume thread pool threads</item>
 /// </list>
 /// </para>
 /// <para>
-/// <strong>Real-World Causes:</strong>
+/// <strong>Real-World Equivalent Causes:</strong>
 /// <list type="bullet">
-/// <item>Legacy code calling async methods synchronously</item>
-/// <item>Incorrect async/await usage in constructors or properties</item>
-/// <item>Mixing sync and async code paths</item>
-/// <item>Third-party libraries with sync-only APIs calling async internally</item>
+/// <item>Database queries with long timeouts</item>
+/// <item>External HTTP calls to slow services</item>
+/// <item>File I/O operations on slow storage</item>
+/// <item>Sync-over-async anti-patterns (Task.Wait(), .Result, GetAwaiter().GetResult())</item>
 /// </list>
 /// </para>
 /// </remarks>
@@ -370,10 +370,10 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     }
 
     // ==========================================================================
-    // SCENARIO 1: Simple Sync-Over-Async
+    // SCENARIO 1: Simple Blocking
     // ==========================================================================
-    // CLR Profiler will show time blocked at .Result and .Wait()
-    // Using Thread.Sleep to ensure the time shows up in profiler
+    // CLR Profiler will show time spent in Thread.Sleep
+    // This simulates slow I/O operations like database queries or HTTP calls
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void ExecuteSimpleSyncOverAsyncRequest(int totalDurationSeconds, CancellationToken ct)
@@ -414,9 +414,10 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     }
 
     // ==========================================================================
-    // SCENARIO 2: Nested Sync-Over-Async
+    // SCENARIO 2: Nested Blocking Methods
     // ==========================================================================
     // CLR Profiler will show a chain of blocking calls through multiple methods
+    // Each method internally uses Thread.Sleep to simulate work
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void ExecuteNestedSyncOverAsyncRequest(int totalDurationSeconds, CancellationToken ct)
@@ -467,7 +468,8 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     // ==========================================================================
     // SCENARIO 3: Realistic Database/HTTP Pattern
     // ==========================================================================
-    // CLR Profiler will show GetAwaiter().GetResult() - common in legacy migrations
+    // CLR Profiler will show time spent in simulated database and HTTP calls
+    // This simulates what blocking I/O looks like in production code
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private void ExecuteDatabasePatternRequest(int totalDurationSeconds, CancellationToken ct)

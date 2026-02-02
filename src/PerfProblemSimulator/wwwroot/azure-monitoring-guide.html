@@ -541,7 +541,7 @@ In the profiler, you'll see time spent at:
             <h4>Scenario 2: Nested Sync Methods</h4>
             <p>Look for methods ending in: <code>_BLOCKS_INTERNALLY</code></p>
             <div class="code-block">
-These are synchronous methods that internally call .Wait():
+These are synchronous methods that block internally using Thread.Sleep:
   → ValidateOrderSync_BLOCKS_INTERNALLY
   → CheckInventorySync_BLOCKS_INTERNALLY  
   → ProcessPaymentSync_BLOCKS_INTERNALLY

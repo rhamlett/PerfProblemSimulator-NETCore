@@ -10,13 +10,13 @@ namespace PerfProblemSimulator.Controllers;
 /// <remarks>
 /// <para>
 /// <strong>Educational Note:</strong> This controller simulates slow requests that are ideal
-/// for CLR Profiler analysis. Unlike CPU or memory issues, sync-over-async problems show:
+/// for CLR Profiler analysis. Unlike CPU or memory issues, blocking problems show:
 /// </para>
 /// <list type="bullet">
-/// <item>Low CPU usage (threads are waiting, not working)</item>
+/// <item>Low CPU usage (threads are blocked/sleeping, not working)</item>
 /// <item>Normal memory usage</item>
 /// <item>Slow response times</item>
-/// <item>Threads blocked at .Result, .Wait(), or GetAwaiter().GetResult()</item>
+/// <item>Time spent in Thread.Sleep visible in profiler call stacks</item>
 /// </list>
 /// <para>
 /// <strong>How to Use:</strong>
@@ -25,7 +25,7 @@ namespace PerfProblemSimulator.Controllers;
 /// <item>Start the slow request simulation</item>
 /// <item>In Azure Portal: Diagnose and Solve Problems → Collect a .NET Profiler Trace</item>
 /// <item>Or use dotnet-trace: <c>dotnet-trace collect -p {PID} --duration 00:01:00</c></item>
-/// <item>Analyze the trace to find threads blocked in sync-over-async patterns</item>
+/// <item>Analyze the trace to find blocking methods by their descriptive names</item>
 /// </list>
 /// </remarks>
 [ApiController]
@@ -52,13 +52,13 @@ public class SlowRequestController : ControllerBase
     /// <returns>Information about the started simulation.</returns>
     /// <remarks>
     /// <para>
-    /// This starts a background process that spawns slow HTTP-like requests at regular intervals.
-    /// Each request randomly uses one of three sync-over-async patterns:
+    /// This starts a background process that spawns slow HTTP requests at regular intervals.
+    /// Each request randomly uses one of three blocking patterns:
     /// </para>
     /// <list type="bullet">
-    /// <item><strong>SimpleSyncOverAsync</strong>: Direct .Result and .Wait() calls</item>
+    /// <item><strong>SimpleSyncOverAsync</strong>: Direct Thread.Sleep blocking calls</item>
     /// <item><strong>NestedSyncOverAsync</strong>: Chain of sync methods that block internally</item>
-    /// <item><strong>DatabasePattern</strong>: Realistic GetAwaiter().GetResult() pattern</item>
+    /// <item><strong>DatabasePattern</strong>: Simulated database/HTTP blocking calls</item>
     /// </list>
     /// <para>
     /// <strong>Recommended Settings for CLR Profile (60s default):</strong>
@@ -139,8 +139,8 @@ public class SlowRequestController : ControllerBase
             },
             ["NestedSyncOverAsync"] = new ScenarioInfo
             {
-                Name = "Nested Sync-Over-Async",
-                Description = "Chain of sync methods that each block on async internally",
+                Name = "Nested Blocking Methods",
+                Description = "Chain of sync methods that each block internally using Thread.Sleep",
                 WhatProfilerShows = "Nested blocking calls - sync methods calling other sync methods that block",
                 MethodsToLookFor = new[]
                 {

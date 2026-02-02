@@ -230,7 +230,7 @@ In the profiler, you'll see time spent at:
 #### Scenario 2: Nested Sync Methods
 Look for methods ending in: `_BLOCKS_INTERNALLY`
 ```
-These are synchronous methods that internally call .Wait():
+These are synchronous methods that block internally using Thread.Sleep:
   → ValidateOrderSync_BLOCKS_INTERNALLY
   → CheckInventorySync_BLOCKS_INTERNALLY  
   → ProcessPaymentSync_BLOCKS_INTERNALLY
@@ -256,37 +256,45 @@ Simulated database and HTTP blocking calls:
 | Interval | 10s | Multiple requests during 60s trace |
 | Max Requests | 6 | Enough samples without overwhelming |
 
-### Code Pattern (What's Wrong)
+### Code Pattern (What the Simulation Does)
 
 ```csharp
 // SCENARIO 1: Direct blocking - most obvious in traces
-public void ProcessRequest()
+public void FetchDataSync_BLOCKING_HERE(int delayMs)
 {
-    // BAD: Blocking on async - thread is blocked for 25 seconds!
-    FetchDataAsync().Wait();
+    // Intentional blocking - will show in profiler as Thread.Sleep
+    Thread.Sleep(delayMs);
 }
 
-// SCENARIO 2: Hidden blocking inside sync methods
-public void ValidateOrderSync_BLOCKS_INTERNALLY()
+// SCENARIO 2: Nested blocking inside sync methods
+public void ValidateOrderSync_BLOCKS_INTERNALLY(int delayMs)
 {
-    // BAD: Looks like a sync method but blocks internally
-    ValidateOrderAsync().Wait();
+    // Each method internally blocks using Thread.Sleep
+    Thread.Sleep(delayMs);
 }
 
-// SCENARIO 3: Common legacy migration pattern
-public Customer GetCustomer(int id)
+// SCENARIO 3: Simulated database/HTTP pattern
+public void GetCustomerFromDatabaseSync_SYNC_BLOCK(int delayMs)
 {
-    // BAD: GetAwaiter().GetResult() still blocks!
-    return GetCustomerAsync(id).GetAwaiter().GetResult();
+    // Simulates a blocking database call
+    Thread.Sleep(delayMs);
 }
 ```
 
+### Real-World Equivalents
+
+The Thread.Sleep patterns simulate what you'd see with:
+- Synchronous database calls with long query times
+- HTTP calls to slow external services
+- Sync-over-async anti-patterns (Task.Wait(), .Result, GetAwaiter().GetResult())
+
 ### Key Insight
 
-The slow request simulator makes sync-over-async **visible in profiler call stacks** because:
+The slow request simulator makes blocking **visible in profiler call stacks** because:
 1. Requests are long enough (25s) to be captured during any reasonable trace period
-2. Method names explicitly indicate where blocking occurs
+2. Method names explicitly indicate where blocking occurs (e.g., `_BLOCKING_HERE`, `_SYNC_BLOCK`)
 3. Multiple scenarios show different blocking patterns commonly found in production code
+4. Thread.Sleep shows as clear self-time in the profiler, making it easy to identify
 
 ---
 

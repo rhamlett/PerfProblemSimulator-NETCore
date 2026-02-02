@@ -73,11 +73,13 @@ builder.Services.AddSwaggerGen(options =>
             - **CPU**: Triggers high CPU usage through parallel spin loops
             - **Memory**: Allocates and holds memory to create memory pressure
             - **ThreadBlock**: Simulates thread pool starvation via sync-over-async patterns
+            - **SlowRequest**: Generates long-running blocking requests for CLR Profiler training
+            - **Crash**: Triggers intentional crashes (OOM, StackOverflow) for Azure crash monitoring
             
             ## Safety Features
-            - All operations have configurable limits (duration, memory size, etc.)
             - Problem endpoints can be disabled via DISABLE_PROBLEM_ENDPOINTS environment variable
             - Health endpoints remain responsive even under stress
+            - Real-time dashboard shows metrics and active simulations
             """
     });
 });
