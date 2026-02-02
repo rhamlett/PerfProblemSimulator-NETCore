@@ -911,6 +911,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">HealthController.cs</span>
 │   ├── <span class="file">MemoryController.cs</span>
 │   ├── <span class="file">MetricsController.cs</span>
+│   ├── <span class="file">SlowRequestController.cs</span>
 │   └── <span class="file">ThreadBlockController.cs</span>
 │
 ├── <span class="folder">Services/</span>                 <span class="comment"># Business logic</span>
@@ -921,11 +922,13 @@ az webapp config appsettings set \
 │   ├── <span class="file">MetricsBroadcastService.cs</span>
 │   ├── <span class="file">MetricsCollector.cs</span>
 │   ├── <span class="file">SimulationTracker.cs</span>
+│   ├── <span class="file">SlowRequestService.cs</span>
 │   ├── <span class="file">ThreadBlockService.cs</span>
 │   ├── <span class="file">ICpuStressService.cs</span>       <span class="comment"># Interfaces</span>
 │   ├── <span class="file">ICrashService.cs</span>
 │   ├── <span class="file">IMemoryPressureService.cs</span>
 │   ├── <span class="file">IMetricsCollector.cs</span>
+│   ├── <span class="file">ISlowRequestService.cs</span>
 │   └── <span class="file">IThreadBlockService.cs</span>
 │
 ├── <span class="folder">Hubs/</span>                     <span class="comment"># SignalR for real-time updates</span>
@@ -944,6 +947,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">ProblemSimulatorOptions.cs</span>
 │   ├── <span class="file">SimulationResult.cs</span>
 │   ├── <span class="file">SimulationType.cs</span>
+│   ├── <span class="file">SlowRequestRequest.cs</span>
 │   └── <span class="file">ThreadBlockRequest.cs</span>
 │
 ├── <span class="folder">Middleware/</span>               <span class="comment"># Request pipeline</span>

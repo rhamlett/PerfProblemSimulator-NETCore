@@ -267,28 +267,34 @@ See [Azure Monitoring Guide](./docs/azure-monitoring-guide.md) for detailed inst
 ```
 src/PerfProblemSimulator/
 ├── Controllers/          # API endpoints
+│   ├── AdminController.cs
 │   ├── CpuController.cs
-│   ├── MemoryController.cs
-│   ├── ThreadBlockController.cs
-│   ├── MetricsController.cs
+│   ├── CrashController.cs
 │   ├── HealthController.cs
-│   └── AdminController.cs
+│   ├── MemoryController.cs
+│   ├── MetricsController.cs
+│   ├── SlowRequestController.cs
+│   └── ThreadBlockController.cs
 ├── Services/             # Business logic
 │   ├── CpuStressService.cs
+│   ├── CrashService.cs
+│   ├── LatencyProbeService.cs
 │   ├── MemoryPressureService.cs
-│   ├── ThreadBlockService.cs
-│   ├── SlowRequestService.cs
-│   ├── SimulationTracker.cs
-│   ├── MetricsCollector.cs
 │   ├── MetricsBroadcastService.cs
-│   └── LatencyProbeService.cs
+│   ├── MetricsCollector.cs
+│   ├── SimulationTracker.cs
+│   ├── SlowRequestService.cs
+│   └── ThreadBlockService.cs
 ├── Hubs/                 # SignalR for real-time updates
-│   └── MetricsHub.cs
+│   ├── MetricsHub.cs
+│   └── IMetricsClient.cs
 ├── Models/               # Data transfer objects
 ├── Middleware/           # Request pipeline
 │   └── ProblemEndpointGuard.cs
 └── wwwroot/              # SPA dashboard
     ├── index.html
+    ├── documentation.html
+    ├── azure-monitoring-guide.html
     ├── css/dashboard.css
     └── js/dashboard.js
 ```
