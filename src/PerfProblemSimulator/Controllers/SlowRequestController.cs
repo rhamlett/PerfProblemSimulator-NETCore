@@ -168,6 +168,58 @@ public class SlowRequestController : ControllerBase
 
         return Ok(scenarios);
     }
+
+    /// <summary>
+    /// HTTP endpoint that simulates a slow blocking request.
+    /// </summary>
+    /// <param name="durationSeconds">How long the request should take (default: 25 seconds).</param>
+    /// <returns>Result after the blocking delay completes.</returns>
+    /// <remarks>
+    /// <para>
+    /// <strong>⚠️ This endpoint intentionally blocks!</strong>
+    /// </para>
+    /// <para>
+    /// This endpoint is designed to be called during slow request simulation so that
+    /// slow requests show up in the Request Latency Monitor chart. It uses sync-over-async
+    /// to block the thread pool thread.
+    /// </para>
+    /// </remarks>
+    /// <response code="200">Request completed after blocking</response>
+    [HttpGet("execute-slow")]
+    [ProducesResponseType(typeof(SlowRequestResult), StatusCodes.Status200OK)]
+    public IActionResult ExecuteSlowRequest([FromQuery] int durationSeconds = 25)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        _logger.LogWarning("🐌 HTTP slow request started: {Duration}s", durationSeconds);
+        
+        // BAD: Intentionally blocking with sync-over-async
+        // This makes the request visible in the latency chart
+        Task.Delay(durationSeconds * 1000).Wait();
+        
+        var elapsed = DateTimeOffset.UtcNow - startTime;
+        
+        _logger.LogWarning("🐌 HTTP slow request completed: {Elapsed}s", elapsed.TotalSeconds);
+        
+        return Ok(new SlowRequestResult
+        {
+            Message = $"Slow request completed after {elapsed.TotalSeconds:F1} seconds",
+            DurationSeconds = elapsed.TotalSeconds,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        });
+    }
+}
+
+/// <summary>
+/// Result from a slow request execution.
+/// </summary>
+public class SlowRequestResult
+{
+    public string Message { get; set; } = "";
+    public double DurationSeconds { get; set; }
+    public DateTimeOffset StartedAt { get; set; }
+    public DateTimeOffset CompletedAt { get; set; }
 }
 
 /// <summary>

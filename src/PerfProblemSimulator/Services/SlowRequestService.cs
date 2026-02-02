@@ -37,7 +37,9 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<SlowRequestService> _logger;
+    private readonly IConfiguration _configuration;
     private readonly Random _random = new();
+    private readonly HttpClient _httpClient;
 
     private CancellationTokenSource? _cts;
     private Thread? _requestSpawnerThread;
@@ -47,19 +49,33 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     private int _requestsInProgress;
     private int _intervalSeconds;
     private int _requestDurationSeconds;
+    private int _maxRequests;
     private DateTimeOffset? _startedAt;
     private Guid _simulationId;
     private readonly Dictionary<string, int> _scenarioCounts = new();
     private readonly object _lock = new();
+    private string _baseUrl = "http://localhost:5221";
 
     public bool IsRunning => _isRunning;
 
     public SlowRequestService(
         ISimulationTracker simulationTracker,
-        ILogger<SlowRequestService> logger)
+        ILogger<SlowRequestService> logger,
+        IConfiguration configuration)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        
+        // Create HttpClient with long timeout for slow requests
+        _httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        
+        // Get base URL from configuration
+        var urls = _configuration["ASPNETCORE_URLS"] ?? _configuration["urls"];
+        if (!string.IsNullOrEmpty(urls))
+        {
+            _baseUrl = urls.Split(';')[0];
+        }
     }
 
     public SimulationResult Start(SlowRequestRequest request)
@@ -82,6 +98,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         _requestsInProgress = 0;
         _intervalSeconds = Math.Max(5, request.IntervalSeconds);
         _requestDurationSeconds = Math.Max(10, request.RequestDurationSeconds);
+        _maxRequests = request.MaxRequests;
         _startedAt = DateTimeOffset.UtcNow;
         _scenarioCounts.Clear();
         _isRunning = true;
@@ -228,6 +245,10 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     {
         try
         {
+            // Call the HTTP endpoint so the request shows up in the latency monitor
+            ExecuteHttpSlowRequest(durationSeconds, ct);
+            
+            // Also execute the internal sync-over-async pattern for CLR Profiler
             switch (scenario)
             {
                 case SlowRequestScenario.SimpleSyncOverAsync:
@@ -256,7 +277,35 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         finally
         {
             Interlocked.Increment(ref _requestsCompleted);
-            Interlocked.Decrement(ref _requestsInProgress);
+            var remaining = Interlocked.Decrement(ref _requestsInProgress);
+            
+            // Check if simulation is naturally complete (all requests done)
+            CheckAndCompleteSimulation();
+        }
+    }
+
+    /// <summary>
+    /// Checks if all requests have completed and marks the simulation as done.
+    /// </summary>
+    private void CheckAndCompleteSimulation()
+    {
+        // Only check if we have a max request limit and we've sent all requests
+        if (_maxRequests > 0 && _requestsSent >= _maxRequests && _requestsInProgress == 0 && _isRunning)
+        {
+            lock (_lock)
+            {
+                // Double-check inside lock to avoid race conditions
+                if (_isRunning && _requestsInProgress == 0 && _requestsSent >= _maxRequests)
+                {
+                    _isRunning = false;
+                    _simulationTracker.UnregisterSimulation(_simulationId);
+                    
+                    _logger.LogInformation(
+                        "🐌 Slow request simulation completed naturally: {SimulationId}. " +
+                        "Total requests: {Total}, Completed: {Completed}",
+                        _simulationId, _requestsSent, _requestsCompleted);
+                }
+            }
         }
     }
 
@@ -445,10 +494,33 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     private class InventoryData { public bool Available { get; set; } }
     private class ResponseData { public bool Success { get; set; } }
 
+    /// <summary>
+    /// Executes a slow request via HTTP so it shows up in the latency monitor.
+    /// </summary>
+    private void ExecuteHttpSlowRequest(int durationSeconds, CancellationToken ct)
+    {
+        try
+        {
+            var url = $"{_baseUrl}/api/slowrequest/execute-slow?durationSeconds={durationSeconds}";
+            _logger.LogDebug("🐌 Calling HTTP slow endpoint: {Url}", url);
+            
+            // BAD: Blocking HTTP call - this shows up in latency monitor AND CLR Profiler
+            var response = _httpClient.GetAsync(url, ct).GetAwaiter().GetResult();
+            response.EnsureSuccessStatusCode();
+            
+            _logger.LogDebug("🐌 HTTP slow endpoint returned: {StatusCode}", response.StatusCode);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "HTTP slow request failed, continuing with internal simulation");
+        }
+    }
+
     public void Dispose()
     {
         Stop();
         _cts?.Dispose();
+        _httpClient.Dispose();
         GC.SuppressFinalize(this);
     }
 }
