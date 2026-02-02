@@ -551,7 +551,7 @@ function updateLatencyDisplay(currentLatency, isTimeout, isError) {
 }
 
 /**
- * Format latency value for display.
+ * Format latency value for display with dynamic units.
  */
 function formatLatency(ms) {
     if (ms >= 10000) {
@@ -559,9 +559,9 @@ function formatLatency(ms) {
     } else if (ms >= 1000) {
         return (ms / 1000).toFixed(2) + 's';
     } else if (ms >= 100) {
-        return Math.round(ms);
+        return Math.round(ms) + 'ms';
     } else {
-        return ms.toFixed(1);
+        return ms.toFixed(1) + 'ms';
     }
 }
 
