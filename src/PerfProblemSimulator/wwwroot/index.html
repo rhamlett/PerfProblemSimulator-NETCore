@@ -199,16 +199,17 @@
                 </div>
             </div>
 
+            <div class="latency-thresholds">
+                <span class="threshold-title">Thresholds:</span>
+                <span class="threshold-item good">● Good (&lt;50ms)</span>
+                <span class="threshold-item warning">● Degraded (50-500ms)</span>
+                <span class="threshold-item danger">● Critical (&gt;500ms)</span>
+                <span class="threshold-item timeout">● Timeout (30s)</span>
+            </div>
+
             <div class="chart-container latency-chart-container">
                 <h3>📊 Response Latency Over Time</h3>
                 <canvas id="latencyChart"></canvas>
-            </div>
-
-            <div class="latency-legend">
-                <span class="legend-item good">● &lt;50ms (Good)</span>
-                <span class="legend-item warning">● 50-500ms (Degraded)</span>
-                <span class="legend-item danger">● &gt;500ms (Critical)</span>
-                <span class="legend-item timeout">● Timeout (30s)</span>
             </div>
         </section>
 

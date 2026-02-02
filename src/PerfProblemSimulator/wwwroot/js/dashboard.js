@@ -401,7 +401,10 @@ function initializeCharts() {
                 x: {
                     display: true,
                     ticks: {
-                        maxTicksLimit: 10,
+                        maxTicksLimit: 6,
+                        maxRotation: 0,
+                        minRotation: 0,
+                        font: { size: 10 },
                         callback: (value, index) => {
                             const date = state.latencyHistory.timestamps[index];
                             return date ? formatUtcTime(date) : '';
@@ -409,17 +412,18 @@ function initializeCharts() {
                     }
                 },
                 y: {
-                    type: 'logarithmic',
                     display: true,
                     position: 'left',
-                    min: 1,
-                    title: { display: true, text: 'Latency (ms) - Log Scale' },
+                    beginAtZero: true,
+                    grace: '5%',
+                    title: { display: true, text: 'Latency (ms)', font: { size: 10 } },
                     ticks: {
+                        font: { size: 10 },
                         callback: (value) => {
-                            if (value === 1 || value === 10 || value === 100 || value === 1000 || value === 10000 || value === 30000) {
-                                return value >= 1000 ? `${value/1000}s` : `${value}ms`;
+                            if (value >= 1000) {
+                                return (value / 1000).toFixed(1) + 's';
                             }
-                            return '';
+                            return value + 'ms';
                         }
                     }
                 }
@@ -583,9 +587,11 @@ function updateLatencyChart() {
     
     const history = state.latencyHistory;
     
-    // Create gradient based on latency values
+    // Create gradient based on chart's actual dimensions
     const ctx = state.charts.latency.ctx;
-    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    const chartArea = state.charts.latency.chartArea;
+    const gradientHeight = chartArea ? (chartArea.bottom - chartArea.top) : 200;
+    const gradient = ctx.createLinearGradient(0, 0, 0, gradientHeight);
     gradient.addColorStop(0, 'rgba(209, 52, 56, 0.3)');   // Red at top (high latency)
     gradient.addColorStop(0.5, 'rgba(255, 185, 0, 0.2)'); // Yellow in middle
     gradient.addColorStop(1, 'rgba(16, 124, 16, 0.1)');   // Green at bottom (low latency)

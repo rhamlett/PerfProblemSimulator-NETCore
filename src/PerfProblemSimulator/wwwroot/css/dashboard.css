@@ -718,41 +718,53 @@ body {
 
 .latency-chart-container {
     margin-top: 0.5rem;
-    height: 160px;
-    margin-bottom: 0.25rem;
+    height: 200px;
+    margin-bottom: 1rem;
+    position: relative;
 }
 
-.latency-legend {
+.latency-chart-container canvas {
+    max-height: 100%;
+}
+
+.latency-thresholds {
     display: flex;
-    justify-content: center;
-    gap: 2.5rem;
-    padding-top: 1.5rem;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--color-bg);
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
-    font-size: 0.75rem;
-    row-gap: 0.5rem;
 }
 
-.legend-item {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
+.threshold-title {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.threshold-item {
     white-space: nowrap;
-    padding: 0.25rem 0.5rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--color-card);
 }
 
-.legend-item.good {
+.threshold-item.good {
     color: var(--color-success);
 }
 
-.legend-item.warning {
+.threshold-item.warning {
     color: var(--color-warning);
 }
 
-.legend-item.danger {
+.threshold-item.danger {
     color: var(--color-danger);
 }
 
-.legend-item.timeout {
-    color: var(--color-danger);
+.threshold-item.timeout {
+    color: #8b0000;
     font-weight: 600;
 }
 
