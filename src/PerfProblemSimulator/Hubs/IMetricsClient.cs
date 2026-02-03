@@ -98,4 +98,14 @@ public class SlowRequestLatencyData
     /// The expected duration of the request in milliseconds (Processing Time).
     /// </summary>
     public double ExpectedDurationMs { get; set; }
+
+    /// <summary>
+    /// Whether the request failed or timed out.
+    /// </summary>
+    public bool IsError { get; set; }
+
+    /// <summary>
+    /// Error message if the request failed.
+    /// </summary>
+    public string? ErrorMessage { get; set; }
 }

@@ -289,12 +289,23 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         }
         catch (OperationCanceledException)
         {
-            _logger.LogDebug("Slow request #{Number} cancelled", requestNumber);
+            sw.Stop();
+            var latencyMs = sw.Elapsed.TotalMilliseconds;
+            _logger.LogWarning("Slow request #{Number} timed out after {Latency:F0}ms", requestNumber, latencyMs);
+            
+            BroadcastSlowRequestLatency(requestNumber, scenario, latencyMs, durationSeconds * 1000, 
+                isError: true, 
+                errorMessage: "Request Timed Out (Client Side)");
         }
         catch (Exception ex)
         {
             sw.Stop();
-            _logger.LogError(ex, "Slow HTTP request #{Number} failed after {Elapsed}ms", requestNumber, sw.ElapsedMilliseconds);
+            var latencyMs = sw.Elapsed.TotalMilliseconds;
+            _logger.LogError(ex, "Slow HTTP request #{Number} failed after {Elapsed}ms", requestNumber, latencyMs);
+            
+            BroadcastSlowRequestLatency(requestNumber, scenario, latencyMs, durationSeconds * 1000, 
+                isError: true, 
+                errorMessage: ex.Message);
         }
         finally
         {
@@ -309,7 +320,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     /// <summary>
     /// Broadcasts slow request latency to connected dashboard clients.
     /// </summary>
-    private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs, double expectedDurationMs)
+    private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs, double expectedDurationMs, bool isError = false, string? errorMessage = null)
     {
         try
         {
@@ -319,7 +330,9 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 Scenario = scenario.ToString(),
                 LatencyMs = latencyMs,
                 ExpectedDurationMs = expectedDurationMs,
-                Timestamp = DateTimeOffset.UtcNow
+                Timestamp = DateTimeOffset.UtcNow,
+                IsError = isError,
+                ErrorMessage = errorMessage
             }).GetAwaiter().GetResult();
         }
         catch (Exception ex)

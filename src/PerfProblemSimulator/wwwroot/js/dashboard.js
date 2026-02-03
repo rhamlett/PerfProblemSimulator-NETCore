@@ -484,7 +484,17 @@ function updateCharts() {
  * This shows the impact of thread pool starvation on request processing time.
  */
 function handleLatencyUpdate(measurement) {
-    // Only log errors or significant latency, not every update
+    // Log significant latency events to the dashboard log
+    if (measurement.isError) {
+        logEvent('error', `⚠️ Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
+    } else if (measurement.isTimeout) {
+        logEvent('error', `⚠️ Health Probe Timeout: >${formatLatency(measurement.latencyMs)}`);
+    } else if (measurement.latencyMs > 5000) {
+        // Log extremely high latency (starvation)
+        logEvent('warning', `⚠️ High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
+    }
+    
+    // Debug log for console
     if (measurement.isError || measurement.isTimeout || measurement.latencyMs > 500) {
         console.log('Latency update:', measurement);
     }
@@ -510,6 +520,8 @@ function handleSlowRequestLatency(data) {
     const latencyMs = data.latencyMs;
     const scenario = data.scenario;
     const expectedMs = data.expectedDurationMs || 0;
+    const isError = data.isError;
+    const errorMessage = data.errorMessage;
     
     // Calculate Queue Time (Total - Expected)
     // If negative (processing was faster than expected?), clamp to 0
@@ -529,17 +541,24 @@ function handleSlowRequestLatency(data) {
     }
     
     // Add as a special latency point on the chart (it will show as a large spike)
-    addLatencyToHistory(timestamp, latencyMs, false, false);
-    updateLatencyDisplay(latencyMs, false, false);
+    addLatencyToHistory(timestamp, latencyMs, false, isError);
+    updateLatencyDisplay(latencyMs, false, isError);
     updateLatencyChart();
     
     // Log the slow request completion with Queue Time breakdown
     const durationSec = (latencyMs / 1000).toFixed(1);
     const queueSec = (queueTimeMs / 1000).toFixed(1);
     
-    let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
-    
-    logEvent('warning', msg);
+    if (isError) {
+        let msg = `❌ Slow request #${data.requestNumber} FAILED: ${durationSec}s (${scenario}) - ${errorMessage}`;
+        if (queueTimeMs > 100) {
+            msg += ` [Queue Time: ${queueSec}s]`;
+        }
+        logEvent('error', msg);
+    } else {
+        let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
+        logEvent('warning', msg);
+    }
 }
 
 /**

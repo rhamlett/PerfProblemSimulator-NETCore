@@ -62,8 +62,9 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// <summary>
     /// Request timeout in milliseconds. If the probe takes longer than this,
     /// it's recorded as a timeout with this value as the latency.
+    /// Increased to 70s to match CLR profile observations during severe starvation.
     /// </summary>
-    private const int RequestTimeoutMs = 30000;
+    private const int RequestTimeoutMs = 70000;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LatencyProbeService"/> class.
