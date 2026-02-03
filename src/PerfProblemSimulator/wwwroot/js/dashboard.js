@@ -689,6 +689,9 @@ function updateLatencyChart() {
  * This runs independently in the browser and won't be affected by server thread pool issues.
  */
 function startClientProbe() {
+    // Idempotency check: Don't start if already running
+    if (state.isClientProbeRunning) return;
+
     // Use a flag to track running state
     state.isClientProbeRunning = true;
     
