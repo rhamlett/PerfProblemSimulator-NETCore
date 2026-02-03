@@ -175,6 +175,25 @@ public class LatencyProbeService : IHostedService, IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in latency probe loop");
+
+                // Broadcast error to dashboard so it's visible in the monitor
+                // This helps explain why health probe requests might seem missing or slow in profiler
+                try
+                {
+                    var errorResult = new LatencyMeasurement 
+                    { 
+                        Timestamp = DateTimeOffset.UtcNow,
+                        IsError = true,
+                        ErrorMessage = ex.Message,
+                        LatencyMs = 0
+                    };
+                    BroadcastLatency(errorResult);
+                }
+                catch
+                {
+                    // Ignore broadcast errors
+                }
+
                 // Continue probing even after errors
                 Thread.Sleep(ProbeIntervalMs);
             }

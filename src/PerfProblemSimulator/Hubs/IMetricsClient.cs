@@ -93,4 +93,9 @@ public class SlowRequestLatencyData
     /// When this measurement was taken.
     /// </summary>
     public DateTimeOffset Timestamp { get; set; }
+
+    /// <summary>
+    /// The expected duration of the request in milliseconds (Processing Time).
+    /// </summary>
+    public double ExpectedDurationMs { get; set; }
 }

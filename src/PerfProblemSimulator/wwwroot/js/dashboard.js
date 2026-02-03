@@ -509,6 +509,11 @@ function handleSlowRequestLatency(data) {
     const timestamp = new Date(data.timestamp);
     const latencyMs = data.latencyMs;
     const scenario = data.scenario;
+    const expectedMs = data.expectedDurationMs || 0;
+    
+    // Calculate Queue Time (Total - Expected)
+    // If negative (processing was faster than expected?), clamp to 0
+    const queueTimeMs = Math.max(0, latencyMs - expectedMs);
     
     // Add to slow request history
     const history = state.slowRequestHistory;
@@ -528,9 +533,16 @@ function handleSlowRequestLatency(data) {
     updateLatencyDisplay(latencyMs, false, false);
     updateLatencyChart();
     
-    // Log the slow request completion
+    // Log the slow request completion with Queue Time breakdown
     const durationSec = (latencyMs / 1000).toFixed(1);
-    logEvent('warning', `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario})`);
+    const queueSec = (queueTimeMs / 1000).toFixed(1);
+    
+    let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario})`;
+    if (queueTimeMs > 100) {
+        msg += ` [Queue Time: ${queueSec}s]`;
+    }
+    
+    logEvent('warning', msg);
 }
 
 /**

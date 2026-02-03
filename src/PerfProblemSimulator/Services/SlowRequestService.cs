@@ -270,13 +270,22 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             
             sw.Stop();
             var latencyMs = sw.Elapsed.TotalMilliseconds;
-            
-            _logger.LogInformation(
-                "🐌 Slow HTTP request #{Number} ({Scenario}) completed in {Latency:F0}ms (expected ~{Expected}s)", 
-                requestNumber, scenario, latencyMs, durationSeconds);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError(
+                    "🐌 Slow HTTP request #{Number} failed with status {StatusCode} after {Latency:F0}ms", 
+                    requestNumber, response.StatusCode, latencyMs);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "🐌 Slow HTTP request #{Number} ({Scenario}) completed in {Latency:F0}ms (expected ~{Expected}s)", 
+                    requestNumber, scenario, latencyMs, durationSeconds);
+            }
 
             // Broadcast the slow request latency to the dashboard
-            BroadcastSlowRequestLatency(requestNumber, scenario, latencyMs);
+            BroadcastSlowRequestLatency(requestNumber, scenario, latencyMs, durationSeconds * 1000);
         }
         catch (OperationCanceledException)
         {
@@ -300,7 +309,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     /// <summary>
     /// Broadcasts slow request latency to connected dashboard clients.
     /// </summary>
-    private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs)
+    private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs, double expectedDurationMs)
     {
         try
         {
@@ -309,6 +318,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 RequestNumber = requestNumber,
                 Scenario = scenario.ToString(),
                 LatencyMs = latencyMs,
+                ExpectedDurationMs = expectedDurationMs,
                 Timestamp = DateTimeOffset.UtcNow
             }).GetAwaiter().GetResult();
         }

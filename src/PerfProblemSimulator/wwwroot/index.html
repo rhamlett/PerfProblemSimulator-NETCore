@@ -78,8 +78,8 @@
                 <h3>🐌 Slow Requests</h3>
                 <p>Generates ~25s requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
                 <div class="control-inputs">
-                    <label>Duration (s):
-                        <input type="number" id="slowRequestDuration" value="25" min="5" max="60" title="How long each request takes">
+                    <label title="Estimated total time = Queue Time + Execution Time">Request Execution Time (s):
+                        <input type="number" id="slowRequestDuration" value="25" min="5" max="60" title="Processing time (thread blocking duration)">
                     </label>
                     <label>Interval (s):
                         <input type="number" id="slowRequestInterval" value="2" min="1" max="30" title="Time between requests">
