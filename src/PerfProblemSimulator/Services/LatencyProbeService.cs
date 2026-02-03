@@ -47,7 +47,6 @@ public class LatencyProbeService : IHostedService, IDisposable
     private readonly ILogger<LatencyProbeService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IServer _server;
-    private readonly ISimulationTracker _simulationTracker;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
@@ -75,15 +74,13 @@ public class LatencyProbeService : IHostedService, IDisposable
         IHttpClientFactory httpClientFactory,
         ILogger<LatencyProbeService> logger,
         IConfiguration configuration,
-        IServer server,
-        ISimulationTracker simulationTracker)
+        IServer server)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _server = server ?? throw new ArgumentNullException(nameof(server));
-        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
     }
 
     /// <inheritdoc />
@@ -163,17 +160,6 @@ public class LatencyProbeService : IHostedService, IDisposable
         {
             try
             {
-                // Pause probing during SlowRequest simulation to avoid spamming the CLR Profile/Trace
-                // with hundreds of "Slow" health probe requests, allowing the user to focus on
-                // the actual test requests.
-                if (_simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0)
-                {
-                    // Update dashboard to show "paused" or just stop sending updates
-                    // For now, we just sleep.
-                    Thread.Sleep(1000);
-                    continue;
-                }
-
                 var result = MeasureLatency(httpClient, cancellationToken);
 
                 // Broadcast to all connected clients
