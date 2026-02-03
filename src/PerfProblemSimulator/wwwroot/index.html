@@ -42,7 +42,7 @@
                 <p>Creates parallel spin loops to max out all CPU cores.</p>
                 <div class="control-inputs">
                     <label>Duration (s):
-                        <input type="number" id="cpuDuration" value="10" min="1" max="60">
+                        <input type="number" id="cpuDuration" value="10" min="1" title="Duration in seconds (minimum 1 second)">
                     </label>
                 </div>
                 <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
@@ -53,7 +53,7 @@
                 <p>Allocates pinned memory blocks to increase working set.</p>
                 <div class="control-inputs">
                     <label>Size (MB):
-                        <input type="number" id="memorySize" value="512" min="1" max="500">
+                        <input type="number" id="memorySize" value="512" min="1" title="Memory size in megabytes (minimum 1 MB). Allocations are cumulative until released.">
                     </label>
                 </div>
                 <button class="btn btn-warning" id="btnAllocateMemory">📊 Allocate</button>
@@ -65,10 +65,10 @@
                 <p>Blocks threads using sync-over-async anti-pattern.</p>
                 <div class="control-inputs">
                     <label>Delay (ms):
-                        <input type="number" id="threadDelay" value="5000" min="100" max="30000">
+                        <input type="number" id="threadDelay" value="5000" min="100" title="How long each blocking operation delays (minimum 100ms)">
                     </label>
                     <label>Count:
-                        <input type="number" id="threadConcurrent" value="100" min="1" max="500">
+                        <input type="number" id="threadConcurrent" value="100" min="1" title="Number of concurrent blocking operations (minimum 1)">
                     </label>
                 </div>
                 <button class="btn btn-danger" id="btnTriggerThreadBlock">🧵 Block Threads</button>
@@ -106,9 +106,11 @@
                             <option value="OutOfMemory">Out of Memory</option>
                         </select>
                     </label>
+                    <!-- Delay option commented out - not serving a useful purpose
                     <label>Delay (s):
-                        <input type="number" id="crashDelay" value="0" min="0" max="60">
+                        <input type="number" id="crashDelay" value="0" min="0" title="Optional delay before crash (0 = immediate)">
                     </label>
+                    -->
                 </div>
                 <button class="btn btn-crash" id="btnTriggerCrash">💀 Trigger Crash</button>
                 <p class="crash-warning">⚠️ This will TERMINATE the app!</p>
