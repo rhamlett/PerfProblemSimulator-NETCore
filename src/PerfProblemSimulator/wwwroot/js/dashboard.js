@@ -484,6 +484,24 @@ function updateCharts() {
  * This shows the impact of thread pool starvation on request processing time.
  */
 function handleLatencyUpdate(measurement) {
+    const timestamp = new Date(measurement.timestamp);
+
+    // Special handling for PAUSED state
+    if (measurement.isPaused) {
+        addLatencyToHistory(timestamp, null, false, false);
+        
+        // Update display to show PAUSED status
+        const currentEl = document.getElementById('latencyCurrent');
+        if (currentEl) {
+            currentEl.textContent = "PAUSED";
+            currentEl.className = 'latency-value';
+        }
+        
+        // Don't log anything for paused heartbeats
+        updateLatencyChart();
+        return;
+    }
+
     // Log significant latency events to the dashboard log
     if (measurement.isError) {
         logEvent('error', `⚠️ Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
@@ -499,7 +517,6 @@ function handleLatencyUpdate(measurement) {
         console.log('Latency update:', measurement);
     }
     
-    const timestamp = new Date(measurement.timestamp);
     const latencyMs = measurement.latencyMs;
     const isTimeout = measurement.isTimeout;
     const isError = measurement.isError;
@@ -597,6 +614,9 @@ function addLatencyToHistory(timestamp, latencyMs, isTimeout, isError) {
 function updateLatencyDisplay(currentLatency, isTimeout, isError) {
     const history = state.latencyHistory;
     
+    // Ignore updates if the current value is null (paused)
+    if (currentLatency === null) return;
+    
     // Current latency with color coding (check if element exists)
     const currentEl = document.getElementById('latencyCurrent');
     if (currentEl) {
@@ -604,18 +624,21 @@ function updateLatencyDisplay(currentLatency, isTimeout, isError) {
         currentEl.className = `latency-value ${getLatencyClass(currentLatency, isTimeout)}`;
     }
     
+    // Filter out nulls for calculations
+    const validValues = history.values.filter(v => v !== null);
+
     // Calculate average
     const avgEl = document.getElementById('latencyAverage');
-    if (avgEl && history.values.length > 0) {
-        const avg = history.values.reduce((a, b) => a + b, 0) / history.values.length;
+    if (avgEl && validValues.length > 0) {
+        const avg = validValues.reduce((a, b) => a + b, 0) / validValues.length;
         avgEl.textContent = formatLatency(avg);
         avgEl.className = `latency-value ${getLatencyClass(avg, false)}`;
     }
     
     // Calculate max
     const maxEl = document.getElementById('latencyMax');
-    if (maxEl && history.values.length > 0) {
-        const max = Math.max(...history.values);
+    if (maxEl && validValues.length > 0) {
+        const max = Math.max(...validValues);
         maxEl.textContent = formatLatency(max);
         
         // precise timeout check for max value could be complex, 
@@ -679,6 +702,7 @@ function updateLatencyChart() {
     
     // Map data points to colors based on latency
     const pointColors = history.values.map((v, i) => {
+        if (v === null) return 'transparent'; // Handle paused/null values
         if (history.isTimeout[i]) return '#d13438';
         if (v > 1000) return '#d13438';
         if (v > 150) return '#ffb900';
@@ -693,6 +717,8 @@ function updateLatencyChart() {
         borderColor: ctx => {
             const index = ctx.p0DataIndex;
             const latency = history.values[index];
+            if (latency === null || history.values[index+1] === null) return 'transparent'; // Gap
+            
             const isTimeout = history.isTimeout[index];
             if (isTimeout) return '#d13438';
             if (latency > 1000) return '#d13438';

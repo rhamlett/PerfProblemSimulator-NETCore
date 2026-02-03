@@ -47,6 +47,7 @@ public class LatencyProbeService : IHostedService, IDisposable
     private readonly ILogger<LatencyProbeService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IServer _server;
+    private readonly ISimulationTracker _simulationTracker;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
@@ -74,13 +75,15 @@ public class LatencyProbeService : IHostedService, IDisposable
         IHttpClientFactory httpClientFactory,
         ILogger<LatencyProbeService> logger,
         IConfiguration configuration,
-        IServer server)
+        IServer server,
+        ISimulationTracker simulationTracker)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _server = server ?? throw new ArgumentNullException(nameof(server));
+        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
     }
 
     /// <inheritdoc />
@@ -160,6 +163,24 @@ public class LatencyProbeService : IHostedService, IDisposable
         {
             try
             {
+                // Pause probing during SlowRequest simulation to avoid spamming the CLR Profile/Trace
+                // with hundreds of "Slow" health probe requests, allowing the user to focus on
+                // the actual test requests.
+                if (_simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0)
+                {
+                    // Broadcast a "Paused" measurement so the dashboard chart keeps ticking
+                    BroadcastLatency(new LatencyMeasurement
+                    {
+                        Timestamp = DateTimeOffset.UtcNow,
+                        LatencyMs = 0,
+                        IsPaused = true
+                    });
+
+                    // Wait for next probe interval
+                    Thread.Sleep(ProbeIntervalMs);
+                    continue;
+                }
+
                 var result = MeasureLatency(httpClient, cancellationToken);
 
                 // Broadcast to all connected clients
@@ -387,8 +408,11 @@ public class LatencyMeasurement
     /// <summary>
     /// Whether the request failed with an error.
     /// </summary>
-    public bool IsError { get; init; }
-
+    public bool IsError { get; init; }    
+    /// <summary>
+    /// Whether the probe was skipped (paused) to preserve CLR profile.
+    /// </summary>
+    public bool IsPaused { get; init; }
     /// <summary>
     /// Error message if IsError is true.
     /// </summary>
