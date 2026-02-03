@@ -763,24 +763,34 @@ procdump -ma -h w3wp.exe
                 <thead>
                     <tr>
                         <th>Scenario</th>
-                        <th>Expected Latency</th>
+                        <th>Latency (Total)</th>
+                        <th>Status</th>
                         <th>What's Happening</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Normal operation</td>
-                        <td>&lt; 50ms</td>
+                        <td>&lt; 150ms</td>
+                        <td>✅ Good</td>
                         <td>Thread pool threads are available</td>
                     </tr>
                     <tr>
-                        <td>Thread pool starvation</td>
-                        <td>100ms - 30s+</td>
+                        <td>Mild starvation</td>
+                        <td>150ms - 1s</td>
+                        <td>⚠️ Degraded</td>
                         <td>Requests queued waiting for threads</td>
+                    </tr>
+                    <tr>
+                        <td>Severe starvation</td>
+                        <td>&gt; 1s</td>
+                        <td>❌ Critical</td>
+                        <td>Significant queuing delay</td>
                     </tr>
                     <tr>
                         <td>Timeout</td>
                         <td>30s</td>
+                        <td>❌ Timeout</td>
                         <td>No thread available within timeout</td>
                     </tr>
                 </tbody>

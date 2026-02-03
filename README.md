@@ -173,11 +173,12 @@ The dashboard includes a **Request Latency Monitor** that demonstrates how threa
 
 ### What You'll Observe
 
-| Scenario | Expected Latency | Explanation |
-|----------|-----------------|-------------|
-| Normal operation | < 50ms | Thread pool threads available |
-| Thread pool starvation | 100ms - 30s | Requests queued waiting for threads |
-| Timeout | 30s | No thread became available |
+| Scenario | Latency (Queue + Processing) | Status | Explanation |
+|----------|------------------------------|--------|-------------|
+| Normal operation | < 150ms | 🟢 Good | Thread pool threads available |
+| Mild starvation | 150ms - 1s | 🟡 Degraded | Requests beginning to queue |
+| Severe starvation | > 1s | 🔴 Critical | Significant queuing delay |
+| Timeout | 30s | 🔴 Timeout | No thread became available within timeout |
 
 ### Why This Matters
 

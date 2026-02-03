@@ -629,8 +629,8 @@ function formatLatency(ms) {
  */
 function getLatencyClass(ms, isTimeout) {
     if (isTimeout) return 'timeout';
-    if (ms > 500) return 'danger';
-    if (ms > 50) return 'warning';
+    if (ms > 1000) return 'danger';
+    if (ms > 150) return 'warning';
     return 'good';
 }
 
@@ -654,8 +654,8 @@ function updateLatencyChart() {
     // Map data points to colors based on latency
     const pointColors = history.values.map((v, i) => {
         if (history.isTimeout[i]) return '#d13438';
-        if (v > 500) return '#d13438';
-        if (v > 50) return '#ffb900';
+        if (v > 1000) return '#d13438';
+        if (v > 150) return '#ffb900';
         return '#107c10';
     });
     
@@ -669,8 +669,8 @@ function updateLatencyChart() {
             const latency = history.values[index];
             const isTimeout = history.isTimeout[index];
             if (isTimeout) return '#d13438';
-            if (latency > 500) return '#d13438';
-            if (latency > 50) return '#ffb900';
+            if (latency > 1000) return '#d13438';
+            if (latency > 150) return '#ffb900';
             return '#107c10';
         }
     };

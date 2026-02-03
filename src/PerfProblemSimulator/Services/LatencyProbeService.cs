@@ -175,25 +175,6 @@ public class LatencyProbeService : IHostedService, IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in latency probe loop");
-
-                // Broadcast error to dashboard so it's visible in the monitor
-                // This helps explain why health probe requests might seem missing or slow in profiler
-                try
-                {
-                    var errorResult = new LatencyMeasurement 
-                    { 
-                        Timestamp = DateTimeOffset.UtcNow,
-                        IsError = true,
-                        ErrorMessage = ex.Message,
-                        LatencyMs = 0
-                    };
-                    BroadcastLatency(errorResult);
-                }
-                catch
-                {
-                    // Ignore broadcast errors
-                }
-
                 // Continue probing even after errors
                 Thread.Sleep(ProbeIntervalMs);
             }
@@ -227,28 +208,31 @@ public class LatencyProbeService : IHostedService, IDisposable
                 errorMessage = $"HTTP {(int)response.StatusCode}";
             }
         }
-        catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            // Request timed out (not service shutdown)
-            stopwatch.Stop();
-            isTimeout = true;
-            _logger.LogWarning("Probe request timed out after {Timeout}ms", RequestTimeoutMs);
-        }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
             stopwatch.Stop();
-            isError = true;
-            errorMessage = ex.Message;
-            _logger.LogWarning(ex, "Probe request failed");
+
+            // Check if it's a timeout (TaskCanceledException or OperationCanceledException when token not cancelled)
+            if (ex is TaskCanceledException || 
+               (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+            {
+                isTimeout = true;
+                _logger.LogWarning("Probe request timed out/cancelled");
+            }
+            else
+            {
+                isError = true;
+                errorMessage = ex.Message;
+                _logger.LogWarning(ex, "Probe request failed");
+            }
         }
 
-        // If timeout, report the timeout value as the latency
-        var latencyMs = isTimeout ? RequestTimeoutMs : stopwatch.ElapsedMilliseconds;
-
+        // Always report the actual elapsed time, even on error/timeout
+        // This ensures the chart shows the full impact of queuing (Total Time)
         return new LatencyMeasurement
         {
             Timestamp = timestamp,
-            LatencyMs = latencyMs,
+            LatencyMs = stopwatch.ElapsedMilliseconds,
             IsTimeout = isTimeout,
             IsError = isError,
             ErrorMessage = errorMessage

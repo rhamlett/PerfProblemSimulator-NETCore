@@ -424,10 +424,10 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p><strong>Note:</strong> Memory thresholds are calculated dynamically based on the actual total available memory reported by the server, not a hardcoded value. This ensures accurate warnings regardless of the machine's RAM configuration.</p>
         </section>
 
-        <!-- Latency Monitor Section -->
+        <!-- Request Latency Monitor Section -->
         <section id="latency" class="doc-section">
             <h2>⏱️ Request Latency Monitor</h2>
-            <p>The dashboard includes a <strong>Request Latency Monitor</strong> that demonstrates how thread pool starvation affects real-world request processing.</p>
+            <p>The dashboard includes a <strong>Request Latency Monitor</strong> that demonstrates how thread pool starvation affects real-world request processing. The latency values shown include <strong>both queue time and processing time</strong>.</p>
             
             <h3>How It Works</h3>
             <ul>
@@ -441,25 +441,35 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <thead>
                     <tr>
                         <th>Scenario</th>
-                        <th>Expected Latency</th>
+                        <th>Latency (Total)</th>
+                        <th>Status</th>
                         <th>Explanation</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Normal operation</td>
-                        <td>&lt; 50ms</td>
+                        <td>&lt; 150ms</td>
+                        <td>🟢 Good</td>
                         <td>Thread pool threads available</td>
                     </tr>
                     <tr>
-                        <td>Thread pool starvation</td>
-                        <td>100ms - 30s</td>
+                        <td>Mild starvation</td>
+                        <td>150ms - 1s</td>
+                        <td>🟡 Degraded</td>
                         <td>Requests queued waiting for threads</td>
+                    </tr>
+                    <tr>
+                        <td>Severe starvation</td>
+                        <td>&gt; 1s</td>
+                        <td>🔴 Critical</td>
+                        <td>Significant queuing delay</td>
                     </tr>
                     <tr>
                         <td>Timeout</td>
                         <td>30s</td>
-                        <td>No thread became available</td>
+                        <td>🔴 Timeout</td>
+                        <td>No thread became available within timeout</td>
                     </tr>
                 </tbody>
             </table>
@@ -507,7 +517,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <h3>Recommended Settings</h3>
             <p>For a 60-second CLR Profiler trace:</p>
             <ul>
-                <li><strong>Duration:</strong> 25 seconds (long enough to capture)</li>
+                <li><strong>Request Execution Time:</strong> 25 seconds (processing time only, excludes queue time)</li>
                 <li><strong>Interval:</strong> 10 seconds (multiple samples)</li>
                 <li><strong>Max Requests:</strong> 6 (doesn't overwhelm)</li>
             </ul>

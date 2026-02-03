@@ -65,7 +65,7 @@
                 <p>Blocks threads using sync-over-async anti-pattern.</p>
                 <div class="control-inputs">
                     <label>Delay (ms):
-                        <input type="number" id="threadDelay" value="5000" min="100" title="How long each blocking operation delays (minimum 100ms)">
+                        <input type="number" id="threadDelay" class="wide-input" value="5000" min="100" title="How long each blocking operation delays (minimum 100ms)">
                     </label>
                     <label>Count:
                         <input type="number" id="threadConcurrent" value="100" min="1" title="Number of concurrent blocking operations (minimum 1)">
@@ -76,10 +76,10 @@
 
             <div class="control-group slowrequest-group">
                 <h3>🐌 Slow Requests</h3>
-                <p>Generates ~25s requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
+                <p>Generates requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
                 <div class="control-inputs">
-                    <label title="Estimated total time = Queue Time + Execution Time">Request Execution Time (s):
-                        <input type="number" id="slowRequestDuration" value="25" min="5" max="60" title="Processing time (thread blocking duration)">
+                    <label>Request Execution Time (s) <span style="cursor: help; color: var(--color-primary);" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
+                        <input type="number" id="slowRequestDuration" value="25" min="5" max="60">
                     </label>
                     <label>Interval (s):
                         <input type="number" id="slowRequestInterval" value="2" min="1" max="30" title="Time between requests">
@@ -98,7 +98,7 @@
                 <p>Triggers a fatal crash for Azure crash monitoring.</p>
                 <div class="control-inputs">
                     <label>Type:
-                        <select id="crashType">
+                        <select id="crashType" class="wide-input">
                             <option value="FailFast">FailFast</option>
                             <option value="StackOverflow">Stack Overflow</option>
                             <option value="UnhandledException">Unhandled Exception</option>
@@ -199,7 +199,7 @@
         <!-- Latency Monitor Section -->
         <section class="latency-section">
             <h2>⏱️ Request Latency Monitor</h2>
-            <p class="info-text">Measures response time to a lightweight probe endpoint. During thread pool starvation, latency increases dramatically.</p>
+            <p class="info-text">Measures response time to a lightweight probe endpoint. Times include both processing and queue time. During thread pool starvation, latency increases dramatically.</p>
             
             <div class="latency-stats">
                 <div class="latency-stat current">
@@ -222,9 +222,9 @@
 
             <div class="latency-thresholds">
                 <span class="threshold-title">Thresholds:</span>
-                <span class="threshold-item good">● Good (&lt;50ms)</span>
-                <span class="threshold-item warning">● Degraded (50-500ms)</span>
-                <span class="threshold-item danger">● Critical (&gt;500ms)</span>
+                <span class="threshold-item good">● Good (&lt;150ms)</span>
+                <span class="threshold-item warning">● Degraded (150ms-1s)</span>
+                <span class="threshold-item danger">● Critical (&gt;1s)</span>
                 <span class="threshold-item timeout">● Timeout (30s)</span>
             </div>
 

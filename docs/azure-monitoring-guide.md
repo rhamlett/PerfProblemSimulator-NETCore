@@ -394,11 +394,12 @@ The dashboard includes a **Request Latency Monitor** that demonstrates how threa
 
 ### What to Observe
 
-| Scenario | Expected Latency | What's Happening |
-|----------|-----------------|------------------|
-| Normal operation | < 50ms | Thread pool threads are available |
-| Thread pool starvation | 100ms - 30s+ | Requests queued waiting for threads |
-| Timeout | 30s | No thread available within timeout |
+| Scenario | Latency (Total Time) | Status | What's Happening |
+|----------|----------------------|--------|------------------|
+| Normal operation | < 150ms | Good | Thread pool threads are available |
+| Mild starvation | 150ms - 1s | Degraded | Requests queued waiting for threads |
+| Severe starvation | > 1s | Critical | Significant queuing delay |
+| Timeout | 30s | Timeout | No thread available within timeout |
 
 ### Key Insight
 

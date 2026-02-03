@@ -660,7 +660,11 @@ body {
 
 .side-panel-content .control-inputs input,
 .side-panel-content .control-inputs select {
-    width: 100px;
+    width: 60px;
+}
+
+.side-panel-content .control-inputs .wide-input {
+    width: 110px;
 }
 
 .side-panel-content .btn {
