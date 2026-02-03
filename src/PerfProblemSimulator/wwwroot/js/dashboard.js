@@ -822,14 +822,15 @@ async function triggerThreadBlock() {
  */
 async function triggerCrash() {
     const crashType = document.getElementById('crashType').value;
-    const delaySeconds = parseInt(document.getElementById('crashDelay').value) || 0;
+    // Delay option removed from UI - default to 0 (immediate crash)
+    const delayElement = document.getElementById('crashDelay');
+    const delaySeconds = delayElement ? parseInt(delayElement.value) || 0 : 0;
     
     // Confirmation dialog - always synchronous for Azure Crash Monitoring
     const confirmed = confirm(
         `⚠️ WARNING: This will CRASH the application!\n\n` +
         `Crash Type: ${crashType}\n` +
-        `Delay: ${delaySeconds} seconds\n\n` +
-        `The application will terminate and Azure will auto-restart it.\n` +
+        `\nThe application will terminate and Azure will auto-restart it.\n` +
         `✓ Azure Crash Monitoring will capture this crash.\n` +
         `\nAre you sure you want to proceed?`
     );
