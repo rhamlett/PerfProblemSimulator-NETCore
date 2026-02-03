@@ -537,10 +537,7 @@ function handleSlowRequestLatency(data) {
     const durationSec = (latencyMs / 1000).toFixed(1);
     const queueSec = (queueTimeMs / 1000).toFixed(1);
     
-    let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario})`;
-    if (queueTimeMs > 100) {
-        msg += ` [Queue Time: ${queueSec}s]`;
-    }
+    let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
     
     logEvent('warning', msg);
 }
@@ -593,6 +590,7 @@ function updateLatencyDisplay(currentLatency, isTimeout, isError) {
     if (avgEl && history.values.length > 0) {
         const avg = history.values.reduce((a, b) => a + b, 0) / history.values.length;
         avgEl.textContent = formatLatency(avg);
+        avgEl.className = `latency-value ${getLatencyClass(avg, false)}`;
     }
     
     // Calculate max
@@ -600,12 +598,21 @@ function updateLatencyDisplay(currentLatency, isTimeout, isError) {
     if (maxEl && history.values.length > 0) {
         const max = Math.max(...history.values);
         maxEl.textContent = formatLatency(max);
+        
+        // precise timeout check for max value could be complex, 
+        // but high latency > 1s will be red anyway which is sufficient
+        maxEl.className = `latency-value ${getLatencyClass(max, false)}`;
     }
     
     // Update timeout count
     const timeoutsEl = document.getElementById('latencyTimeouts');
     if (timeoutsEl) {
         timeoutsEl.textContent = state.latencyStats.timeoutCount;
+        if (state.latencyStats.timeoutCount > 0) {
+            timeoutsEl.className = 'latency-value timeout';
+        } else {
+            timeoutsEl.className = 'latency-value';
+        }
     }
 }
 
@@ -682,10 +689,13 @@ function updateLatencyChart() {
  * This runs independently in the browser and won't be affected by server thread pool issues.
  */
 function startClientProbe() {
-    // Client probe at same interval as server for comparison
-    state.clientProbeInterval = setInterval(async () => {
+    // Use a flag to track running state
+    state.isClientProbeRunning = true;
+    
+    const runProbe = async () => {
+        if (!state.isClientProbeRunning) return;
+
         try {
-            const start = performance.now();
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), CONFIG.latencyTimeoutMs);
             
@@ -694,29 +704,32 @@ function startClientProbe() {
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
-                
-                const latency = performance.now() - start;
-                // Client probe data could be shown separately or compared
-                // For now, we rely on server-side probe which is more accurate for thread pool measurement
             } catch (e) {
                 clearTimeout(timeoutId);
-                if (e.name === 'AbortError') {
-                    // Timeout - handled by server probe
-                }
+                // Ignore errors/aborts
             }
         } catch (err) {
-            // Network error - server probe will detect this
+            // Ignore network errors
         }
-    }, CONFIG.latencyProbeIntervalMs);
+
+        // Schedule next probe ONLY after this one completes (Closed Loop)
+        if (state.isClientProbeRunning) {
+            state.clientProbeTimeout = setTimeout(runProbe, CONFIG.latencyProbeIntervalMs);
+        }
+    };
+
+    // Start the loop
+    runProbe();
 }
 
 /**
  * Stop client-side probe.
  */
 function stopClientProbe() {
-    if (state.clientProbeInterval) {
-        clearInterval(state.clientProbeInterval);
-        state.clientProbeInterval = null;
+    state.isClientProbeRunning = false;
+    if (state.clientProbeTimeout) {
+        clearTimeout(state.clientProbeTimeout);
+        state.clientProbeTimeout = null;
     }
 }
 
