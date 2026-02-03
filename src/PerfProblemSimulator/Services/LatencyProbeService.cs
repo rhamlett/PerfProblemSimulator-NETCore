@@ -168,16 +168,9 @@ public class LatencyProbeService : IHostedService, IDisposable
                 // the actual test requests.
                 if (_simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0)
                 {
-                    // Broadcast a "Paused" measurement so the dashboard chart keeps ticking
-                    BroadcastLatency(new LatencyMeasurement
-                    {
-                        Timestamp = DateTimeOffset.UtcNow,
-                        LatencyMs = 0,
-                        IsPaused = true
-                    });
-
-                    // Wait for next probe interval
-                    Thread.Sleep(ProbeIntervalMs);
+                    // Update dashboard to show "paused" or just stop sending updates
+                    // For now, we just sleep.
+                    Thread.Sleep(1000);
                     continue;
                 }
 
@@ -408,11 +401,8 @@ public class LatencyMeasurement
     /// <summary>
     /// Whether the request failed with an error.
     /// </summary>
-    public bool IsError { get; init; }    
-    /// <summary>
-    /// Whether the probe was skipped (paused) to preserve CLR profile.
-    /// </summary>
-    public bool IsPaused { get; init; }
+    public bool IsError { get; init; }
+
     /// <summary>
     /// Error message if IsError is true.
     /// </summary>
