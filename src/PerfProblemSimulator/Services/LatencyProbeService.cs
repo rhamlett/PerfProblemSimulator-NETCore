@@ -167,7 +167,17 @@ public class LatencyProbeService : IHostedService, IDisposable
         // Add a user agent for Azure (some proxies require it)
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LatencyProbe/1.0");
 
-        while (!cancellationT_probeIntervalMs);
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                var result = MeasureLatency(httpClient, cancellationToken);
+
+                // Broadcast to all connected clients
+                BroadcastLatency(result);
+
+                // Wait for next probe interval
+                Thread.Sleep(_probeIntervalMs);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -178,17 +188,7 @@ public class LatencyProbeService : IHostedService, IDisposable
             {
                 _logger.LogError(ex, "Error in latency probe loop");
                 // Continue probing even after errors
-                Thread.Sleep(_p
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                // Normal shutdown, exit gracefully
-                break;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error in latency probe loop");
-                // Continue probing even after errors
-                Thread.Sleep(ProbeIntervalMs);
+                Thread.Sleep(_probeIntervalMs);
             }
         }
     }

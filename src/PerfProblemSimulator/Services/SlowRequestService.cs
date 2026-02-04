@@ -167,11 +167,11 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 
         _logger.LogInformation(
             "🛑 Slow request simulation stopped: {SimulationId}. " +
-        // Restore normal probe frequency
-        _latencyProbeService.SetProbeInterval(100);
-
             "Sent={Sent}, Completed={Completed}, InProgress={InProgress}",
             _simulationId, _requestsSent, _requestsCompleted, _requestsInProgress);
+
+        // Restore normal probe frequency
+        _latencyProbeService.SetProbeInterval(100);
 
         return new SimulationResult
         {
