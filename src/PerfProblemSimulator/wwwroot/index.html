@@ -99,7 +99,6 @@
                 </div>
                 <button class="btn btn-slowrequest" id="btnStartSlowRequests">🐌 Start Slow Requests</button>
                 <button class="btn btn-secondary" id="btnStopSlowRequests">⏹️ Stop</button>
-                <div id="slowRequestStatus" class="slowrequest-status"></div>
             </div>
 
             <div class="control-group crash-group">
@@ -239,11 +238,12 @@
 
             <div class="chart-container latency-chart-container" style="position: relative;">
                 <h3>📊 Response Latency Over Time</h3>
+                <div id="latencySuspendedMsg" style="display:none; color: #8b3a3a; font-weight: bold; text-align: center; margin-bottom: 5px;">
+                    Latency probes suspended during Slow Request testing to ensure clean CLR Profile diagnostics.
+                </div>
                 <canvas id="latencyChart"></canvas>
                 <div id="latencyOverlay" class="chart-overlay">
-                    <div class="overlay-content">
-                        <p class="overlay-message">Latency probes suspended during Slow Request testing to ensure clean CLR Profile diagnostics.</p>
-                    </div>
+                    <div id="slowRequestStatus" class="slowrequest-status-overlay"></div>
                 </div>
             </div>
         </section>

@@ -764,10 +764,31 @@ body {
     height: 200px;
     margin-bottom: 1rem;
     position: relative;
+    /* Ensure flex column so the new message sits above canvas nicely */
+    display: flex;
+    flex-direction: column;
+}
+
+.slowrequest-status-overlay {
+    font-size: 0.9rem;
+    color: #ff8c00;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ff8c00;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: none;
+    pointer-events: none;
+}
+
+.slowrequest-status-overlay.active {
+    display: block;
 }
 
 .latency-chart-container canvas {
     max-height: 100%;
+    /* Allow canvas to shrink if message appears */
+    flex: 1;
 }
 
 .latency-thresholds {
@@ -814,14 +835,13 @@ body {
 /* Chart Overlay */
 .chart-overlay {
     position: absolute;
-    top: 50px; /* Position below header/legend area */
+    top: 0; 
     left: 0;
     right: 0;
     bottom: 0;
     display: none; /* Hidden by default */
-    align-items: flex-start; /* Align near top */
-    justify-content: center;
-    padding-top: 20px;
+    align-items: center; /* Center Vertically */
+    justify-content: center; /* Center Horizontally */
     z-index: 10;
     pointer-events: none; /* Allow interaction with chart behind */
 }

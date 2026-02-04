@@ -1044,8 +1044,12 @@ async function pollSlowRequestStatus() {
 
                 // Ensure overlay is active if running (in case page was refreshed)
                 const overlay = document.getElementById('latencyOverlay');
+                const msg = document.getElementById('latencySuspendedMsg');
                 if (overlay && !overlay.classList.contains('active')) {
                      overlay.classList.add('active');
+                }
+                if (msg && msg.style.display === 'none') {
+                    msg.style.display = 'block';
                 }
                 
                 // Continue polling
@@ -1063,7 +1067,9 @@ async function pollSlowRequestStatus() {
                 
                 // Hide overlay when simulation is confirmed done via polling
                 const overlay = document.getElementById('latencyOverlay');
+                const msg = document.getElementById('latencySuspendedMsg');
                 if (overlay) overlay.classList.remove('active');
+                if (msg) msg.style.display = 'none';
 
                 if (status.requestsCompleted > 0) {
                     logEvent('success', `🐌 Slow request simulation completed: ${status.requestsCompleted} requests`);
@@ -1089,7 +1095,12 @@ function handleSimulationStarted(simulationType, simulationId) {
     // Handle SlowRequest specific UI
     if (simulationType === 'SlowRequest') {
         const overlay = document.getElementById('latencyOverlay');
+        const statusOverlay = document.getElementById('slowRequestStatus');
+        const msg = document.getElementById('latencySuspendedMsg');
+
         if (overlay) overlay.classList.add('active');
+        if (statusOverlay) statusOverlay.classList.add('active');
+        if (msg) msg.style.display = 'block';
         
         // Stop client probe to ensure clean profile
         stopClientProbe();
@@ -1103,7 +1114,14 @@ function handleSimulationCompleted(simulationType, simulationId) {
     // Handle SlowRequest specific UI
     if (simulationType === 'SlowRequest') {
         const overlay = document.getElementById('latencyOverlay');
+        const statusOverlay = document.getElementById('slowRequestStatus');
+        const msg = document.getElementById('latencySuspendedMsg');
+
         if (overlay) overlay.classList.remove('active');
+        if (msg) msg.style.display = 'none';
+        
+        // Let the status overlay hang around for a few seconds via the polling loop instead of hiding immediately
+        // The polling loop will handle the 'Running' -> 'Completed' text update.
     }
 }
 
