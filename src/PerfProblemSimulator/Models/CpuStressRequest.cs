@@ -35,4 +35,16 @@ public class CpuStressRequest
     /// </remarks>
     [Range(1, int.MaxValue, ErrorMessage = "Duration must be at least 1 second")]
     public int DurationSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// The target CPU usage percentage (1-100).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default: 100%. Lower values use a duty cycle (work/sleep) to simulate
+    /// partial CPU load.
+    /// </para>
+    /// </remarks>
+    [Range(1, 100, ErrorMessage = "Target percentage must be between 1 and 100")]
+    public int TargetPercentage { get; set; } = 100;
 }

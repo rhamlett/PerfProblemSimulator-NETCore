@@ -761,18 +761,22 @@ function stopClientProbe() {
 
 async function triggerCpuStress() {
     const duration = parseInt(document.getElementById('cpuDuration').value) || 10;
+    const target = parseInt(document.getElementById('cpuTarget').value) || 100;
     
     try {
-        logEvent('info', `Triggering CPU stress for ${duration} seconds...`);
+        logEvent('info', `Triggering CPU stress for ${duration} seconds @ ${target}%...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/trigger-high-cpu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ durationSeconds: duration })
+            body: JSON.stringify({ 
+                durationSeconds: duration,
+                targetPercentage: target
+            })
         });
         
         if (response.ok) {
             const result = await response.json();
-            addActiveSimulation(result.simulationId, 'cpu', 'CPU Stress');
+            addActiveSimulation(result.simulationId, 'cpu', `CPU Stress (${target}%)`);
             logEvent('success', `CPU stress started: ${result.simulationId}`);
         } else {
             const error = await response.json();

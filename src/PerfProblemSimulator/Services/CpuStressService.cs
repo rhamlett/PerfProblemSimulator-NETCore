@@ -84,7 +84,7 @@ public class CpuStressService : ICpuStressService
     }
 
     /// <inheritdoc />
-    public Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken)
+    public Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken, int targetPercentage = 100)
     {
         // ==========================================================================
         // STEP 1: Validate the duration (no upper limits - app is meant to break)
@@ -92,6 +92,8 @@ public class CpuStressService : ICpuStressService
         var actualDuration = durationSeconds <= 0
             ? DefaultDurationSeconds
             : durationSeconds;
+
+        var actualPercentage = Math.Clamp(targetPercentage, 1, 100);
 
         var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;
@@ -108,16 +110,18 @@ public class CpuStressService : ICpuStressService
         var parameters = new Dictionary<string, object>
         {
             ["DurationSeconds"] = actualDuration,
-            ["ProcessorCount"] = processorCount
+            ["ProcessorCount"] = processorCount,
+            ["TargetPercentage"] = actualPercentage
         };
 
         // Register this simulation with the tracker
         _simulationTracker.RegisterSimulation(simulationId, SimulationType.Cpu, parameters, cts);
 
         _logger.LogInformation(
-            "Starting CPU stress simulation {SimulationId}: {Duration}s across {ProcessorCount} cores",
+            "Starting CPU stress simulation {SimulationId}: {Duration}s @ {Percentage}% across {ProcessorCount} cores",
             simulationId,
             actualDuration,
+            actualPercentage,
             processorCount);
 
         // ==========================================================================
@@ -128,7 +132,7 @@ public class CpuStressService : ICpuStressService
         // This is important because the caller (HTTP request) shouldn't be blocked
         // waiting for the entire duration.
 
-        _ = Task.Run(() => ExecuteCpuStress(simulationId, actualDuration, cts.Token), cts.Token);
+        _ = Task.Run(() => ExecuteCpuStress(simulationId, actualDuration, actualPercentage, cts.Token), cts.Token);
 
         // ==========================================================================
         // STEP 4: Return the result immediately
@@ -141,7 +145,7 @@ public class CpuStressService : ICpuStressService
             SimulationId = simulationId,
             Type = SimulationType.Cpu,
             Status = "Started",
-            Message = $"CPU stress started on {processorCount} cores for {actualDuration} seconds. " +
+            Message = $"CPU stress started on {processorCount} cores for {actualDuration} seconds at {actualPercentage}%. " +
                       "Observe CPU metrics in Task Manager, dotnet-counters, or Application Insights. " +
                       "High CPU like this is typically caused by spin loops, inefficient algorithms, or infinite loops.",
             ActualParameters = parameters,
@@ -160,9 +164,9 @@ public class CpuStressService : ICpuStressService
     /// <strong>⚠️ THIS IS AN ANTI-PATTERN - FOR EDUCATIONAL PURPOSES ONLY ⚠️</strong>
     /// </para>
     /// <para>
-    /// This method uses dedicated threads with spin loops to consume all available CPU cores.
-    /// Each thread runs a tight <c>while</c> loop that does nothing but check the time 
-    /// and cancellation token.
+    /// This method uses dedicated threads with spin loops to consume available CPU.
+    /// If targetPercentage is 100, it runs a tight loop.
+    /// If targetPercentage is less than 100, it uses a duty cycle (work/sleep) to simulate load.
     /// </para>
     /// <para>
     /// <strong>Why Dedicated Threads Instead of Parallel.For?</strong>
@@ -171,7 +175,7 @@ public class CpuStressService : ICpuStressService
     /// thread pool remains available for the dashboard and metrics collection.
     /// </para>
     /// </remarks>
-    private void ExecuteCpuStress(Guid simulationId, int durationSeconds, CancellationToken cancellationToken)
+    private void ExecuteCpuStress(Guid simulationId, int durationSeconds, int targetPercentage, CancellationToken cancellationToken)
     {
         try
         {
@@ -182,14 +186,8 @@ public class CpuStressService : ICpuStressService
             // ==========================================================================
             // THE ANTI-PATTERN: Dedicated thread spin loops
             // ==========================================================================
-            // This code intentionally:
-            // 1. Creates one dedicated thread per CPU core
-            // 2. Each thread runs a tight while loop (spin loop)
-            // 3. The while loop continuously checks the time and does NOTHING useful
-            //
-            // We use dedicated threads instead of Parallel.For to avoid starving the
-            // thread pool, which would freeze the dashboard and SignalR.
-
+            // This code intentionally creates one dedicated thread per CPU core.
+            
             var threads = new Thread[processorCount];
             
             for (int i = 0; i < processorCount; i++)
@@ -197,12 +195,40 @@ public class CpuStressService : ICpuStressService
                 var threadIndex = i;
                 threads[i] = new Thread(() =>
                 {
-                    // This spin loop is the source of high CPU usage
-                    // It does nothing but burn CPU cycles checking conditions
-                    while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
+                    if (targetPercentage >= 99)
                     {
-                        // Intentionally empty - this is a spin loop
-                        // Every CPU cycle spent here is a wasted cycle
+                        // 100% Load: Tight spin loop (simplest, most effective for maxing out core)
+                        while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
+                        {
+                            // Intentionally empty - this is a spin loop
+                        }
+                    }
+                    else
+                    {
+                        // Partial Load: Duty Cycle
+                        // Work for X ms, Sleep for Y ms
+                        // Using a small window (e.g., 50ms) keeps usage relatively smooth
+                        const int windowMs = 50;
+                        int workMs = (windowMs * targetPercentage) / 100;
+                        int sleepMs = windowMs - workMs;
+
+                        while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
+                        {
+                            var cycleStart = Stopwatch.GetTimestamp();
+                            var workTicks = (workMs * Stopwatch.Frequency) / 1000;
+                            
+                            // Spin for work portion
+                            while (Stopwatch.GetTimestamp() - cycleStart < workTicks)
+                            {
+                                // Spin
+                            }
+
+                            // Sleep for remainder of window
+                            if (sleepMs > 0)
+                            {
+                                Thread.Sleep(sleepMs);
+                            }
+                        }
                     }
                 })
                 {

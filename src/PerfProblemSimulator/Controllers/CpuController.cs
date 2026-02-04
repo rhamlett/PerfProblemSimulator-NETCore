@@ -103,21 +103,24 @@ public class CpuController : ControllerBase
     {
         // Use defaults if no request body provided
         var durationSeconds = request?.DurationSeconds ?? 30;
+        var targetPercentage = request?.TargetPercentage ?? 100;
 
         // Log the incoming request (FR-010: Request logging)
         _logger.LogInformation(
-            "Received CPU stress request: DurationSeconds={Duration}, ClientIP={ClientIP}",
+            "Received CPU stress request: DurationSeconds={Duration}, Percentage={Percentage}, ClientIP={ClientIP}",
             durationSeconds,
+            targetPercentage,
             HttpContext.Connection.RemoteIpAddress);
 
         try
         {
-            var result = await _cpuStressService.TriggerCpuStressAsync(durationSeconds, cancellationToken);
+            var result = await _cpuStressService.TriggerCpuStressAsync(durationSeconds, cancellationToken, targetPercentage);
 
             _logger.LogInformation(
-                "Started CPU stress simulation {SimulationId} for {Duration}s",
+                "Started CPU stress simulation {SimulationId} for {Duration}s @ {Percentage}%",
                 result.SimulationId,
-                result.ActualParameters?["DurationSeconds"]);
+                result.ActualParameters?["DurationSeconds"],
+                result.ActualParameters?["TargetPercentage"]);
 
             return Ok(result);
         }
