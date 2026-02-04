@@ -56,8 +56,9 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// <summary>
     /// Probe interval in milliseconds. 100ms provides good granularity for
     /// observing latency changes during starvation ramp-up.
+    /// Can be adjusted dynamically to reduce noise in profiler traces.
     /// </summary>
-    private const int ProbeIntervalMs = 100;
+    private int _probeIntervalMs = 100;
 
     /// <summary>
     /// Request timeout in milliseconds. If the probe takes longer than this,
@@ -83,6 +84,16 @@ public class LatencyProbeService : IHostedService, IDisposable
         _server = server ?? throw new ArgumentNullException(nameof(server));
     }
 
+    /// <summary>
+    /// Sets the probe interval dynamically.
+    /// Used to reduce probe frequency during slow request simulations to avoid polluting CLR profiles.
+    /// </summary>
+    public void SetProbeInterval(int intervalMs)
+    {
+        _probeIntervalMs = Math.Max(100, intervalMs);
+        _logger.LogInformation("Latency probe interval updated to {Interval}ms", _probeIntervalMs);
+    }
+
     /// <inheritdoc />
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -101,7 +112,7 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         _logger.LogInformation(
             "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms, Target: {BaseUrl}",
-            ProbeIntervalMs,
+            _probeIntervalMs,
             RequestTimeoutMs,
             _baseUrl);
 
@@ -156,18 +167,18 @@ public class LatencyProbeService : IHostedService, IDisposable
         // Add a user agent for Azure (some proxies require it)
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LatencyProbe/1.0");
 
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            try
-            {
-                var result = MeasureLatency(httpClient, cancellationToken);
-
-                // Broadcast to all connected clients
-                BroadcastLatency(result);
-
-                // Wait for next probe interval
-                Thread.Sleep(ProbeIntervalMs);
+        while (!cancellationT_probeIntervalMs);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                // Normal shutdown, exit gracefully
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in latency probe loop");
+                // Continue probing even after errors
+                Thread.Sleep(_p
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 // Normal shutdown, exit gracefully
