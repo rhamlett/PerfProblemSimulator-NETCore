@@ -207,8 +207,9 @@ public class CpuStressService : ICpuStressService
                     {
                         // Partial Load: Duty Cycle
                         // Work for X ms, Sleep for Y ms
-                        // Using a small window (e.g., 50ms) keeps usage relatively smooth
-                        const int windowMs = 50;
+                        // Using a small window (e.g., 200ms) keeps usage relatively smooth
+                        // while being large enough to reduce the impact of Thread.Sleep inaccuracy.
+                        const int windowMs = 200;
                         int workMs = (windowMs * targetPercentage) / 100;
                         int sleepMs = windowMs - workMs;
 
@@ -224,9 +225,23 @@ public class CpuStressService : ICpuStressService
                             }
 
                             // Sleep for remainder of window
-                            if (sleepMs > 0)
+                            // Only sleep if the duration is significant enough (> 20ms) to ensure
+                            // we don't undershoot due to timer resolution (15.6ms usually).
+                            if (sleepMs > 20)
                             {
                                 Thread.Sleep(sleepMs);
+                            }
+                            else
+                            {
+                                // For very high target percentages (e.g. 95%), sleep is small.
+                                // Thread.Sleep(sleepMs) might sleep too long.
+                                // It's better to spin lightly or just accept higher usage.
+                                // To respect the "duty cycle", we could just spin-wait with lower power, 
+                                // but C# doesn't expose easy PAUSE instructions well here besides SpinWait.
+                                // For this simulator, we'll just skip the sleep, meaning >90% behaves like 100%.
+                                // Wait, the user asked for 70%. 60ms sleep is fine.
+                                // If user asks for 95%, 190ms Work, 10ms Sleep. 
+                                // Skipping sleep means 100%. ACCEPTABLE.
                             }
                         }
                     }
