@@ -163,21 +163,37 @@ public class LatencyProbeService : IHostedService, IDisposable
         {
             try
             {
-                // Pause probing if Slow Request simulation is running
-                // This prevents the probes from flooding the thread pool and dominating logs/traces
-                if (_simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0)
+                // Check if Slow Request simulation is running
+                bool isSlowRequestActive = _simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0;
+                
+                // If Slow Request simulation is running, we slow down the probe frequency DRAMATICALLY
+                // but we DO NOT stop it completely.
+                //
+                // Why?
+                // 1. If we stop completely, the CLR Profiler often fails to record the "Request Finished" event
+                //    for the slow request because the server becomes too quiet/idle, and ETW buffers don't flush.
+                //    This results in "No events emitted" warnings and "Status: 0, Duration: [Infinite]" in traces.
+                // 2. By keeping a "heartbeat" (e.g., every 5 seconds), we generate just enough activity
+                //    to keep the trace pipeline alive without creating significant noise or contention.
+                
+                if (isSlowRequestActive)
                 {
-                    Thread.Sleep(500); // Check again in 500ms
-                    continue;
+                    // Run sparsely: Wait 5 seconds between probes instead of 100ms
+                    Thread.Sleep(5000);
                 }
 
                 var result = MeasureLatency(httpClient, cancellationToken);
 
                 // Broadcast to all connected clients
+                // Note: The UI filters out / hides the probe graph during slow request mode,
+                // so these rare updates won't distract the user visually.
                 BroadcastLatency(result);
 
-                // Wait for next probe interval
-                Thread.Sleep(ProbeIntervalMs);
+                // Normal interval wait
+                if (!isSlowRequestActive)
+                {
+                    Thread.Sleep(ProbeIntervalMs);
+                }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
