@@ -213,6 +213,15 @@ public class CpuStressService : ICpuStressService
                         int workMs = (windowMs * targetPercentage) / 100;
                         int sleepMs = windowMs - workMs;
 
+                        // Stagger start times to desynchronize the duty cycles across cores.
+                        // This prevents "spiky" aggregate CPU usage where all cores sleep simultaneously.
+                        // We distribute the start times evenly across the window.
+                        if (processorCount > 1)
+                        {
+                            int startDelay = (windowMs * threadIndex) / processorCount;
+                            Thread.Sleep(startDelay);
+                        }
+
                         while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
                         {
                             var cycleStart = Stopwatch.GetTimestamp();
@@ -230,18 +239,6 @@ public class CpuStressService : ICpuStressService
                             if (sleepMs > 20)
                             {
                                 Thread.Sleep(sleepMs);
-                            }
-                            else
-                            {
-                                // For very high target percentages (e.g. 95%), sleep is small.
-                                // Thread.Sleep(sleepMs) might sleep too long.
-                                // It's better to spin lightly or just accept higher usage.
-                                // To respect the "duty cycle", we could just spin-wait with lower power, 
-                                // but C# doesn't expose easy PAUSE instructions well here besides SpinWait.
-                                // For this simulator, we'll just skip the sleep, meaning >90% behaves like 100%.
-                                // Wait, the user asked for 70%. 60ms sleep is fine.
-                                // If user asks for 95%, 190ms Work, 10ms Sleep. 
-                                // Skipping sleep means 100%. ACCEPTABLE.
                             }
                         }
                     }
