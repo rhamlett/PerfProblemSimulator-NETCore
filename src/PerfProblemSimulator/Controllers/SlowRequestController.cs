@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace PerfProblemSimulator.Controllers;
 
@@ -197,9 +199,25 @@ public class SlowRequestController : ControllerBase
         _logger.LogWarning("🐌 HTTP slow request started: {Duration}s, Scenario: {Scenario}", 
             durationSeconds, scenario ?? "Direct");
         
-        // BAD: Intentionally blocking with Thread.Sleep
-        // This makes the request visible in the latency chart AND shows up clearly in CLR Profiler
-        Thread.Sleep(durationSeconds * 1000);
+        // Execute the appropriate blocking pattern based on the scenario
+        // Using "Sync-Over-Async" pattern (Task.Delay().Wait()) instead of Thread.Sleep
+        // because it better simulates blocking on external resources like databases or HTTP calls.
+        switch (scenario)
+        {
+            case "SimpleSyncOverAsync":
+                FetchDataSync_BLOCKING_HERE(durationSeconds);
+                break;
+            case "NestedSyncOverAsync":
+                ValidateOrderSync_BLOCKS_INTERNALLY(durationSeconds);
+                break;
+            case "DatabasePattern":
+                GetCustomerFromDatabaseSync_SYNC_BLOCK(durationSeconds);
+                break;
+            default:
+                // Default fallback
+                Task.Delay(durationSeconds * 1000).Wait();
+                break;
+        }
         
         var elapsed = DateTimeOffset.UtcNow - startTime;
         
@@ -213,6 +231,77 @@ public class SlowRequestController : ControllerBase
             StartedAt = startTime,
             CompletedAt = DateTimeOffset.UtcNow
         });
+    }
+
+    // =================================================================================
+    // SCENARIO 1: Simple Blocking
+    // =================================================================================
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void FetchDataSync_BLOCKING_HERE(int duration)
+    {
+        // Simulate blocking call to fetch data
+        Task.Delay(duration * 1000).Wait();
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ProcessDataSync_BLOCKING_HERE() { } 
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void SaveDataSync_BLOCKING_HERE() { }
+
+
+    // =================================================================================
+    // SCENARIO 2: Nested Blocking
+    // =================================================================================
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ValidateOrderSync_BLOCKS_INTERNALLY(int duration)
+    {
+        CheckInventorySync_BLOCKS_INTERNALLY(duration);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void CheckInventorySync_BLOCKS_INTERNALLY(int duration)
+    {
+        ProcessPaymentSync_BLOCKS_INTERNALLY(duration);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ProcessPaymentSync_BLOCKS_INTERNALLY(int duration)
+    {
+        // Deeply nested blocking call
+        Task.Delay(duration * 1000).Wait();
+    }
+
+
+    // =================================================================================
+    // SCENARIO 3: Database Pattern
+    // =================================================================================
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void GetCustomerFromDatabaseSync_SYNC_BLOCK(int duration)
+    {
+        // Split the duration across multiple "Database" calls
+        int partDuration = duration / 3;
+        
+        // Block 1
+        Task.Delay(partDuration * 1000).Wait();
+        
+        GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(partDuration);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(int duration)
+    {
+        // Block 2
+        Task.Delay(duration * 1000).Wait();
+        
+        BuildResponseSync_SYNC_BLOCK(duration);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void BuildResponseSync_SYNC_BLOCK(int duration)
+    {
+        // Block 3
+        Task.Delay(duration * 1000).Wait();
     }
 }
 
