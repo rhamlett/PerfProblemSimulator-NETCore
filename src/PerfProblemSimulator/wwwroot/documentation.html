@@ -339,7 +339,7 @@
             <div class="warning-box">
                 <h4>⚠️ Warning - This application intentionally creates performance problems!</h4>
                 <ul>
-                    <li>🔥 <strong>CPU stress</strong> - Creates parallel spin loops that consume all CPU cores</li>
+                    <li>🔥 <strong>CPU stress</strong> - Creates dedicated threads running spin loops to consume all CPU cores</li>
                     <li>📊 <strong>Memory pressure</strong> - Allocates and pins memory blocks to increase working set</li>
                     <li>🧵 <strong>Thread pool starvation</strong> - Uses sync-over-async anti-patterns to block thread pool threads</li>
                     <li>� <strong>Slow requests</strong> - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis</li>
@@ -499,7 +499,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                     <tr>
                         <td><strong>Simple</strong></td>
                         <td><code>_BLOCKING_HERE</code></td>
-                        <td>Direct <code>.Wait()</code> blocking</td>
+                        <td><code>Task.Delay().Wait()</code> causing blocking</td>
                     </tr>
                     <tr>
                         <td><strong>Nested</strong></td>
@@ -521,6 +521,8 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <li><strong>Interval:</strong> 10 seconds (multiple samples)</li>
                 <li><strong>Max Requests:</strong> 6 (doesn't overwhelm)</li>
             </ul>
+
+            <p><strong>Note on Queue Time:</strong> If the thread pool is starved, you may see a large gap in the trace before the request starts. This is "Queue Time" (waiting for a thread) vs "Execution Time" (running the code).</p>
 
             <h3>Using with CLR Profiler</h3>
             <ol>

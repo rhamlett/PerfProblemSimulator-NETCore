@@ -60,15 +60,22 @@ In the profiler trace, you'll see:
 ### Code Pattern (What's Wrong)
 
 ```csharp
-// This is the intentional "bad" code in CpuStressService:
-Parallel.For(0, Environment.ProcessorCount, _ =>
+// The service uses dedicated threads to avoid starving the Thread Pool,
+// ensuring the dashboard remains responsive even under 100% load.
+var threads = new Thread[Environment.ProcessorCount];
+
+for (int i = 0; i < threads.Length; i++)
 {
-    while (!cancellationToken.IsCancellationRequested)
+    threads[i] = new Thread(() =>
     {
-        // Intentionally consuming CPU with no useful work
-        Thread.SpinWait(10000);
-    }
-});
+        // Tight spin loop to consume 100% of a core
+        while (Stopwatch.GetTimestamp() < endTime)
+        {
+             // Spin
+        }
+    });
+    threads[i].Start();
+}
 ```
 
 ---
@@ -259,27 +266,36 @@ Simulated database and HTTP blocking calls:
 ### Code Pattern (What the Simulation Does)
 
 ```csharp
-// SCENARIO 1: Direct blocking - most obvious in traces
+// SCENARIO 1: Sync-Over-Async (Simple)
 public void FetchDataSync_BLOCKING_HERE(int delayMs)
 {
-    // Intentional blocking - will show in profiler as Thread.Sleep
-    Thread.Sleep(delayMs);
+    // FATAL FLAW: Calling .Wait() on a Task blocks the thread!
+    // This is the classic "Sync Over Async" anti-pattern.
+    Task.Delay(delayMs * 1000).Wait();
 }
 
 // SCENARIO 2: Nested blocking inside sync methods
 public void ValidateOrderSync_BLOCKS_INTERNALLY(int delayMs)
 {
-    // Each method internally blocks using Thread.Sleep
-    Thread.Sleep(delayMs);
-}
-
-// SCENARIO 3: Simulated database/HTTP pattern
-public void GetCustomerFromDatabaseSync_SYNC_BLOCK(int delayMs)
-{
-    // Simulates a blocking database call
-    Thread.Sleep(delayMs);
+    // Each method internally blocks using Task.Delay().Wait()
+    CheckInventorySync_BLOCKS_INTERNALLY(delayMs);
 }
 ```
+
+### Analyzing the Trace: The "Gap" (Queue Time vs Execution Time)
+
+When diagnosing slow requests, you may see a large gap where "No events emitted" appears before the request actually starts.
+
+1.  **Queue Time**: If the Thread Pool is starved (by other slow requests), a new request will sit in the queue waiting for a thread. PROFILER will show a gap here.
+2.  **Execution Time**: Once a thread is assigned, the method runs.
+
+**Example from a Trace:**
+*   Total Time seen by user: **47 seconds**
+*   Request Duration in log: **25 seconds**
+*   **Conclusion**: The request sat in the queue for **22 seconds** before it could even start!
+
+### ETW Flushing (Heartbeats)
+The simulator runs a background thread that logs "Generating trace noise..." every 500ms. This ensures that ETW buffers are flushed to the `.diagsession` file, preventing data loss during long idle periods.
 
 ### Real-World Equivalents
 

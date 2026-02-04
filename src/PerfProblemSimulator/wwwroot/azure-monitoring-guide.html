@@ -358,22 +358,29 @@
             <h3>What to Look For</h3>
             <div class="code-block">
 <span class="comment">In the profiler trace, you'll see:</span>
-- Parallel.For loops
-- SpinWait operations
-- High self-time in CpuStressService.RunStressLoop
+- Dedicated threads running a while loop
+- High self-time in CpuStressService
+- Thread names like CpuStress-*
             </div>
 
             <h3>Code Pattern (What's Wrong)</h3>
             <div class="code-block">
-<span class="comment">// This is the intentional "bad" code in CpuStressService:</span>
-Parallel.For(<span class="keyword">0</span>, Environment.ProcessorCount, _ =>
+<span class="comment">// The service uses dedicated threads to avoid starving the Thread Pool,</span>
+<span class="comment">// ensuring the dashboard remains responsive even under 100% load.</span>
+<span class="keyword">var</span> threads = <span class="keyword">new</span> Thread[Environment.ProcessorCount];
+
+<span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">0</span>; i &lt; threads.Length; i++)
 {
-    <span class="keyword">while</span> (!cancellationToken.IsCancellationRequested)
+    threads[i] = <span class="keyword">new</span> Thread(() =>
     {
-        <span class="comment">// Intentionally consuming CPU with no useful work</span>
-        Thread.SpinWait(<span class="keyword">10000</span>);
-    }
-});
+        <span class="comment">// Tight spin loop to consume 100% of a core</span>
+        <span class="keyword">while</span> (Stopwatch.GetTimestamp() &lt; endTime)
+        {
+             <span class="comment">// Spin</span>
+        }
+    });
+    threads[i].Start();
+}
             </div>
         </section>
 
@@ -589,36 +596,35 @@ Simulated database and HTTP blocking calls:
 
             <h3>Code Pattern (What's Wrong)</h3>
             <div class="code-block">
-<span class="comment">// SCENARIO 1: Direct blocking - most obvious in traces</span>
+<span class="comment">// SCENARIO 1: Sync-Over-Async (Simple)</span>
 <span class="keyword">public void</span> ProcessRequest()
 {
-    <span class="comment">// BAD: Blocking on async - thread is blocked for 25 seconds!</span>
-    FetchDataAsync().Wait();
+    <span class="comment">// FATAL FLAW: Calling .Wait() on a Task blocks the thread!</span>
+    <span class="comment">// This is the classic "Sync Over Async" anti-pattern.</span>
+    Task.Delay(<span class="keyword">25000</span>).Wait();
 }
 
 <span class="comment">// SCENARIO 2: Hidden blocking inside sync methods</span>
 <span class="keyword">public void</span> ValidateOrderSync_BLOCKS_INTERNALLY()
 {
-    <span class="comment">// BAD: Looks like a sync method but blocks internally</span>
-    ValidateOrderAsync().Wait();
-}
-
-<span class="comment">// SCENARIO 3: Common legacy migration pattern</span>
-<span class="keyword">public</span> Customer GetCustomer(<span class="keyword">int</span> id)
-{
-    <span class="comment">// BAD: GetAwaiter().GetResult() still blocks!</span>
-    <span class="keyword">return</span> GetCustomerAsync(id).GetAwaiter().GetResult();
+    <span class="comment">// Each method internally blocks using Task.Delay().Wait()</span>
+    ValidateOrderAsync_BLOCKS().Wait();
 }
             </div>
 
             <div class="info-box">
-                <h4>💡 Key Insight</h4>
-                <p>The slow request simulator makes sync-over-async <strong>visible in profiler call stacks</strong> because:</p>
+                <h4>💡 Key Insight: Queue Time vs Execution Time</h4>
+                <p>If you see a large gap where "No events emitted" appears before the request starts:</p>
                 <ul>
-                    <li>Requests are long enough (25s) to be captured during any reasonable trace period</li>
-                    <li>Method names explicitly indicate where blocking occurs</li>
-                    <li>Multiple scenarios show different blocking patterns commonly found in production code</li>
+                    <li><strong>Queue Time:</strong> The Thread Pool is starved, so your request sat in the queue waiting for a thread (e.g., 20+ seconds).</li>
+                    <li><strong>Execution Time:</strong> Once a thread was assigned, the method finally ran.</li>
                 </ul>
+                <p><strong>Example:</strong> User waits 47s, but log shows only 25s duration. The missing 22s was spent in the queue!</p>
+            </div>
+
+            <div class="info-box">
+                <h4>💡 ETW Heartbeats</h4>
+                <p>The simulator logs "Generating trace noise..." every 500ms to flush ETW buffers, ensuring long requests are not lost in traces.</p>
             </div>
         </section>
 

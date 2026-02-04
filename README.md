@@ -15,7 +15,7 @@ This application is designed to help developers and DevOps engineers:
 
 **This application intentionally creates performance problems!**
 
-- 🔥 **CPU stress** - Creates parallel spin loops that consume all CPU cores
+- 🔥 **CPU stress** - Creates dedicated threads running spin loops to consume all CPU cores
 - 📊 **Memory pressure** - Allocates and pins memory blocks to increase working set
 - 🧵 **Thread pool starvation** - Uses sync-over-async anti-patterns to block thread pool threads
 - � **Slow requests** - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis
@@ -99,7 +99,8 @@ The CPU and Memory metric tiles use dynamic color coding based on utilization pe
 **Request body:**
 ```json
 {
-  "durationSeconds": 30
+  "durationSeconds": 30,
+  "targetPercentage": 100
 }
 ```
 
