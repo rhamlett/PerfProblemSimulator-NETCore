@@ -1176,12 +1176,35 @@ function logEvent(level, message) {
 // Initialization
 // ==========================================================================
 
+/**
+ * Fetches and displays the Azure SKU info.
+ */
+async function fetchAzureSku() {
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/admin/stats`);
+        if (response.ok) {
+            const data = await response.json();
+            const skuElement = document.getElementById('skuDisplay');
+            if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                skuElement.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch Azure SKU', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize charts first
     initializeCharts();
     
+    // Fetch SKU info
+    fetchAzureSku();
+    
     // Start SignalR connection
     initializeSignalR();
+
     
     // Wire up button handlers
     document.getElementById('btnTriggerCpu').addEventListener('click', triggerCpuStress);

@@ -141,7 +141,9 @@ public class AdminController : ControllerBase
             {
                 ProcessorCount = Environment.ProcessorCount,
                 WorkingSetBytes = Environment.WorkingSet,
-                ManagedHeapBytes = GC.GetTotalMemory(forceFullCollection: false)
+                ManagedHeapBytes = GC.GetTotalMemory(forceFullCollection: false),
+                AzureSku = Environment.GetEnvironmentVariable("WEBSITE_SKU") ?? "Local",
+                ComputeMode = Environment.GetEnvironmentVariable("WEBSITE_COMPUTE_MODE")
             }
         });
     }
@@ -276,23 +278,33 @@ public class ThreadPoolStats
     public long PendingWorkItems { get; init; }
 }
 
-/// <summary>
-/// Process information statistics.
-/// </summary>
-public class ProcessStats
-{
     /// <summary>
-    /// Number of processors available.
+    /// Process information statistics.
     /// </summary>
-    public int ProcessorCount { get; init; }
+    public class ProcessStats
+    {
+        /// <summary>
+        /// Number of processors available.
+        /// </summary>
+        public int ProcessorCount { get; init; }
 
-    /// <summary>
-    /// Process working set in bytes.
-    /// </summary>
-    public long WorkingSetBytes { get; init; }
+        /// <summary>
+        /// Process working set in bytes.
+        /// </summary>
+        public long WorkingSetBytes { get; init; }
 
-    /// <summary>
-    /// Managed heap size in bytes.
-    /// </summary>
-    public long ManagedHeapBytes { get; init; }
-}
+        /// <summary>
+        /// Managed heap size in bytes.
+        /// </summary>
+        public long ManagedHeapBytes { get; init; }
+
+        /// <summary>
+        /// The Azure SKU (Pricing Tier) if running in Azure App Service (e.g., P0V3, Standard, Basic).
+        /// </summary>
+        public string? AzureSku { get; init; }
+
+        /// <summary>
+        /// The compute mode (e.g., Dedicated, Shared).
+        /// </summary>
+        public string? ComputeMode { get; init; }
+    }
