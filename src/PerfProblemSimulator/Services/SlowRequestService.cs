@@ -396,6 +396,9 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                         "🐌 Slow request simulation completed naturally: {SimulationId}. " +
                         "Total requests: {Total}, Completed: {Completed}",
                         _simulationId, _requestsSent, _requestsCompleted);
+
+                    // Restore normal probe frequency
+                    _latencyProbeService.SetProbeInterval(100);
                 }
             }
         }
