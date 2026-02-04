@@ -242,6 +242,7 @@ public class MetricsCollectorTests : IDisposable
         _sut.Stop();
 
         // Assert
+        Assert.NotNull(status.ThreadPool);
         Assert.True(status.ThreadPool.MaxWorkerThreads > 0, "MaxWorkerThreads should be positive");
         Assert.True(status.ThreadPool.AvailableWorkerThreads > 0, "AvailableWorkerThreads should be positive");
         Assert.True(status.ThreadPool.MaxIoThreads > 0, "MaxIoThreads should be positive");

@@ -44,8 +44,14 @@
                     <label>Duration (s):
                         <input type="number" id="cpuDuration" value="10" min="1" title="Duration in seconds (minimum 1 second)">
                     </label>
-                    <label>Target CPU (%):
-                        <input type="number" id="cpuTarget" value="100" min="1" max="100" title="Target CPU load percentage (1-100)">
+                    <label>Target Load:
+                        <select id="cpuTarget" title="Target CPU load range" class="wide-input">
+                            <option value="55">50% - 60%</option>
+                            <option value="65">60% - 70%</option>
+                            <option value="75" selected>70% - 80%</option>
+                            <option value="90">80% - 90%</option>
+                            <option value="100">90% - 100%</option>
+                        </select>
                     </label>
                 </div>
                 <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
