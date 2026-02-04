@@ -47,6 +47,7 @@ public class LatencyProbeService : IHostedService, IDisposable
     private readonly ILogger<LatencyProbeService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IServer _server;
+    private readonly ISimulationTracker _simulationTracker;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
@@ -56,9 +57,8 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// <summary>
     /// Probe interval in milliseconds. 100ms provides good granularity for
     /// observing latency changes during starvation ramp-up.
-    /// Can be adjusted dynamically to reduce noise in profiler traces.
     /// </summary>
-    private int _probeIntervalMs = 100;
+    private const int ProbeIntervalMs = 100;
 
     /// <summary>
     /// Request timeout in milliseconds. If the probe takes longer than this,
@@ -75,23 +75,15 @@ public class LatencyProbeService : IHostedService, IDisposable
         IHttpClientFactory httpClientFactory,
         ILogger<LatencyProbeService> logger,
         IConfiguration configuration,
-        IServer server)
+        IServer server,
+        ISimulationTracker simulationTracker)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _server = server ?? throw new ArgumentNullException(nameof(server));
-    }
-
-    /// <summary>
-    /// Sets the probe interval dynamically.
-    /// Used to reduce probe frequency during slow request simulations to avoid polluting CLR profiles.
-    /// </summary>
-    public void SetProbeInterval(int intervalMs)
-    {
-        _probeIntervalMs = Math.Max(100, intervalMs);
-        _logger.LogInformation("Latency probe interval updated to {Interval}ms", _probeIntervalMs);
+        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
     }
 
     /// <inheritdoc />
@@ -112,7 +104,7 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         _logger.LogInformation(
             "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms, Target: {BaseUrl}",
-            _probeIntervalMs,
+            ProbeIntervalMs,
             RequestTimeoutMs,
             _baseUrl);
 
@@ -171,13 +163,21 @@ public class LatencyProbeService : IHostedService, IDisposable
         {
             try
             {
+                // Pause probing if Slow Request simulation is running
+                // This prevents the probes from flooding the thread pool and dominating logs/traces
+                if (_simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0)
+                {
+                    Thread.Sleep(500); // Check again in 500ms
+                    continue;
+                }
+
                 var result = MeasureLatency(httpClient, cancellationToken);
 
                 // Broadcast to all connected clients
                 BroadcastLatency(result);
 
                 // Wait for next probe interval
-                Thread.Sleep(_probeIntervalMs);
+                Thread.Sleep(ProbeIntervalMs);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -188,7 +188,7 @@ public class LatencyProbeService : IHostedService, IDisposable
             {
                 _logger.LogError(ex, "Error in latency probe loop");
                 // Continue probing even after errors
-                Thread.Sleep(_probeIntervalMs);
+                Thread.Sleep(ProbeIntervalMs);
             }
         }
     }

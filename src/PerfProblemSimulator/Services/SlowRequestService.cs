@@ -45,7 +45,6 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
     private readonly IServer _server;
-    private readonly LatencyProbeService _latencyProbeService;
     private readonly Random _random = new();
 
     private CancellationTokenSource? _cts;
@@ -70,15 +69,13 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         ILogger<SlowRequestService> logger,
         IHttpClientFactory httpClientFactory,
         IHubContext<MetricsHub, IMetricsClient> hubContext,
-        IServer server,
-        LatencyProbeService latencyProbeService)
+        IServer server)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _server = server ?? throw new ArgumentNullException(nameof(server));
-        _latencyProbeService = latencyProbeService ?? throw new ArgumentNullException(nameof(latencyProbeService));
     }
 
     public SimulationResult Start(SlowRequestRequest request)
@@ -132,9 +129,6 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             "Making HTTP calls to {BaseUrl}/api/slowrequest/execute-slow",
             _simulationId, _requestDurationSeconds, _intervalSeconds, _baseUrl);
 
-        // Reduce probe frequency during slow request simulation to reduce noise in CLR profile
-        _latencyProbeService.SetProbeInterval(2000);
-
         return new SimulationResult
         {
             SimulationId = _simulationId,
@@ -169,9 +163,6 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             "🛑 Slow request simulation stopped: {SimulationId}. " +
             "Sent={Sent}, Completed={Completed}, InProgress={InProgress}",
             _simulationId, _requestsSent, _requestsCompleted, _requestsInProgress);
-
-        // Restore normal probe frequency
-        _latencyProbeService.SetProbeInterval(100);
 
         return new SimulationResult
         {
@@ -396,9 +387,6 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                         "🐌 Slow request simulation completed naturally: {SimulationId}. " +
                         "Total requests: {Total}, Completed: {Completed}",
                         _simulationId, _requestsSent, _requestsCompleted);
-
-                    // Restore normal probe frequency
-                    _latencyProbeService.SetProbeInterval(100);
                 }
             }
         }

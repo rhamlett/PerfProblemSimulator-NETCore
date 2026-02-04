@@ -811,6 +811,48 @@ body {
     font-weight: 600;
 }
 
+/* Chart Overlay */
+.chart-overlay {
+    position: absolute;
+    top: 50px; /* Position below header/legend area */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none; /* Hidden by default */
+    align-items: flex-start; /* Align near top */
+    justify-content: center;
+    padding-top: 20px;
+    z-index: 10;
+    pointer-events: none; /* Allow interaction with chart behind */
+}
+
+.chart-overlay.active {
+    display: flex;
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 0.5rem 1rem;
+    max-width: 90%;
+}
+
+.overlay-message {
+    font-size: 1.1rem;
+    color: #8b3a3a; /* Muted red/brown */
+    text-shadow: 
+        -1px -1px 0 #fff,  
+         1px -1px 0 #fff,
+        -1px  1px 0 #fff,
+         1px  1px 0 #fff,
+         0 0 8px #fff,
+         0 0 15px #fff; /* White halo to make text readable over grid lines */
+}
+
+/* Remove old overlay classes if they exist */
+.overlay-icon, .overlay-detail, .overlay-sub {
+    display: none;
+}
+
 /* --------------------------------------------------------------------------
    Responsive Adjustments
    -------------------------------------------------------------------------- */

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Performance Problem Simulator - Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/dashboard.css?v=3">
     <!-- Chart.js for real-time graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- SignalR client library -->
@@ -228,9 +228,14 @@
                 <span class="threshold-item timeout">● Timeout (30s)</span>
             </div>
 
-            <div class="chart-container latency-chart-container">
+            <div class="chart-container latency-chart-container" style="position: relative;">
                 <h3>📊 Response Latency Over Time</h3>
                 <canvas id="latencyChart"></canvas>
+                <div id="latencyOverlay" class="chart-overlay">
+                    <div class="overlay-content">
+                        <p class="overlay-message">Latency probes suspended during Slow Request testing to ensure clean CLR Profile diagnostics.</p>
+                    </div>
+                </div>
             </div>
         </section>
 

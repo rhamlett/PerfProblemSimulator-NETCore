@@ -151,11 +151,7 @@ builder.Services.AddHttpClient("LatencyProbe")
         // Allow connections to localhost
         ConnectTimeout = TimeSpan.FromSeconds(5)
     });
-
-// Register LatencyProbeService as a Singleton so it can be injected into other services
-builder.Services.AddSingleton<LatencyProbeService>();
-// Then register it as a Hosted Service using the same singleton instance
-builder.Services.AddHostedService(sp => sp.GetRequiredService<LatencyProbeService>());
+builder.Services.AddHostedService<LatencyProbeService>();
 
 // -----------------------------------------------------------------------------
 // CORS Configuration

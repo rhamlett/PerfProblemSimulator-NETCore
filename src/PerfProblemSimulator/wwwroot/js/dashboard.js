@@ -1037,6 +1037,12 @@ async function pollSlowRequestStatus() {
             if (status.isRunning) {
                 statusDiv.textContent = `Running: ${status.requestsCompleted}/${status.requestsSent} completed, ${status.requestsInProgress} active`;
                 statusDiv.classList.add('active');
+
+                // Ensure overlay is active if running (in case page was refreshed)
+                const overlay = document.getElementById('latencyOverlay');
+                if (overlay && !overlay.classList.contains('active')) {
+                     overlay.classList.add('active');
+                }
                 
                 // Continue polling
                 setTimeout(pollSlowRequestStatus, 1000);
@@ -1051,6 +1057,10 @@ async function pollSlowRequestStatus() {
                 startBtn.disabled = false;
                 stopBtn.disabled = true;
                 
+                // Hide overlay when simulation is confirmed done via polling
+                const overlay = document.getElementById('latencyOverlay');
+                if (overlay) overlay.classList.remove('active');
+
                 if (status.requestsCompleted > 0) {
                     logEvent('success', `🐌 Slow request simulation completed: ${status.requestsCompleted} requests`);
                 }
@@ -1071,11 +1081,26 @@ async function pollSlowRequestStatus() {
 function handleSimulationStarted(simulationType, simulationId) {
     addActiveSimulation(simulationId, simulationType.toLowerCase(), simulationType);
     logEvent('info', `Simulation started: ${simulationType} (${simulationId})`);
+
+    // Handle SlowRequest specific UI
+    if (simulationType === 'SlowRequest') {
+        const overlay = document.getElementById('latencyOverlay');
+        if (overlay) overlay.classList.add('active');
+        
+        // Stop client probe to ensure clean profile
+        stopClientProbe();
+    }
 }
 
 function handleSimulationCompleted(simulationType, simulationId) {
     removeActiveSimulation(simulationId);
     logEvent('success', `Simulation completed: ${simulationType} (${simulationId})`);
+
+    // Handle SlowRequest specific UI
+    if (simulationType === 'SlowRequest') {
+        const overlay = document.getElementById('latencyOverlay');
+        if (overlay) overlay.classList.remove('active');
+    }
 }
 
 function addActiveSimulation(id, type, label) {
