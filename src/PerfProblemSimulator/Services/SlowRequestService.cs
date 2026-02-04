@@ -254,8 +254,10 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 {
                     if (ct.IsCancellationRequested) break;
                     Thread.Sleep(500);
-                    // Log trace (verbose) - high volume event to force buffer flush
-                    _logger.LogTrace("Generating trace noise to flush ETW buffers...");
+                    
+                    // We must use LogInformation because LogTrace/LogDebug are often disabled in configuration.
+                    // If the log isn't written, no ETW event is generated, and the buffer doesn't flush.
+                    _logger.LogInformation("Generating trace noise to flush ETW buffers...");
                 }
             }
             catch (ThreadInterruptedException)
