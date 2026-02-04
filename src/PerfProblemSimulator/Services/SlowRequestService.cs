@@ -200,6 +200,16 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 
     private void SpawnRequestsLoop(int maxRequests, CancellationToken ct)
     {
+        // =========================================================================================
+        // WAIT FOR EXISTING PROBES TO DRAIN
+        // IsSimulationActive(SlowRequest) is already true (set in Start method).
+        // This causes new probes to be skipped (see LatencyProbeService).
+        // Now we wait a moment for any *existing* probes in the pipeline to finish 
+        // before we start generating noise. This ensures a clean CLR profile trace.
+        // =========================================================================================
+        _logger.LogInformation("⏳ Waiting 3 seconds for existing health probes to drain...");
+        Thread.Sleep(3000);
+
         int requestNumber = 0;
 
         while (!ct.IsCancellationRequested && (maxRequests == 0 || requestNumber < maxRequests))
