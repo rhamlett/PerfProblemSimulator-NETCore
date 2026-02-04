@@ -16,41 +16,6 @@ public class AdminEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task ResetAll_ReturnsOk()
-    {
-        // Act
-        var response = await _client.PostAsync("/api/admin/reset-all", null);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("success", content, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("memoryBlocksReleased", content, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("bytesReleased", content, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public async Task ResetAll_AfterMemoryAllocation_ReleasesMemory()
-    {
-        // Arrange - Allocate some memory first
-        var allocateRequest = new StringContent(
-            """{"sizeInMegabytes": 10}""",
-            System.Text.Encoding.UTF8,
-            "application/json");
-        await _client.PostAsync("/api/memory/allocate-memory", allocateRequest);
-
-        // Act
-        var response = await _client.PostAsync("/api/admin/reset-all", null);
-
-        // Assert
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var content = await response.Content.ReadAsStringAsync();
-        Assert.Contains("success", content, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
     public async Task GetStats_ReturnsOk()
     {
         // Act

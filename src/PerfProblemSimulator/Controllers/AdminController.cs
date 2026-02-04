@@ -45,63 +45,6 @@ public class AdminController : ControllerBase
     }
 
     /// <summary>
-    /// Resets all active simulations and releases allocated memory.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// This endpoint performs a full reset of the simulator:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>Releases all allocated memory blocks</item>
-    /// <item>Forces garbage collection</item>
-    /// <item>Clears active simulation tracking (CPU/ThreadBlock simulations will complete naturally)</item>
-    /// </list>
-    /// <para>
-    /// <strong>Note:</strong> CPU stress and thread blocking simulations cannot be instantly
-    /// cancelled - they will complete their configured duration. Only memory allocations
-    /// are immediately released.
-    /// </para>
-    /// </remarks>
-    /// <returns>Summary of the reset operation.</returns>
-    /// <response code="200">Reset completed successfully.</response>
-    [HttpPost("reset-all")]
-    [ProducesResponseType(typeof(ResetAllResponse), StatusCodes.Status200OK)]
-    public IActionResult ResetAll()
-    {
-        var clientIp = HttpContext.Connection.RemoteIpAddress?.ToString();
-        _logger.LogWarning(
-            "⚠️ Reset-all requested from {ClientIP}. Releasing all resources...",
-            clientIp);
-
-        // Get state before reset
-        var activeSimulations = _simulationTracker.GetActiveSimulations();
-        var memoryStatus = _memoryPressureService.GetMemoryStatus();
-
-        // Release memory (this also unregisters from tracker)
-        var releaseResult = _memoryPressureService.ReleaseAllMemory(forceGc: true);
-
-        _logger.LogInformation(
-            "Reset complete: Released {BlocksReleased} memory blocks ({BytesReleased} bytes), " +
-            "had {ActiveSimulations} active simulations",
-            releaseResult.ReleasedBlockCount,
-            releaseResult.ReleasedBytes,
-            activeSimulations.Count);
-
-        return Ok(new ResetAllResponse
-        {
-            Success = true,
-            Message = "Reset completed. Memory released. Note: CPU and ThreadBlock simulations will complete naturally.",
-            MemoryBlocksReleased = releaseResult.ReleasedBlockCount,
-            BytesReleased = releaseResult.ReleasedBytes,
-            ActiveSimulationsAtReset = activeSimulations.Count,
-            SimulationTypesActive = activeSimulations
-                .GroupBy(s => s.Type)
-                .ToDictionary(g => g.Key.ToString(), g => g.Count()),
-            GarbageCollectionForced = true
-        });
-    }
-
-    /// <summary>
     /// Gets current simulation statistics.
     /// </summary>
     /// <returns>Statistics about active and historical simulations.</returns>
@@ -147,47 +90,6 @@ public class AdminController : ControllerBase
             }
         });
     }
-}
-
-/// <summary>
-/// Response from the reset-all operation.
-/// </summary>
-public class ResetAllResponse
-{
-    /// <summary>
-    /// Whether the reset was successful.
-    /// </summary>
-    public bool Success { get; init; }
-
-    /// <summary>
-    /// Human-readable message about the reset.
-    /// </summary>
-    public required string Message { get; init; }
-
-    /// <summary>
-    /// Number of memory blocks that were released.
-    /// </summary>
-    public int MemoryBlocksReleased { get; init; }
-
-    /// <summary>
-    /// Total bytes of memory that were released.
-    /// </summary>
-    public long BytesReleased { get; init; }
-
-    /// <summary>
-    /// Number of active simulations at the time of reset.
-    /// </summary>
-    public int ActiveSimulationsAtReset { get; init; }
-
-    /// <summary>
-    /// Breakdown of active simulations by type.
-    /// </summary>
-    public Dictionary<string, int> SimulationTypesActive { get; init; } = new();
-
-    /// <summary>
-    /// Whether garbage collection was forced.
-    /// </summary>
-    public bool GarbageCollectionForced { get; init; }
 }
 
 /// <summary>

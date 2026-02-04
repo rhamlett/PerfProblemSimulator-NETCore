@@ -109,13 +109,6 @@ curl -X POST https://localhost:5001/api/trigger-sync-over-async `
 - Response times for ALL endpoints increase
 - CPU and memory appear normal (the key diagnostic clue!)
 
-### Reset Everything
-
-```powershell
-# Stop all simulations and release memory
-curl -X POST https://localhost:5001/api/reset-all
-```
-
 ---
 
 ## Environment Configuration

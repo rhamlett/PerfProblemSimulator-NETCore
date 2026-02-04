@@ -79,16 +79,6 @@ Represents a request to trigger sync-over-async thread blocking.
 
 ---
 
-### ResetRequest
-
-Represents a request to reset all active simulations.
-
-| Field | Type | Required | Default | Constraints | Description |
-|-------|------|----------|---------|-------------|-------------|
-| `ForceGarbageCollection` | `bool` | No | true | N/A | Whether to force GC after releasing memory |
-
----
-
 ## Domain Models
 
 ### AllocatedMemoryBlock
@@ -105,7 +95,7 @@ Represents a chunk of memory intentionally held by the application.
 **Lifecycle:**
 1. Created when `/api/allocate-memory` is called
 2. Held in static collection (prevents GC)
-3. Released when `/api/release-memory` or `/api/reset-all` is called
+3. Released when `/api/release-memory` is called
 4. After release, GC may collect (timing not guaranteed)
 
 ---

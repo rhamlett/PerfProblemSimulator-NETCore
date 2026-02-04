@@ -68,7 +68,7 @@ public class ProblemEndpointGuardTests : IDisposable
     [Theory]
     [InlineData("/api/health")]
     [InlineData("/api/metrics")]
-    [InlineData("/api/reset-all")]
+    [InlineData("/api/admin/stats")]
     [InlineData("/")]
     [InlineData("/index.html")]
     public async Task InvokeAsync_WhenEndpointsDisabled_AllowsNonGuardedPaths(string path)

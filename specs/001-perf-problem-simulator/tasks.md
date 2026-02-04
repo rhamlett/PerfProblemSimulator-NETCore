@@ -201,14 +201,8 @@
 
 **Purpose**: Cross-cutting control features that affect multiple user stories
 
-### Tests
-
-- [ ] T063 [P] Integration test for POST /api/reset-all endpoint in tests/PerfProblemSimulator.Tests/Integration/AdminEndpointTests.cs
-
 ### Implementation
 
-- [ ] T064 Create AdminController with POST /api/reset-all endpoint in src/PerfProblemSimulator/Controllers/AdminController.cs
-- [ ] T065 Implement reset logic: cancel active simulations, release memory, optional GC
 - [ ] T066 Add request logging for admin operations
 
 ---

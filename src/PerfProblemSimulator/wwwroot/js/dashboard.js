@@ -840,11 +840,12 @@ async function releaseMemory() {
 }
 
 async function triggerThreadBlock() {
-    const delayMs = parseInt(document.getElementById('threadDelay').value) || 5000;
+    const delaySeconds = parseFloat(document.getElementById('threadDelay').value) || 10;
+    const delayMs = Math.round(delaySeconds * 1000);
     const concurrent = parseInt(document.getElementById('threadConcurrent').value) || 100;
     
     try {
-        logEvent('info', `Triggering thread blocking: ${concurrent} requests, ${delayMs}ms delay...`);
+        logEvent('info', `Triggering thread blocking: ${concurrent} requests, ${delaySeconds}s delay...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/threadblock/trigger-sync-over-async`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1218,12 +1219,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize slow request Stop button as disabled
     document.getElementById('btnStopSlowRequests').disabled = true;
     
-    // Wire up Reset All button
-    const btnResetAll = document.getElementById('btnResetAll');
-    if (btnResetAll) {
-        btnResetAll.addEventListener('click', resetAll);
-    }
-    
     // Wire up side panel toggle
     initializeSidePanel();
     
@@ -1283,40 +1278,6 @@ function closeSidePanel() {
     
     sidePanel.classList.remove('open');
     btnToggle.classList.remove('active');
-}
-
-async function resetAll() {
-    if (!confirm('Reset all active simulations and release all memory?')) {
-        return;
-    }
-    
-    try {
-        // Also stop slow requests if running
-        await fetch(`${CONFIG.apiBaseUrl}/slowrequest/stop`, { method: 'POST' }).catch(() => {});
-        
-        // Reset slow request UI
-        const statusDiv = document.getElementById('slowRequestStatus');
-        const startBtn = document.getElementById('btnStartSlowRequests');
-        const stopBtn = document.getElementById('btnStopSlowRequests');
-        if (statusDiv) statusDiv.classList.remove('active');
-        if (startBtn) startBtn.disabled = false;
-        if (stopBtn) stopBtn.disabled = true;
-        
-        const response = await fetch(`${CONFIG.apiBaseUrl}/admin/reset-all`, {
-            method: 'POST'
-        });
-        
-        if (response.ok) {
-            const result = await response.json();
-            logEvent('success', `🔄 Reset complete: ${result.memoryBlocksReleased} memory blocks released`);
-            // Clear all active simulations from the UI
-            clearAllActiveSimulations();
-        } else {
-            logEvent('error', 'Reset failed');
-        }
-    } catch (error) {
-        logEvent('error', `Reset error: ${error.message}`);
-    }
 }
 
 /**

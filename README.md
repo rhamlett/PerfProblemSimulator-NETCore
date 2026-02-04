@@ -159,7 +159,6 @@ The slow request simulator generates requests using three different sync-over-as
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/admin/reset-all` | POST | Release all memory and reset state |
 | `/api/admin/stats` | GET | Get current simulation statistics |
 
 ## ⏱️ Request Latency Monitor

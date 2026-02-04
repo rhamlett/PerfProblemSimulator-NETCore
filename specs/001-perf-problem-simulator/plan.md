@@ -77,7 +77,7 @@ src/
     │   ├── MemoryController.cs       # POST /api/allocate-memory, POST /api/release-memory
     │   ├── ThreadBlockController.cs  # POST /api/trigger-sync-over-async
     │   ├── MetricsController.cs      # GET /api/metrics/*
-    │   └── AdminController.cs        # POST /api/reset-all
+    │   └── AdminController.cs        # GET /api/admin/stats
     │
     ├── Services/                     # Business logic
     │   ├── ICpuStressService.cs
