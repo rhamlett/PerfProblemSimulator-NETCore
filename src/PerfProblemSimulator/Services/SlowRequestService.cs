@@ -244,7 +244,19 @@ public class SlowRequestService : ISlowRequestService, IDisposable
             // Wait for interval before next request
             try
             {
-                Thread.Sleep(_intervalSeconds * 1000);
+                // Thread.Sleep(_intervalSeconds * 1000);
+                
+                // FIX: Instead of one long sleep (which causes silence in ETW traces), 
+                // we sleep in small chunks and log "heartbeats". 
+                // This ensures the ETW buffers fill up and flush to the .diagsession file,
+                // allowing the CLR Profiler to see the "Request Finished" events even if the app is otherwise idle.
+                for (int i = 0; i < _intervalSeconds * 2; i++) // 500ms chunks
+                {
+                    if (ct.IsCancellationRequested) break;
+                    Thread.Sleep(500);
+                    // Log trace (verbose) - high volume event to force buffer flush
+                    _logger.LogTrace("Generating trace noise to flush ETW buffers...");
+                }
             }
             catch (ThreadInterruptedException)
             {
