@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Services;
 
@@ -23,6 +24,7 @@ namespace PerfProblemSimulator.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
+[RequestTimeout("NoTimeout")] // Health endpoints must always respond, never timeout
 public class HealthController : ControllerBase
 {
     private readonly ISimulationTracker _simulationTracker;

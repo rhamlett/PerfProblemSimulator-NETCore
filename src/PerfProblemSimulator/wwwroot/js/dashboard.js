@@ -558,6 +558,11 @@ function handleSlowRequestLatency(data) {
             msg += ` [Queue Time: ${queueSec}s]`;
         }
         logEvent('error', msg);
+    } else if (isTimeout) {
+        // Request completed but exceeded the 30s timeout threshold
+        // In IIS with requestTimeout="00:00:30", this would have been terminated with HTTP 502.3
+        let msg = `⏱️ Slow request #${data.requestNumber} TIMEOUT: ${durationSec}s exceeded 30s threshold (${scenario}) [Queue Time: ${queueSec}s]`;
+        logEvent('error', msg);
     } else {
         let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
         logEvent('warning', msg);

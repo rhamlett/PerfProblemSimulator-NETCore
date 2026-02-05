@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -25,6 +26,7 @@ namespace PerfProblemSimulator.Controllers;
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
+[RequestTimeout("NoTimeout")] // Admin endpoints must always respond
 public class AdminController : ControllerBase
 {
     private readonly ISimulationTracker _simulationTracker;

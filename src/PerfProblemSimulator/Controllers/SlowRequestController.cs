@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -34,6 +35,7 @@ namespace PerfProblemSimulator.Controllers;
 [Route("api/[controller]")]
 [Produces("application/json")]
 [Tags("Slow Request Simulation")]
+[RequestTimeout("SlowRequest")] // Extended 120s timeout for intentionally slow requests
 public class SlowRequestController : ControllerBase
 {
     private readonly ISlowRequestService _slowRequestService;

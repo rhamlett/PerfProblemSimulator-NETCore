@@ -169,6 +169,37 @@ builder.Services.AddCors(options =>
     });
 });
 
+// -----------------------------------------------------------------------------
+// Request Timeouts (Kestrel)
+// -----------------------------------------------------------------------------
+// Add request timeouts for local development to match IIS behavior (web.config).
+// This ensures slow requests timeout after 30 seconds, consistent with the UI threshold.
+// Educational Note: In Azure App Service, the web.config requestTimeout handles this.
+// For local Kestrel development, we use the RequestTimeouts middleware instead.
+builder.Services.AddRequestTimeouts(options =>
+{
+    // Default 30-second timeout for all endpoints (matches web.config and UI threshold)
+    options.DefaultPolicy = new Microsoft.AspNetCore.Http.Timeouts.RequestTimeoutPolicy
+    {
+        Timeout = TimeSpan.FromSeconds(30),
+        TimeoutStatusCode = StatusCodes.Status504GatewayTimeout
+    };
+    
+    // Extended timeout for slow request simulation endpoint
+    // This endpoint intentionally runs 20-35s requests, so it needs more time
+    options.AddPolicy("SlowRequest", new Microsoft.AspNetCore.Http.Timeouts.RequestTimeoutPolicy
+    {
+        Timeout = TimeSpan.FromSeconds(120),
+        TimeoutStatusCode = StatusCodes.Status504GatewayTimeout
+    });
+    
+    // No timeout for health/admin endpoints - they must always respond
+    options.AddPolicy("NoTimeout", new Microsoft.AspNetCore.Http.Timeouts.RequestTimeoutPolicy
+    {
+        Timeout = null // Disable timeout
+    });
+});
+
 var app = builder.Build();
 
 // -----------------------------------------------------------------------------
@@ -194,6 +225,10 @@ if (app.Environment.IsDevelopment())
 
 // CORS must be called before UseRouting
 app.UseCors();
+
+// Request timeouts middleware (Kestrel) - matches web.config requestTimeout for IIS
+// Educational Note: This must be placed before UseRouting so timeouts apply to all requests.
+app.UseRequestTimeouts();
 
 // Serve static files from wwwroot (for the SPA dashboard)
 app.UseDefaultFiles(); // Enables default document (index.html)
