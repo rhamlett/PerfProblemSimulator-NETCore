@@ -23,7 +23,7 @@
   </ItemGroup>
 
   <!-- Generate build timestamp as assembly metadata -->
-  <Target Name="SetBuildTimestamp" BeforeTargets="CoreCompile">
+  <Target Name="SetBuildTimestamp" BeforeTargets="GetAssemblyAttributes">
     <PropertyGroup>
       <BuildTimestamp>$([System.DateTime]::UtcNow.ToString("o"))</BuildTimestamp>
     </PropertyGroup>
