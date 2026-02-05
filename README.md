@@ -86,6 +86,7 @@ The CPU and Memory metric tiles use dynamic color coding based on utilization pe
 | `/api/health` | GET | Basic health check |
 | `/api/health/status` | GET | Detailed health with active simulations |
 | `/api/health/probe` | GET | Lightweight probe for latency measurement |
+| `/api/health/build` | GET | Build information and assembly version |
 | `/api/metrics/current` | GET | Latest metrics snapshot |
 | `/api/metrics/health` | GET | Detailed health status with warnings |
 | `/api/admin/stats` | GET | Simulation and resource statistics |
@@ -104,12 +105,16 @@ The CPU and Memory metric tiles use dynamic color coding based on utilization pe
 }
 ```
 
+- `durationSeconds`: How long to run (default: 30)
+- `targetPercentage`: Target CPU usage 1-100 (default: 100)
+
 ### Memory Pressure Simulation
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/memory/allocate-memory` | POST | Allocate memory block |
 | `/api/memory/release-memory` | POST | Release all allocated memory |
+| `/api/memory/status` | GET | Get current memory allocation status |
 
 **Request body (allocate):**
 ```json
@@ -154,6 +159,27 @@ The slow request simulator generates requests using three different sync-over-as
 - **SimpleSyncOverAsync**: Blocking calls - look for `FetchDataSync_BLOCKING_HERE`, `ProcessDataSync_BLOCKING_HERE`, `SaveDataSync_BLOCKING_HERE` in traces
 - **NestedSyncOverAsync**: Sync methods that block internally - look for `*_BLOCKS_INTERNALLY` methods
 - **DatabasePattern**: Simulated database/HTTP blocking - look for `*Sync_SYNC_BLOCK` methods
+
+### Crash Simulation
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/crash/trigger` | POST | Trigger a crash with options |
+| `/api/crash/now` | GET/POST | Immediate synchronous crash (best for Azure Crash Monitoring) |
+| `/api/crash/types` | GET | List available crash types |
+| `/api/crash/failfast` | POST | Quick FailFast crash |
+| `/api/crash/stackoverflow` | POST | Quick StackOverflow crash |
+
+**Request body (trigger):**
+```json
+{
+  "crashType": "FailFast",
+  "delaySeconds": 3,
+  "message": "Optional crash message"
+}
+```
+
+**Available crash types:** `FailFast`, `StackOverflow`, `UnhandledException`, `AccessViolation`, `OutOfMemory`
 
 ### Admin Operations
 

@@ -625,6 +625,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                         <td>Lightweight probe for latency measurement</td>
                     </tr>
                     <tr>
+                        <td><code>/api/health/build</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Build information and assembly version</td>
+                    </tr>
+                    <tr>
                         <td><code>/api/metrics/current</code></td>
                         <td><span class="method-badge method-get">GET</span></td>
                         <td>Latest metrics snapshot</td>
@@ -662,9 +667,12 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p><strong>Request body:</strong></p>
             <div class="code-block">
 {
-  <span class="string">"durationSeconds"</span>: 30
+  <span class="string">"durationSeconds"</span>: 30,
+  <span class="string">"targetPercentage"</span>: 100
 }
             </div>
+            <p><code>durationSeconds</code>: How long to run (default: 30)<br>
+            <code>targetPercentage</code>: Target CPU usage 1-100 (default: 100)</p>
 
             <h3>Memory Pressure Simulation</h3>
             <table class="api-table">
@@ -685,6 +693,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                         <td><code>/api/memory/release-memory</code></td>
                         <td><span class="method-badge method-post">POST</span></td>
                         <td>Release all allocated memory</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/memory/status</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get current memory allocation status</td>
                     </tr>
                 </tbody>
             </table>
@@ -791,6 +804,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                         <td><code>/api/crash/trigger</code></td>
                         <td><span class="method-badge method-post">POST</span></td>
                         <td>Trigger a crash of specified type</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/crash/now</code></td>
+                        <td><span class="method-badge method-get">GET</span> <span class="method-badge method-post">POST</span></td>
+                        <td>Immediate synchronous crash (best for Azure Crash Monitoring)</td>
                     </tr>
                     <tr>
                         <td><code>/api/crash/types</code></td>
