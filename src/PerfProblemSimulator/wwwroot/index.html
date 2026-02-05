@@ -38,7 +38,7 @@
         <div class="side-panel-content">
             <p class="warning-text">⚠️ These buttons intentionally cause performance problems!</p>
             
-            <div class="control-group">
+            <div class="control-group cpu-group">
                 <h3>🔥 CPU Stress</h3>
                 <p>Creates parallel spin loops to max out all CPU cores.</p>
                 <div class="control-inputs">
@@ -58,7 +58,7 @@
                 <button class="btn btn-danger" id="btnTriggerCpu">🔥 Trigger High CPU</button>
             </div>
 
-            <div class="control-group">
+            <div class="control-group memory-group">
                 <h3>📊 Memory Pressure</h3>
                 <p>Allocates pinned memory blocks to increase working set.</p>
                 <div class="control-inputs">
@@ -70,7 +70,7 @@
                 <button class="btn btn-secondary" id="btnReleaseMemory">🗑️ Release</button>
             </div>
 
-            <div class="control-group">
+            <div class="control-group thread-group">
                 <h3>🧵 Thread Pool Starvation</h3>
                 <p>Blocks threads using sync-over-async anti-pattern.</p>
                 <div class="control-inputs">
