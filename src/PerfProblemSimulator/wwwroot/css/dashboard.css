@@ -536,7 +536,7 @@ body {
 }
 
 .log-container {
-    max-height: 200px;
+    max-height: 375px;
     overflow-y: auto;
     font-family: 'Cascadia Code', 'Consolas', monospace;
     font-size: 0.8125rem;
