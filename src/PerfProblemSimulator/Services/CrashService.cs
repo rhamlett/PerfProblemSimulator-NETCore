@@ -220,12 +220,17 @@ public class CrashService : ICrashService
     /// that was accessed illegally.
     /// </para>
     /// </remarks>
-    private unsafe void ExecuteAccessViolation()
+    private void ExecuteAccessViolation()
     {
-        // Write to address 0 (null pointer), which is always invalid
-        int* ptr = (int*)0;
-        *ptr = 42; // This will cause an access violation
+        // Use native RaiseException to trigger a real access violation (0xC0000005)
+        // This bypasses .NET's runtime protections and causes a genuine native crash
+        const uint EXCEPTION_ACCESS_VIOLATION = 0xC0000005;
+        const uint EXCEPTION_NONCONTINUABLE = 0x1;
+        RaiseException(EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, 0, IntPtr.Zero);
     }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern void RaiseException(uint dwExceptionCode, uint dwExceptionFlags, uint nNumberOfArguments, IntPtr lpArguments);
 
     /// <summary>
     /// Allocates memory until the process runs out and crashes.
