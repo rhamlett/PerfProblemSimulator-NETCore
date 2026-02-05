@@ -257,6 +257,14 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         // Always report the actual elapsed time, even on error/timeout
         // This ensures the chart shows the full impact of queuing (Total Time)
+        // Also flag as timeout if elapsed time exceeds threshold (request completed but too slowly)
+        if (!isTimeout && stopwatch.ElapsedMilliseconds >= RequestTimeoutMs)
+        {
+            isTimeout = true;
+            _logger.LogWarning("Probe request exceeded timeout threshold: {ElapsedMs}ms >= {TimeoutMs}ms", 
+                stopwatch.ElapsedMilliseconds, RequestTimeoutMs);
+        }
+
         return new LatencyMeasurement
         {
             Timestamp = timestamp,
