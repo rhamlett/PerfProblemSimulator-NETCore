@@ -87,6 +87,7 @@
             <div class="control-group slowrequest-group">
                 <h3>🐌 Slow Requests</h3>
                 <p>Generates requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
+                <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) will timeout with HTTP 502.3</p>
                 <div class="control-inputs">
                     <label>Request Execution Time (s) <span style="cursor: help; color: var(--color-primary);" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
                         <input type="number" id="slowRequestDuration" value="25" min="5" max="60">

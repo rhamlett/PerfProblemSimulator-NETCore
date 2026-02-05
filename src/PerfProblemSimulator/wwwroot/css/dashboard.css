@@ -391,6 +391,16 @@ body {
     background: rgba(255, 140, 0, 0.05);
 }
 
+.timeout-warning {
+    font-size: 0.75rem;
+    color: #b8860b;
+    background: rgba(255, 193, 7, 0.15);
+    border-left: 3px solid #ffc107;
+    padding: 0.4rem 0.6rem;
+    margin: 0.5rem 0;
+    border-radius: 0 4px 4px 0;
+}
+
 .slowrequest-status {
     font-size: 0.8rem;
     color: var(--color-text-secondary);
