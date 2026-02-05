@@ -5,37 +5,73 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      deploy_net8:
+        description: 'Deploy .NET 8 version'
+        type: boolean
+        default: true
+      deploy_net10:
+        description: 'Deploy .NET 10 version'
+        type: boolean
+        default: true
 
 env:
-  AZURE_WEBAPP_NAME: PerfSimDotNet
-  AZURE_WEBAPP_PACKAGE_PATH: './publish'
-  DOTNET_VERSION: '10.0.x'
+  # App Service names - update these to match your Azure resources
+  AZURE_WEBAPP_NET8: PerfSimDotNet8
+  AZURE_WEBAPP_NET10: PerfSimDotNet
 
 permissions:
   id-token: write
   contents: read
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - framework: net8.0
+            dotnet-version: '8.0.x'
+            artifact-name: publish-net8
+          - framework: net10.0
+            dotnet-version: '10.0.x'
+            artifact-name: publish-net10
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
+          dotnet-version: ${{ matrix.dotnet-version }}
 
       - name: Restore dependencies
         run: dotnet restore src/PerfProblemSimulator/PerfProblemSimulator.csproj
 
-      - name: Build
-        run: dotnet build src/PerfProblemSimulator/PerfProblemSimulator.csproj --configuration Release --no-restore
+      - name: Build (${{ matrix.framework }})
+        run: dotnet build src/PerfProblemSimulator/PerfProblemSimulator.csproj --configuration Release --framework ${{ matrix.framework }} --no-restore
 
-      - name: Publish
-        run: dotnet publish src/PerfProblemSimulator/PerfProblemSimulator.csproj --configuration Release --no-build --output ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+      - name: Publish (${{ matrix.framework }})
+        run: dotnet publish src/PerfProblemSimulator/PerfProblemSimulator.csproj --configuration Release --framework ${{ matrix.framework }} --no-build --output ./publish
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: ./publish
+
+  deploy-net8:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.deploy_net8 == 'true'
+
+    steps:
+      - name: Download .NET 8 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-net8
+          path: ./publish-net8
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -44,8 +80,33 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to Azure Web App
+      - name: Deploy to Azure Web App (.NET 8)
         uses: azure/webapps-deploy@v3
         with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
+          app-name: ${{ env.AZURE_WEBAPP_NET8 }}
+          package: ./publish-net8
+
+  deploy-net10:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.inputs.deploy_net10 == 'true'
+
+    steps:
+      - name: Download .NET 10 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-net10
+          path: ./publish-net10
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Azure Web App (.NET 10)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NET10 }}
+          package: ./publish-net10

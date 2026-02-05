@@ -6,8 +6,8 @@
   -->
 
   <PropertyGroup>
-    <!-- Target .NET 10.0 for all projects -->
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Multi-target .NET 8.0 and .NET 10.0 for diagnostics compatibility -->
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
 
     <!-- Enable nullable reference types for defensive programming (Constitution Principle IV) -->
     <Nullable>enable</Nullable>

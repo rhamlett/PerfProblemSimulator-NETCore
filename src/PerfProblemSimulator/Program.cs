@@ -3,6 +3,12 @@ using PerfProblemSimulator.Middleware;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
 
+#if NET8_0
+using OpenApiInfo = Microsoft.OpenApi.Models.OpenApiInfo;
+#else
+using OpenApiInfo = Microsoft.OpenApi.OpenApiInfo;
+#endif
+
 // =============================================================================
 // Performance Problem Simulator - Application Entry Point
 // =============================================================================
@@ -60,7 +66,7 @@ builder.Services.AddSignalR()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new Microsoft.OpenApi.OpenApiInfo
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Performance Problem Simulator API",
         Version = "v1",
