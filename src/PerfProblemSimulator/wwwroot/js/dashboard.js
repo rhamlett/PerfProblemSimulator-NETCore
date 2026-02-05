@@ -527,6 +527,9 @@ function handleSlowRequestLatency(data) {
     // If negative (processing was faster than expected?), clamp to 0
     const queueTimeMs = Math.max(0, latencyMs - expectedMs);
     
+    // Flag as timeout if total time exceeds threshold (30s)
+    const isTimeout = latencyMs >= CONFIG.latencyTimeoutMs;
+    
     // Add to slow request history
     const history = state.slowRequestHistory;
     history.timestamps.push(timestamp);
@@ -541,8 +544,8 @@ function handleSlowRequestLatency(data) {
     }
     
     // Add as a special latency point on the chart (it will show as a large spike)
-    addLatencyToHistory(timestamp, latencyMs, false, isError);
-    updateLatencyDisplay(latencyMs, false, isError);
+    addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
+    updateLatencyDisplay(latencyMs, isTimeout, isError);
     updateLatencyChart();
     
     // Log the slow request completion with Queue Time breakdown
