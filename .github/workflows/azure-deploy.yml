@@ -17,7 +17,7 @@ on:
 
 env:
   # App Service names - update these to match your Azure resources
-  AZURE_WEBAPP_NET8: PerfSimDotNet8
+  AZURE_WEBAPP_NET8: perfsimdotnet8
   AZURE_WEBAPP_NET10: PerfSimDotNet
 
 permissions:
