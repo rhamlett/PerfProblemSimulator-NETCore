@@ -414,8 +414,8 @@ The dashboard includes a **Request Latency Monitor** that demonstrates how threa
 |----------|----------------------|--------|------------------|
 | Normal operation | < 150ms | Good | Thread pool threads are available |
 | Mild starvation | 150ms - 1s | Degraded | Requests queued waiting for threads |
-| Severe starvation | > 1s | Critical | Significant queuing delay |
-| Timeout | 30s | Timeout | No thread available within timeout |
+| Severe starvation | > 1s | Severe | Significant queuing delay |
+| Timeout | 30s | Critical | No thread available within timeout |
 
 ### Key Insight
 
