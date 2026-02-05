@@ -447,7 +447,7 @@ function initializeCharts() {
                             const isTimeout = state.latencyHistory.isTimeout[index];
                             const isError = state.latencyHistory.isError[index];
                             
-                            if (isTimeout) return `Timeout: ${latency}ms (30s)`;
+                            if (isTimeout) return `Critical (>30s): ${latency}ms`;
                             if (isError) return `Error: ${latency}ms`;
                             return `Latency: ${latency}ms`;
                         }
@@ -488,7 +488,7 @@ function handleLatencyUpdate(measurement) {
     if (measurement.isError) {
         logEvent('error', `⚠️ Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
     } else if (measurement.isTimeout) {
-        logEvent('error', `⚠️ Health Probe Timeout: >${formatLatency(measurement.latencyMs)}`);
+        logEvent('warning', `⚠️ Health Probe Critical (>30s): ${formatLatency(measurement.latencyMs)}`);
     } else if (measurement.latencyMs > 5000) {
         // Log extremely high latency (starvation)
         logEvent('warning', `⚠️ High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
@@ -559,10 +559,9 @@ function handleSlowRequestLatency(data) {
         }
         logEvent('error', msg);
     } else if (isTimeout) {
-        // Request completed but exceeded the 30s timeout threshold
-        // In IIS with requestTimeout="00:00:30", this would have been terminated with HTTP 502.3
-        let msg = `⏱️ Slow request #${data.requestNumber} TIMEOUT: ${durationSec}s exceeded 30s threshold (${scenario}) [Queue Time: ${queueSec}s]`;
-        logEvent('error', msg);
+        // Request completed but exceeded the 30s critical threshold
+        let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s] ⚠️ CRITICAL (>30s)`;
+        logEvent('warning', msg);
     } else {
         let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
         logEvent('warning', msg);
@@ -1204,12 +1203,36 @@ async function fetchAzureSku() {
     }
 }
 
+/**
+ * Fetches and displays the build timestamp.
+ */
+async function fetchBuildInfo() {
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/health/build`);
+        if (response.ok) {
+            const data = await response.json();
+            const buildTimeElement = document.getElementById('buildTime');
+            if (buildTimeElement && data.buildTimestamp) {
+                // Parse ISO 8601 timestamp and format as date + time
+                const buildDate = new Date(data.buildTimestamp);
+                const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                buildTimeElement.textContent = formatted;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch build info', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize charts first
     initializeCharts();
     
     // Fetch SKU info
     fetchAzureSku();
+    
+    // Fetch build info
+    fetchBuildInfo();
     
     // Start SignalR connection
     initializeSignalR();

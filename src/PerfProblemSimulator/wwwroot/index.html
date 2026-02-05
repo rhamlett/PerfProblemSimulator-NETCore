@@ -87,7 +87,7 @@
             <div class="control-group slowrequest-group">
                 <h3>🐌 Slow Requests</h3>
                 <p>Generates requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
-                <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) will timeout with HTTP 502.3</p>
+                <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) are flagged as critical</p>
                 <div class="control-inputs">
                     <label>Request Execution Time (s) <span style="cursor: help; color: var(--color-primary);" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
                         <input type="number" id="slowRequestDuration" value="25" min="5" max="60">
@@ -220,7 +220,7 @@
                     <span class="latency-value" id="latencyMax">--</span>
                 </div>
                 <div class="latency-stat">
-                    <span class="latency-label">Timeouts</span>
+                    <span class="latency-label">Critical (&gt;30s)</span>
                     <span class="latency-value" id="latencyTimeouts">0</span>
                 </div>
             </div>
@@ -230,7 +230,7 @@
                 <span class="threshold-item good">● Good (&lt;150ms)</span>
                 <span class="threshold-item warning">● Degraded (150ms-1s)</span>
                 <span class="threshold-item danger">● Critical (&gt;1s)</span>
-                <span class="threshold-item timeout">● Timeout (30s)</span>
+                <span class="threshold-item timeout">● Critical (&gt;30s)</span>
             </div>
 
             <div class="chart-container latency-chart-container" style="position: relative;">
@@ -262,7 +262,8 @@
 
     <footer class="footer">
         <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
-        <p>Last Update: <span id="lastUpdate">--</span></p>
+        <p>Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> in collaboration with <a href="mailto:rhamlett@microsoft.com">Richard Hamlett</a></p>
+        <p>Build: <span id="buildTime">--</span></p>
     </footer>
 
     <script src="js/dashboard.js?v=2"></script>

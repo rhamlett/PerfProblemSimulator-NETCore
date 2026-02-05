@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Services;
+using System.Reflection;
 
 namespace PerfProblemSimulator.Controllers;
 
@@ -130,6 +131,34 @@ public class HealthController : ControllerBase
             PendingWorkItems = ThreadPool.PendingWorkItemCount
         });
     }
+
+    /// <summary>
+    /// Returns build information including the build timestamp.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Educational Note:</strong> The build timestamp is embedded in the assembly
+    /// during compilation via MSBuild. This provides an accurate record of when the
+    /// deployed code was built, useful for debugging and deployment verification.
+    /// </para>
+    /// </remarks>
+    /// <response code="200">Returns build information.</response>
+    [HttpGet("build")]
+    [ProducesResponseType(typeof(BuildInfoResponse), StatusCodes.Status200OK)]
+    public IActionResult GetBuildInfo()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var buildTimestamp = assembly
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(a => a.Key == "BuildTimestamp")?.Value;
+
+        return Ok(new BuildInfoResponse
+        {
+            BuildTimestamp = buildTimestamp,
+            AssemblyVersion = assembly.GetName().Version?.ToString(),
+            EnvironmentName = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"
+        });
+    }
 }
 
 /// <summary>
@@ -216,4 +245,25 @@ public class ProbeResponse
     /// Number of work items waiting in the thread pool queue.
     /// </summary>
     public long PendingWorkItems { get; init; }
+}
+
+/// <summary>
+/// Response containing build information.
+/// </summary>
+public class BuildInfoResponse
+{
+    /// <summary>
+    /// UTC timestamp when the application was built (ISO 8601 format).
+    /// </summary>
+    public string? BuildTimestamp { get; init; }
+
+    /// <summary>
+    /// Assembly version of the application.
+    /// </summary>
+    public string? AssemblyVersion { get; init; }
+
+    /// <summary>
+    /// Current environment name (Development, Staging, Production).
+    /// </summary>
+    public string? EnvironmentName { get; init; }
 }
