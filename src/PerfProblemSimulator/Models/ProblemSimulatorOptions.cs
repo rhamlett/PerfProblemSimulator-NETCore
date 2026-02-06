@@ -19,4 +19,13 @@ public class ProblemSimulatorOptions
     /// dashboard updates but consumes more resources.
     /// </remarks>
     public int MetricsCollectionIntervalMs { get; set; } = 1000;
+
+    /// <summary>
+    /// The title displayed in the dashboard header.
+    /// </summary>
+    /// <remarks>
+    /// Can be overridden via Azure App Service configuration using
+    /// the environment variable: ProblemSimulator__AppTitle
+    /// </remarks>
+    public string AppTitle { get; set; } = "Performance Problem Simulator";
 }

@@ -1224,9 +1224,33 @@ async function fetchBuildInfo() {
     }
 }
 
+/**
+ * Fetches app configuration and updates the UI.
+ * The AppTitle can be set via Azure App Service environment variable:
+ * ProblemSimulator__AppTitle
+ */
+async function fetchAppConfig() {
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/config`);
+        if (response.ok) {
+            const config = await response.json();
+            const titleElement = document.getElementById('appTitle');
+            if (titleElement && config.appTitle) {
+                titleElement.textContent = `🔥 ${config.appTitle}`;
+                document.title = `${config.appTitle} - Dashboard`;
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch app config', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize charts first
     initializeCharts();
+    
+    // Fetch app configuration (title from environment variable)
+    fetchAppConfig();
     
     // Fetch SKU info
     fetchAzureSku();
