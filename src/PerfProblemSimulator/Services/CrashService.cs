@@ -257,12 +257,31 @@ public class CrashService : ICrashService
     /// </remarks>
     private void ExecuteNativeCrash()
     {
-        _logger.LogCritical("Triggering RtlFailFast - this will bypass all exception handlers!");
+        _logger.LogCritical("Triggering native crash - attempting multiple methods!");
         
-        // FAST_FAIL_FATAL_APP_EXIT (7) - Indicates a fatal application error
-        // This generates an unbypassable crash that Windows Error Reporting will capture
-        const uint FAST_FAIL_FATAL_APP_EXIT = 7;
-        RtlFailFast(FAST_FAIL_FATAL_APP_EXIT);
+        // Method 1: RtlFailFast - should bypass all handlers
+        try
+        {
+            _logger.LogCritical("Attempting RtlFailFast...");
+            const uint FAST_FAIL_FATAL_APP_EXIT = 7;
+            RtlFailFast(FAST_FAIL_FATAL_APP_EXIT);
+        }
+        catch
+        {
+            _logger.LogWarning("RtlFailFast was caught (unexpected!)");
+        }
+
+        // Method 2: Direct null pointer dereference via unsafe code
+        _logger.LogCritical("RtlFailFast didn't crash, trying unsafe null dereference...");
+        unsafe
+        {
+            int* nullPtr = (int*)0;
+            *nullPtr = 42; // This WILL crash
+        }
+
+        // Method 3: If somehow we're still alive, use FailFast
+        _logger.LogCritical("Unsafe code didn't crash?! Using Environment.FailFast...");
+        Environment.FailFast("NativeCrash fallback: RtlFailFast and unsafe null dereference both failed!");
     }
 
     [DllImport("ntdll.dll")]
