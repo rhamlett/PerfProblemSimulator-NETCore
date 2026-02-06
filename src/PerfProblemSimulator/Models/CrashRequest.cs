@@ -37,17 +37,17 @@ public class CrashRequest
 
     /// <summary>
     /// If true, crash happens during the HTTP request (no response sent).
-    /// This is more likely to be captured by Azure Crash Monitoring.
-    /// Default: false (crash after response for better UX)
+    /// This is required for Azure Crash Monitoring to capture the crash.
+    /// Default: true (optimized for Azure Crash Monitoring)
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>Azure Crash Monitoring Note:</strong> Set this to true for Azure Crash Monitoring
+    /// <strong>Azure Crash Monitoring Note:</strong> This must be true for Azure Crash Monitoring
     /// to properly capture the crash. When false, the crash happens on a background thread
     /// after the HTTP response is sent, which Azure may not associate with a request.
     /// </para>
     /// </remarks>
-    public bool Synchronous { get; set; } = false;
+    public bool Synchronous { get; set; } = true;
 }
 
 /// <summary>
@@ -84,5 +84,12 @@ public enum CrashType
     /// Allocates memory until the process runs out and crashes.
     /// Different from memory pressure - this is meant to be fatal.
     /// </summary>
-    OutOfMemory = 4
+    OutOfMemory = 4,
+
+    /// <summary>
+    /// Uses RtlFailFast to trigger an unbypassable native crash.
+    /// This bypasses all .NET and ANCM exception handlers and guarantees
+    /// a Windows Error Report is generated. Best option for Azure Crash Monitoring.
+    /// </summary>
+    NativeCrash = 5
 }
