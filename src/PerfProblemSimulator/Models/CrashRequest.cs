@@ -84,12 +84,5 @@ public enum CrashType
     /// Allocates memory until the process runs out and crashes.
     /// Different from memory pressure - this is meant to be fatal.
     /// </summary>
-    OutOfMemory = 4,
-
-    /// <summary>
-    /// Uses RtlFailFast to trigger an unbypassable native crash.
-    /// This bypasses all .NET and ANCM exception handlers and guarantees
-    /// a Windows Error Report is generated. Best option for Azure Crash Monitoring.
-    /// </summary>
-    NativeCrash = 5
+    OutOfMemory = 4
 }

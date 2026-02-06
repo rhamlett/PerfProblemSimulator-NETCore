@@ -580,11 +580,6 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                         <td>Allocates memory until the process crashes</td>
                         <td>Memory dump analysis</td>
                     </tr>
-                    <tr>
-                        <td><strong>NativeCrash</strong></td>
-                        <td>Uses <code>RtlFailFast</code> to bypass ALL exception handlers including ANCM</td>
-                        <td><strong>Best for Azure Crash Monitoring</strong> - guaranteed WER capture</td>
-                    </tr>
                 </tbody>
             </table>
 
@@ -840,7 +835,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
   <span class="string">"message"</span>: <span class="string">"Optional crash message"</span>
 }
             </div>
-            <p><strong>Available crash types:</strong> <code>NativeCrash</code> (recommended), <code>FailFast</code>, <code>StackOverflow</code>, <code>UnhandledException</code>, <code>AccessViolation</code>, <code>OutOfMemory</code></p>
+            <p><strong>Available crash types:</strong> <code>FailFast</code> (recommended), <code>AccessViolation</code>, <code>StackOverflow</code>, <code>UnhandledException</code>, <code>OutOfMemory</code></p>
         </section>
 
         <!-- Configuration Section -->

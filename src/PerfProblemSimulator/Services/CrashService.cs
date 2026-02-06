@@ -117,10 +117,6 @@ public class CrashService : ICrashService
                 ExecuteOutOfMemory();
                 break;
 
-            case CrashType.NativeCrash:
-                ExecuteNativeCrash();
-                break;
-
             default:
                 throw new ArgumentOutOfRangeException(nameof(crashType), crashType, "Unknown crash type");
         }
@@ -237,37 +233,6 @@ public class CrashService : ICrashService
     private static extern void RaiseException(uint dwExceptionCode, uint dwExceptionFlags, uint nNumberOfArguments, IntPtr lpArguments);
 
     /// <summary>
-    /// Uses RtlFailFast to trigger an unbypassable crash that guarantees WER capture.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <strong>Educational Note:</strong> RtlFailFast (the underlying implementation of __fastfail)
-    /// is the nuclear option for crash generation. It:
-    /// </para>
-    /// <list type="bullet">
-    /// <item>Bypasses ALL exception handlers (including ANCM in IIS InProcess mode)</item>
-    /// <item>Generates a Windows Error Report that Crash Monitoring can capture</item>
-    /// <item>Cannot be caught, filtered, or intercepted by any managed or unmanaged code</item>
-    /// <item>Is what the CLR itself uses for internal fatal errors</item>
-    /// </list>
-    /// <para>
-    /// Use this crash type if other crash types are not being captured by Azure Crash Monitoring.
-    /// The error code 7 (FAST_FAIL_FATAL_APP_EXIT) is specifically designed for application crashes.
-    /// </para>
-    /// </remarks>
-    private void ExecuteNativeCrash()
-    {
-        _logger.LogCritical("Triggering native crash via RaiseException (FAIL_FAST_EXCEPTION)!");
-        
-        // Use RaiseException with FAIL_FAST_EXCEPTION code (0xC0000409)
-        // This is the same exception code used by __fastfail and is reliably captured
-        // by Windows Error Reporting and Azure Crash Monitoring
-        const uint STATUS_STACK_BUFFER_OVERRUN = 0xC0000409; // __fastfail exception code
-        const uint EXCEPTION_NONCONTINUABLE = 0x1;
-        RaiseException(STATUS_STACK_BUFFER_OVERRUN, EXCEPTION_NONCONTINUABLE, 0, IntPtr.Zero);
-    }
-
-    /// <summary>
     /// Allocates memory until the process runs out and crashes.
     /// </summary>
     /// <remarks>
@@ -346,8 +311,7 @@ public class CrashService : ICrashService
             [CrashType.StackOverflow] = "Triggers StackOverflowException via infinite recursion. Cannot be caught. Creates interesting stack traces for analysis.",
             [CrashType.UnhandledException] = "Throws an unhandled exception on a background thread, demonstrating the importance of proper exception handling.",
             [CrashType.AccessViolation] = "Writes to invalid memory (null pointer). Demonstrates native-level crashes common in P/Invoke or unsafe code bugs.",
-            [CrashType.OutOfMemory] = "Allocates memory until the process crashes. Useful for learning memory dump analysis techniques.",
-            [CrashType.NativeCrash] = "Uses RtlFailFast to bypass ALL exception handlers including ANCM. Guarantees WER capture - use this if other types aren't detected by Azure Crash Monitoring."
+            [CrashType.OutOfMemory] = "Allocates memory until the process crashes. Useful for learning memory dump analysis techniques."
         };
     }
 }
