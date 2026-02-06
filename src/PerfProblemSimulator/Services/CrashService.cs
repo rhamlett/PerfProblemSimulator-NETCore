@@ -257,35 +257,15 @@ public class CrashService : ICrashService
     /// </remarks>
     private void ExecuteNativeCrash()
     {
-        _logger.LogCritical("Triggering native crash - attempting multiple methods!");
+        _logger.LogCritical("Triggering native crash via RaiseException (FAIL_FAST_EXCEPTION)!");
         
-        // Method 1: RtlFailFast - should bypass all handlers
-        try
-        {
-            _logger.LogCritical("Attempting RtlFailFast...");
-            const uint FAST_FAIL_FATAL_APP_EXIT = 7;
-            RtlFailFast(FAST_FAIL_FATAL_APP_EXIT);
-        }
-        catch
-        {
-            _logger.LogWarning("RtlFailFast was caught (unexpected!)");
-        }
-
-        // Method 2: Direct null pointer dereference via unsafe code
-        _logger.LogCritical("RtlFailFast didn't crash, trying unsafe null dereference...");
-        unsafe
-        {
-            int* nullPtr = (int*)0;
-            *nullPtr = 42; // This WILL crash
-        }
-
-        // Method 3: If somehow we're still alive, use FailFast
-        _logger.LogCritical("Unsafe code didn't crash?! Using Environment.FailFast...");
-        Environment.FailFast("NativeCrash fallback: RtlFailFast and unsafe null dereference both failed!");
+        // Use RaiseException with FAIL_FAST_EXCEPTION code (0xC0000409)
+        // This is the same exception code used by __fastfail and is reliably captured
+        // by Windows Error Reporting and Azure Crash Monitoring
+        const uint STATUS_STACK_BUFFER_OVERRUN = 0xC0000409; // __fastfail exception code
+        const uint EXCEPTION_NONCONTINUABLE = 0x1;
+        RaiseException(STATUS_STACK_BUFFER_OVERRUN, EXCEPTION_NONCONTINUABLE, 0, IntPtr.Zero);
     }
-
-    [DllImport("ntdll.dll")]
-    private static extern void RtlFailFast(uint Code);
 
     /// <summary>
     /// Allocates memory until the process runs out and crashes.
