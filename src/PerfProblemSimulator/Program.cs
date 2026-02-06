@@ -55,7 +55,17 @@ builder.Services.AddControllers()
 // Add SignalR for real-time dashboard updates
 // Educational Note: SignalR provides WebSocket-based real-time communication,
 // which is essential for showing live metrics on the dashboard.
-builder.Services.AddSignalR()
+builder.Services.AddSignalR(options =>
+    {
+        // Configure timeouts to prevent connections from hanging indefinitely
+        // during simulated performance problems (thread starvation, crashes, etc.)
+        options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);   // Disconnect if no message for 60s
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);       // Send keepalive every 15s
+        options.HandshakeTimeout = TimeSpan.FromSeconds(15);        // Handshake must complete in 15s
+        
+        // Enable detailed errors for debugging (disable in production)
+        options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    })
     .AddJsonProtocol(options =>
     {
         // Use camelCase to match controller JSON serialization

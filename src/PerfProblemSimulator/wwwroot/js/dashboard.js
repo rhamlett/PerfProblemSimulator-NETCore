@@ -93,6 +93,14 @@ async function initializeSignalR() {
         .configureLogging(signalR.LogLevel.Information)
         .build();
 
+    // Configure timeouts to detect server unresponsiveness faster
+    // serverTimeoutInMilliseconds: How long client waits for server response before disconnecting
+    // Must be at least 2x the server's KeepAliveInterval (15s), so we use 45s
+    state.connection.serverTimeoutInMilliseconds = 45000;
+    
+    // keepAliveIntervalInMilliseconds: How often client sends ping to server
+    state.connection.keepAliveIntervalInMilliseconds = 15000;
+
     // Handle connection state changes
     state.connection.onreconnecting(error => {
         updateConnectionStatus('connecting', 'Reconnecting...');
@@ -106,7 +114,9 @@ async function initializeSignalR() {
 
     state.connection.onclose(error => {
         updateConnectionStatus('disconnected', 'Disconnected');
-        logEvent('error', 'Connection closed. Refresh page to reconnect.');
+        logEvent('warning', 'Connection closed. Attempting to reconnect...');
+        // Auto-reconnect after close (handles cases where withAutomaticReconnect gives up)
+        setTimeout(initializeSignalR, CONFIG.reconnectDelayMs);
     });
 
     // Register message handlers
