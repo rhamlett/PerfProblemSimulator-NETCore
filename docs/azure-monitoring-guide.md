@@ -1,6 +1,6 @@
-# Azure Monitoring Guide for Performance Problem Simulator
+# Azure Diagnostics Guide for Performance Problem Simulator
 
-This guide explains how to use Azure monitoring tools to diagnose the performance problems created by this simulator.
+This guide explains how to use Azure diagnostics tools to diagnose the performance problems created by this simulator.
 
 ## 📊 Overview
 
