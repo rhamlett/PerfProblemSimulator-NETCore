@@ -218,21 +218,7 @@
         .architecture-tree .file { color: var(--color-text-muted); }
         .architecture-tree .comment { color: var(--color-success); font-style: italic; opacity: 0.8; margin-left: 1rem; }
 
-        .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: white;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: var(--radius-sm);
-            transition: background var(--transition-fast);
-        }
 
-        .back-link:hover {
-            background: rgba(255,255,255,0.2);
-        }
 
         .config-table {
             width: 100%;
@@ -273,12 +259,55 @@
 </head>
 <body>
     <header class="header">
+        <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
         <h1>📚 Documentation</h1>
-        <a href="/" class="back-link">
-            <span>←</span>
-            <span>Back to Dashboard</span>
-        </a>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <a href="/" class="btn-panel-toggle">🏠 Dashboard</a>
+        </div>
     </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <h2>🔥 PerfSim .NET</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">&times;</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Application</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Dashboard<span class="nav-desc">Live metrics & controls</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Documentation</div>
+            <a href="/documentation.html" class="sidebar-nav-item active">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Documentation<span class="nav-desc">API reference & guides</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure Diagnostics<span class="nav-desc">Diagnose issues in App Service</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">Deploy to Azure<span class="nav-desc">GitHub Actions + OIDC setup</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">External</div>
+            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" class="sidebar-nav-item">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            PerfSim .NET v1.0 • .NET 8/10
+        </div>
+    </aside>
 
     <div class="doc-container">
         <!-- Navigation -->
@@ -1016,10 +1045,38 @@ dotnet test --filter <span class="string">"Category=Unit"</span>
 
         <!-- Footer -->
         <footer class="footer">
-            <a href="/" class="btn btn-primary" style="margin-bottom: 1rem;">🏠 Return to Dashboard</a>
             <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
             <p>Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> in collaboration with <a href="mailto:rhamlett@microsoft.com">Richard Hamlett</a></p>
         </footer>
     </div>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+    </script>
 </body>
 </html>
