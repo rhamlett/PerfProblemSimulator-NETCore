@@ -12,7 +12,7 @@
 // ==========================================================================
 
 const CONFIG = {
-    maxDataPoints: 60,  // 1 minute of data at 1-second intervals
+    maxDataPoints: 240,  // 1 minute of data at 250ms intervals
     maxLatencyDataPoints: 600, // 60 seconds at 100ms intervals
     latencyProbeIntervalMs: 100,
     latencyTimeoutMs: 30000,
