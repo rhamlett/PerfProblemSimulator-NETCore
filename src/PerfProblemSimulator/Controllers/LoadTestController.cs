@@ -148,7 +148,10 @@ public class LoadTestController : ControllerBase
     /// <summary>
     /// Executes a load test probe request that performs lightweight work.
     /// </summary>
-    /// <param name="request">Optional configuration for the load test behavior.</param>
+    /// <param name="workIterations">Number of SHA256 hash iterations (default: 1000).</param>
+    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 5).</param>
+    /// <param name="softLimit">Concurrent request soft limit (default: 50).</param>
+    /// <param name="degradationFactor">Delay ms per request over limit (default: 5).</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -207,34 +210,44 @@ public class LoadTestController : ControllerBase
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
-        [FromBody] LoadTestRequest? request,
-        CancellationToken cancellationToken)
+        [FromQuery] int workIterations = 1000,
+        [FromQuery] int bufferSizeKb = 5,
+        [FromQuery] int softLimit = 50,
+        [FromQuery] int degradationFactor = 5,
+        CancellationToken cancellationToken = default)
     {
         /*
          * =====================================================================
          * REQUEST HANDLING FLOW
          * =====================================================================
          * 
-         * STEP 1: Apply defaults for null/missing request
-         * STEP 2: Log the incoming request (for diagnostics)
-         * STEP 3: Delegate to service layer for actual work
-         * STEP 4: Return result as JSON
+         * This endpoint now accepts query parameters for maximum compatibility
+         * with Azure Load Testing, JMeter, and browser testing.
+         * 
+         * Examples:
+         * - GET/POST /api/loadtest (uses all defaults)
+         * - GET/POST /api/loadtest?softLimit=25&degradationFactor=10
          * 
          * PORTING NOTES:
-         * - The "?? new LoadTestRequest()" pattern provides a default if null
-         * - In Python: request = request or LoadTestRequest()
-         * - In Node.js: const req = request ?? new LoadTestRequest()
-         * - In Java: request = request != null ? request : new LoadTestRequest()
+         * - Query parameters are universal across HTTP clients
+         * - No Content-Type header required
+         * - Works with any load testing tool
          */
         
-        // Apply defaults if no request body provided
-        var actualRequest = request ?? new LoadTestRequest();
+        // Build request from query parameters
+        var request = new LoadTestRequest
+        {
+            WorkIterations = workIterations,
+            BufferSizeKb = bufferSizeKb,
+            SoftLimit = softLimit,
+            DegradationFactor = degradationFactor
+        };
 
         _logger.LogDebug(
             "Load test request received: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, SoftLimit={SoftLimit}",
-            actualRequest.WorkIterations,
-            actualRequest.BufferSizeKb,
-            actualRequest.SoftLimit);
+            request.WorkIterations,
+            request.BufferSizeKb,
+            request.SoftLimit);
 
         /*
          * =====================================================================
@@ -256,7 +269,7 @@ public class LoadTestController : ControllerBase
          * - Java: Result result = loadTestService.executeWork(...).get()
          * - PHP: $result = $loadTestService->executeWork(...) (sync or with ReactPHP)
          */
-        var result = await _loadTestService.ExecuteWorkAsync(actualRequest, cancellationToken);
+        var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
 
         /*
          * =====================================================================
@@ -317,16 +330,9 @@ public class LoadTestController : ControllerBase
          * - Java: @RequestParam(defaultValue = "1000") int workIterations
          * - PHP: $request->query('workIterations', 1000)
          */
-        
-        var request = new LoadTestRequest
-        {
-            WorkIterations = workIterations,
-            BufferSizeKb = bufferSizeKb,
-            SoftLimit = softLimit,
-            DegradationFactor = degradationFactor
-        };
 
-        return await ExecuteLoadTest(request, cancellationToken);
+        // Delegate to main endpoint - both now use query parameters
+        return await ExecuteLoadTest(workIterations, bufferSizeKb, softLimit, degradationFactor, cancellationToken);
     }
 
     /*
