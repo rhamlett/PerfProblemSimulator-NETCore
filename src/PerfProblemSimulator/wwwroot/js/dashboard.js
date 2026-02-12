@@ -270,7 +270,8 @@ function initializeCharts() {
                     fill: true,
                     yAxisID: 'y',
                     pointRadius: 0,
-                    pointHoverRadius: 0
+                    pointHoverRadius: 0,
+                    borderWidth: 2
                 },
                 {
                     label: 'Memory MB',
@@ -281,7 +282,8 @@ function initializeCharts() {
                     fill: true,
                     yAxisID: 'y1',
                     pointRadius: 0,
-                    pointHoverRadius: 0
+                    pointHoverRadius: 0,
+                    borderWidth: 2
                 }
             ]
         },
@@ -342,7 +344,8 @@ function initializeCharts() {
                     fill: true,
                     yAxisID: 'y',
                     pointRadius: 0,
-                    pointHoverRadius: 0
+                    pointHoverRadius: 0,
+                    borderWidth: 2
                 },
                 {
                     label: 'Queue Length',
@@ -353,7 +356,8 @@ function initializeCharts() {
                     fill: true,
                     yAxisID: 'y1',
                     pointRadius: 0,
-                    pointHoverRadius: 0
+                    pointHoverRadius: 0,
+                    borderWidth: 2
                 }
             ]
         },

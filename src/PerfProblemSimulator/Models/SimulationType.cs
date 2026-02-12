@@ -65,5 +65,14 @@ public enum SimulationType
     /// Diagnosis tools: CLR Profiler, dotnet-trace, Azure Profiler.
     /// Shows threads blocked at .Result, .Wait(), or GetAwaiter().GetResult().
     /// </summary>
-    SlowRequest
+    SlowRequest,
+
+    /// <summary>
+    /// Load test simulation for Azure Load Testing integration.
+    /// Creates realistic degradation under load with configurable soft limits.
+    /// Throws random exceptions after 120 seconds (20% probability).
+    /// Designed to eventually trigger 230s Azure App Service timeout under extreme load.
+    /// Diagnosis tools: Azure Load Testing, Application Insights, Azure Monitor.
+    /// </summary>
+    LoadTest
 }

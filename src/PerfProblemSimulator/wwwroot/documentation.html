@@ -865,6 +865,58 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 }
             </div>
             <p><strong>Available crash types:</strong> <code>FailFast</code> (recommended), <code>AccessViolation</code>, <code>StackOverflow</code>, <code>UnhandledException</code>, <code>OutOfMemory</code></p>
+
+            <h3>Load Test Endpoint (Azure Load Testing)</h3>
+            <p>This endpoint is designed to be targeted by Azure Load Testing or similar load testing tools. Unlike other simulation endpoints, it doesn't have UI controls — it's meant for automated load testing only.</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/loadtest</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Execute load test probe with JSON body</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/loadtest/probe</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Execute load test probe with query parameters</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/loadtest/stats</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get current concurrent request statistics</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body (POST):</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"workIterations"</span>: 1000,
+  <span class="string">"bufferSizeKb"</span>: 5,
+  <span class="string">"softLimit"</span>: 50,
+  <span class="string">"degradationFactor"</span>: 5
+}
+            </div>
+            <p><strong>Parameters:</strong></p>
+            <ul>
+                <li><code>workIterations</code>: Number of SHA256 hash iterations for CPU work (default: 1000)</li>
+                <li><code>bufferSizeKb</code>: Memory buffer size in KB, released after request (default: 5)</li>
+                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 50)</li>
+                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 5)</li>
+            </ul>
+            <p><strong>Behavior:</strong></p>
+            <ul>
+                <li><strong>Low load:</strong> ~100ms response time</li>
+                <li><strong>Above soft limit:</strong> Response time increases linearly (delay = (concurrent - softLimit) × degradationFactor)</li>
+                <li><strong>After 120 seconds:</strong> 20% chance of throwing a random exception per check interval</li>
+                <li><strong>Extreme load:</strong> Can reach Azure's 230-second timeout threshold</li>
+            </ul>
         </section>
 
         <!-- Configuration Section -->

@@ -324,6 +324,7 @@
                 <li><a href="#slowrequest">Diagnosing Slow Requests</a></li>
                 <li><a href="#crash">Diagnosing Application Crashes</a></li>
                 <li><a href="#latency">Latency Monitor</a></li>
+                <li><a href="#load-testing">Azure Load Testing</a></li>
                 <li><a href="#setup">Monitoring Setup</a></li>
                 <li><a href="#best-practices">Best Practices</a></li>
                 <li><a href="#resources">Resources</a></li>
@@ -850,6 +851,130 @@ procdump -ma -h w3wp.exe
                 <li><strong>App Service Metrics</strong> &gt; Response Time</li>
                 <li><strong>Thread Pool</strong> section showing blocked threads</li>
             </ul>
+        </section>
+
+        <!-- Azure Load Testing Section -->
+        <section id="load-testing" class="doc-section">
+            <h2>🔬 Azure Load Testing</h2>
+            <p>The Performance Problem Simulator includes a dedicated load testing endpoint designed for use with Azure Load Testing. This endpoint simulates realistic application behavior that degrades gracefully under load.</p>
+
+            <h3>Load Test Endpoint</h3>
+            <p>The <code>/api/loadtest</code> endpoint is designed to:</p>
+            <ul>
+                <li>Perform lightweight CPU work (SHA256 hash iterations)</li>
+                <li>Allocate small memory buffers (released after each request)</li>
+                <li>Degrade gracefully as concurrent requests increase (soft limit pattern)</li>
+                <li>Throw random exceptions after 120 seconds (20% probability)</li>
+                <li>Eventually trigger Azure's 230-second timeout under extreme load</li>
+            </ul>
+
+            <h3>Setting Up Azure Load Testing</h3>
+            <ol>
+                <li>In the Azure Portal, create an <strong>Azure Load Testing</strong> resource</li>
+                <li>Create a new test and configure the target URL:
+                    <div class="code-block">
+POST https://your-app.azurewebsites.net/api/loadtest
+Content-Type: application/json
+
+{
+  "workIterations": 1000,
+  "bufferSizeKb": 5,
+  "softLimit": 50,
+  "degradationFactor": 5
+}
+                    </div>
+                </li>
+                <li>Configure load pattern (ramp up, steady state, ramp down)</li>
+                <li>Set up Azure Monitor integration to correlate metrics</li>
+            </ol>
+
+            <h3>Understanding the Soft Limit</h3>
+            <p>The soft limit creates a realistic degradation curve:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Concurrent Requests</th>
+                        <th>Over Soft Limit (50)</th>
+                        <th>Added Delay (factor=5)</th>
+                        <th>Expected Response Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>30</td><td>0</td><td>0ms</td><td>~100ms</td></tr>
+                    <tr><td>60</td><td>10</td><td>50ms</td><td>~150ms</td></tr>
+                    <tr><td>100</td><td>50</td><td>250ms</td><td>~350ms</td></tr>
+                    <tr><td>200</td><td>150</td><td>750ms</td><td>~850ms</td></tr>
+                    <tr><td>500</td><td>450</td><td>2250ms</td><td>~2350ms</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Diagnosing Load Test Results</h3>
+            <h4>1. Application Insights Integration</h4>
+            <ul>
+                <li>Go to <strong>Application Insights</strong> &gt; <strong>Performance</strong></li>
+                <li>Filter by operation name <code>POST /api/loadtest</code></li>
+                <li>Observe response time percentiles (p50, p95, p99)</li>
+                <li>Check failure rates for the 120s+ exception threshold</li>
+            </ul>
+
+            <h4>2. Azure Monitor Metrics</h4>
+            <ul>
+                <li><strong>Requests</strong> - Total request count and rate</li>
+                <li><strong>Response Time</strong> - Average and percentile latencies</li>
+                <li><strong>Http Server Errors</strong> - 5xx errors from random exceptions</li>
+                <li><strong>CPU Percentage</strong> - Should increase with load</li>
+            </ul>
+
+            <h4>3. Load Testing Statistics</h4>
+            <p>Query the stats endpoint during the test:</p>
+            <div class="code-block">
+GET /api/loadtest/stats
+
+{
+  "currentConcurrentRequests": 127,
+  "totalRequestsProcessed": 45230,
+  "totalExceptionsThrown": 23,
+  "averageResponseTimeMs": 847.5
+}
+            </div>
+
+            <h3>Tuning Parameters for Different Scenarios</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Scenario</th>
+                        <th>softLimit</th>
+                        <th>degradationFactor</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Quick degradation testing</td>
+                        <td>10</td>
+                        <td>20</td>
+                        <td>Degrades quickly with few requests</td>
+                    </tr>
+                    <tr>
+                        <td>Realistic production simulation</td>
+                        <td>50</td>
+                        <td>5</td>
+                        <td>Default - gradual degradation</td>
+                    </tr>
+                    <tr>
+                        <td>High-capacity testing</td>
+                        <td>200</td>
+                        <td>2</td>
+                        <td>Requires more load to see effects</td>
+                    </tr>
+                    <tr>
+                        <td>Timeout testing</td>
+                        <td>10</td>
+                        <td>100</td>
+                        <td>Reaches 230s faster</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <!-- Recommended Monitoring Setup Section -->

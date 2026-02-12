@@ -143,6 +143,14 @@ builder.Services.AddHttpClient("SlowRequest")
     });
 builder.Services.AddSingleton<ISlowRequestService, SlowRequestService>();
 
+// LoadTestService - Singleton service for Azure Load Testing integration
+// Educational Note: Singleton lifetime is required because the service maintains
+// thread-safe counters for concurrent request tracking and lifetime statistics.
+// This endpoint is designed to be targeted by Azure Load Testing or similar tools.
+// Unlike other simulation endpoints, it degrades gracefully under load rather than
+// causing immediate problems.
+builder.Services.AddSingleton<ILoadTestService, LoadTestService>();
+
 // MetricsCollector - Singleton service for collecting system metrics
 // Educational Note: This service runs on a DEDICATED THREAD (not the thread pool)
 // so it remains responsive even during thread pool starvation scenarios.
