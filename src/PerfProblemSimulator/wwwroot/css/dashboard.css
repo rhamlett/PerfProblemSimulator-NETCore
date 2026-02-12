@@ -695,6 +695,14 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
+.active-simulations h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .simulations-list {
     display: flex;
     flex-wrap: wrap;
@@ -748,6 +756,14 @@ body {
     border-radius: var(--radius-md);
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
+}
+
+.event-log h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .log-container {
