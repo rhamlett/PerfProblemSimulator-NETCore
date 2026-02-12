@@ -879,8 +879,8 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <tbody>
                     <tr>
                         <td><code>/api/loadtest</code></td>
-                        <td><span class="method-badge method-post">POST</span></td>
-                        <td>Execute load test probe with JSON body</td>
+                        <td><span class="method-badge method-get">GET</span> <span class="method-badge method-post">POST</span></td>
+                        <td>Execute load test probe (GET uses defaults, POST accepts JSON body)</td>
                     </tr>
                     <tr>
                         <td><code>/api/loadtest/probe</code></td>
@@ -894,7 +894,22 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                     </tr>
                 </tbody>
             </table>
-            <p><strong>Request body (POST):</strong></p>
+
+            <h4>Option 1: GET with Query Parameters (Recommended for Azure Load Testing)</h4>
+            <p>Use for URL-based quick tests in Azure Load Testing:</p>
+            <div class="code-block">
+<span class="comment"># With defaults (~100ms response at low load)</span>
+GET /api/loadtest/probe
+
+<span class="comment"># Faster degradation (recommended for testing)</span>
+GET /api/loadtest/probe?softLimit=25&amp;degradationFactor=10
+
+<span class="comment"># Aggressive timeout testing</span>
+GET /api/loadtest/probe?softLimit=10&amp;degradationFactor=50
+            </div>
+
+            <h4>Option 2: POST with JSON Body</h4>
+            <p>Use when you need a JMeter script or want to send a request body:</p>
             <div class="code-block">
 {
   <span class="string">"workIterations"</span>: 1000,
@@ -1015,6 +1030,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">CpuController.cs</span>
 │   ├── <span class="file">CrashController.cs</span>
 │   ├── <span class="file">HealthController.cs</span>
+│   ├── <span class="file">LoadTestController.cs</span>     <span class="comment"># Azure Load Testing endpoint</span>
 │   ├── <span class="file">MemoryController.cs</span>
 │   ├── <span class="file">MetricsController.cs</span>
 │   ├── <span class="file">SlowRequestController.cs</span>
@@ -1024,6 +1040,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">CpuStressService.cs</span>
 │   ├── <span class="file">CrashService.cs</span>
 │   ├── <span class="file">LatencyProbeService.cs</span>
+│   ├── <span class="file">LoadTestService.cs</span>        <span class="comment"># Load test with soft limit degradation</span>
 │   ├── <span class="file">MemoryPressureService.cs</span>
 │   ├── <span class="file">MetricsBroadcastService.cs</span>
 │   ├── <span class="file">MetricsCollector.cs</span>
@@ -1032,6 +1049,7 @@ az webapp config appsettings set \
 │   ├── <span class="file">ThreadBlockService.cs</span>
 │   ├── <span class="file">ICpuStressService.cs</span>       <span class="comment"># Interfaces</span>
 │   ├── <span class="file">ICrashService.cs</span>
+│   ├── <span class="file">ILoadTestService.cs</span>
 │   ├── <span class="file">IMemoryPressureService.cs</span>
 │   ├── <span class="file">IMetricsCollector.cs</span>
 │   ├── <span class="file">ISlowRequestService.cs</span>
@@ -1047,6 +1065,8 @@ az webapp config appsettings set \
 │   ├── <span class="file">CrashRequest.cs</span>
 │   ├── <span class="file">DetailedMetrics.cs</span>
 │   ├── <span class="file">ErrorResponse.cs</span>
+│   ├── <span class="file">LoadTestRequest.cs</span>        <span class="comment"># Load test parameters</span>
+│   ├── <span class="file">LoadTestResult.cs</span>         <span class="comment"># Load test response</span>
 │   ├── <span class="file">MemoryAllocationRequest.cs</span>
 │   ├── <span class="file">MemoryReleaseResult.cs</span>
 │   ├── <span class="file">MetricsSnapshot.cs</span>

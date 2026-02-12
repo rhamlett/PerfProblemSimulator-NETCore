@@ -203,6 +203,7 @@ public class LoadTestController : ControllerBase
     /// <response code="200">Load test completed successfully with timing details.</response>
     /// <response code="500">Request exceeded 120s and random exception was triggered.</response>
     [HttpPost]
+    [HttpGet]
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(

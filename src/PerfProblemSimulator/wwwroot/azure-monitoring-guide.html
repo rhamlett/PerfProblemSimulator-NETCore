@@ -871,19 +871,42 @@ procdump -ma -h w3wp.exe
             <h3>Setting Up Azure Load Testing</h3>
             <ol>
                 <li>In the Azure Portal, create an <strong>Azure Load Testing</strong> resource</li>
-                <li>Create a new test and configure the target URL:
-                    <div class="code-block">
+                <li>Create a new test and configure the target URL using one of these options:</li>
+            </ol>
+
+            <h4>Option 1: GET with Query Parameters (Simplest)</h4>
+            <p>Use this for URL-based quick tests — no JMeter script required:</p>
+            <div class="code-block">
+<span class="comment"># With defaults</span>
+https://your-app.azurewebsites.net/api/loadtest/probe
+
+<span class="comment"># Faster degradation (recommended for testing)</span>
+https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=25&amp;degradationFactor=10
+
+<span class="comment"># Aggressive timeout testing</span>
+https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=10&amp;degradationFactor=50
+            </div>
+            <p><strong>Query Parameters:</strong></p>
+            <ul>
+                <li><code>workIterations</code> - CPU work iterations (default: 1000)</li>
+                <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 5)</li>
+                <li><code>softLimit</code> - Concurrent requests before degradation (default: 50)</li>
+                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 5)</li>
+            </ul>
+
+            <h4>Option 2: POST with JSON Body</h4>
+            <p>Use this when configuring a request body in Azure Load Testing or using a JMeter script:</p>
+            <div class="code-block">
 POST https://your-app.azurewebsites.net/api/loadtest
 Content-Type: application/json
 
 {
-  "workIterations": 1000,
-  "bufferSizeKb": 5,
-  "softLimit": 50,
-  "degradationFactor": 5
+  "softLimit": 25,
+  "degradationFactor": 10
 }
-                    </div>
-                </li>
+            </div>
+
+            <ol start="3">
                 <li>Configure load pattern (ramp up, steady state, ramp down)</li>
                 <li>Set up Azure Monitor integration to correlate metrics</li>
             </ol>
