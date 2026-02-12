@@ -268,7 +268,9 @@ function initializeCharts() {
                     backgroundColor: 'rgba(0, 120, 212, 0.1)',
                     tension: 0.3,
                     fill: true,
-                    yAxisID: 'y'
+                    yAxisID: 'y',
+                    pointRadius: 0,
+                    pointHoverRadius: 0
                 },
                 {
                     label: 'Memory MB',
@@ -277,7 +279,9 @@ function initializeCharts() {
                     backgroundColor: 'rgba(16, 124, 16, 0.1)',
                     tension: 0.3,
                     fill: true,
-                    yAxisID: 'y1'
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    pointHoverRadius: 0
                 }
             ]
         },
@@ -336,7 +340,9 @@ function initializeCharts() {
                     backgroundColor: 'rgba(135, 100, 184, 0.1)',
                     tension: 0.3,
                     fill: true,
-                    yAxisID: 'y'
+                    yAxisID: 'y',
+                    pointRadius: 0,
+                    pointHoverRadius: 0
                 },
                 {
                     label: 'Queue Length',
@@ -345,7 +351,9 @@ function initializeCharts() {
                     backgroundColor: 'rgba(255, 185, 0, 0.1)',
                     tension: 0.3,
                     fill: true,
-                    yAxisID: 'y1'
+                    yAxisID: 'y1',
+                    pointRadius: 0,
+                    pointHoverRadius: 0
                 }
             ]
         },
