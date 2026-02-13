@@ -282,11 +282,9 @@ public class LatencyProbeService : IHostedService, IDisposable
     {
         try
         {
-            // We're on a dedicated thread, so we can block waiting for the broadcast
-            _hubContext.Clients.All.ReceiveLatency(measurement)
-                .ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
+            // Fire-and-forget: don't block waiting for SignalR completion
+            // Blocking would deadlock during thread pool starvation (load tests)
+            _ = _hubContext.Clients.All.ReceiveLatency(measurement);
         }
         catch (Exception ex)
         {

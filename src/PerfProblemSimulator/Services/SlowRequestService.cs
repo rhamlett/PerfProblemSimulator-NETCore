@@ -343,12 +343,14 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     
     /// <summary>
     /// Broadcasts slow request latency to connected dashboard clients.
+    /// Uses fire-and-forget to avoid deadlocking during thread pool starvation.
     /// </summary>
     private void BroadcastSlowRequestLatency(int requestNumber, SlowRequestScenario scenario, double latencyMs, double expectedDurationMs, bool isError = false, string? errorMessage = null)
     {
         try
         {
-            _hubContext.Clients.All.ReceiveSlowRequestLatency(new SlowRequestLatencyData
+            // Fire-and-forget: don't block waiting for SignalR completion
+            _ = _hubContext.Clients.All.ReceiveSlowRequestLatency(new SlowRequestLatencyData
             {
                 RequestNumber = requestNumber,
                 Scenario = scenario.ToString(),
@@ -357,7 +359,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 Timestamp = DateTimeOffset.UtcNow,
                 IsError = isError,
                 ErrorMessage = errorMessage
-            }).GetAwaiter().GetResult();
+            });
         }
         catch (Exception ex)
         {

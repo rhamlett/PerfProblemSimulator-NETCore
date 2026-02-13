@@ -303,16 +303,13 @@ public class LoadTestService : ILoadTestService
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>Thread Pool Independence:</strong>
+    /// <strong>Fire-and-Forget Pattern:</strong>
     /// </para>
     /// <para>
-    /// Uses synchronous GetAwaiter().GetResult() instead of async/await to avoid
-    /// depending on thread pool threads for continuations. This ensures broadcasts
-    /// can still work during thread pool starvation from load tests.
-    /// </para>
-    /// <para>
-    /// Timer callbacks run on thread pool threads, but the broadcast itself doesn't
-    /// then need additional thread pool threads for async continuations.
+    /// SignalR's SendAsync needs thread pool threads for I/O completion. If we block
+    /// waiting (GetAwaiter().GetResult()), we deadlock when the pool is exhausted.
+    /// Instead, we fire the send without waiting - the message will be delivered
+    /// as soon as any thread pool thread becomes available.
     /// </para>
     /// </remarks>
     private void BroadcastStats(object? state)
@@ -361,8 +358,8 @@ public class LoadTestService : ILoadTestService
                 "Broadcasting load test stats: {Requests} requests, {AvgMs}ms avg, {MaxMs}ms max, {RPS} RPS",
                 requestsCompleted, avgResponseTime, maxResponseTime, requestsPerSecond);
             
-            // Use synchronous call to avoid thread pool dependency for continuations
-            _hubContext.Clients.All.ReceiveLoadTestStats(statsData).GetAwaiter().GetResult();
+            // Fire-and-forget: don't wait for SignalR completion (would deadlock during thread pool starvation)
+            _ = _hubContext.Clients.All.ReceiveLoadTestStats(statsData);
         }
         catch (Exception ex)
         {

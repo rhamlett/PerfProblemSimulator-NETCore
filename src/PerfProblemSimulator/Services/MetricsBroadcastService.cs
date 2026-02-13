@@ -135,47 +135,73 @@ public class MetricsBroadcastService : IHostedService
     
     /// <summary>
     /// Process a single broadcast message.
-    /// Uses GetAwaiter().GetResult() to avoid thread pool dependency.
+    /// Uses fire-and-forget pattern - don't wait for SignalR completion.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>Why Fire-and-Forget:</strong>
+    /// </para>
+    /// <para>
+    /// SignalR's SendAsync internally uses thread pool threads for I/O completion.
+    /// If we block waiting (GetAwaiter().GetResult()), we deadlock when the pool is exhausted.
+    /// Instead, we fire the send and move on. Messages may be delayed during extreme load,
+    /// but the dashboard will receive updates as soon as any thread pool thread becomes available.
+    /// </para>
+    /// </remarks>
     private void ProcessMessage(BroadcastMessage message)
     {
         try
         {
-            switch (message.Type)
+            // Fire-and-forget: kick off the send, don't wait for completion
+            // The underscore discards the Task to suppress compiler warnings
+            Task sendTask = message.Type switch
             {
-                case BroadcastType.Metrics:
-                    _hubContext.Clients.All.ReceiveMetrics((MetricsSnapshot)message.Data!).GetAwaiter().GetResult();
-                    break;
+                BroadcastType.Metrics => 
+                    _hubContext.Clients.All.ReceiveMetrics((MetricsSnapshot)message.Data!),
                     
-                case BroadcastType.SimulationStarted:
-                    var startArgs = (SimulationEventArgs)message.Data!;
-                    _hubContext.Clients.All.SimulationStarted(startArgs.Type.ToString(), startArgs.SimulationId).GetAwaiter().GetResult();
-                    _logger.LogDebug("Broadcast SimulationStarted: {Type} {Id}", startArgs.Type, startArgs.SimulationId);
-                    break;
+                BroadcastType.SimulationStarted => 
+                    FireSimulationStarted((SimulationEventArgs)message.Data!),
                     
-                case BroadcastType.SimulationCompleted:
-                    var completeArgs = (SimulationEventArgs)message.Data!;
-                    _hubContext.Clients.All.SimulationCompleted(completeArgs.Type.ToString(), completeArgs.SimulationId).GetAwaiter().GetResult();
-                    _logger.LogDebug("Broadcast SimulationCompleted: {Type} {Id}", completeArgs.Type, completeArgs.SimulationId);
-                    break;
+                BroadcastType.SimulationCompleted => 
+                    FireSimulationCompleted((SimulationEventArgs)message.Data!),
                     
-                case BroadcastType.Latency:
-                    _hubContext.Clients.All.ReceiveLatency((LatencyMeasurement)message.Data!).GetAwaiter().GetResult();
-                    break;
+                BroadcastType.Latency => 
+                    _hubContext.Clients.All.ReceiveLatency((LatencyMeasurement)message.Data!),
                     
-                case BroadcastType.SlowRequestLatency:
-                    _hubContext.Clients.All.ReceiveSlowRequestLatency((SlowRequestLatencyData)message.Data!).GetAwaiter().GetResult();
-                    break;
+                BroadcastType.SlowRequestLatency => 
+                    _hubContext.Clients.All.ReceiveSlowRequestLatency((SlowRequestLatencyData)message.Data!),
                     
-                case BroadcastType.LoadTestStats:
-                    _hubContext.Clients.All.ReceiveLoadTestStats((LoadTestStatsData)message.Data!).GetAwaiter().GetResult();
-                    break;
-            }
+                BroadcastType.LoadTestStats => 
+                    _hubContext.Clients.All.ReceiveLoadTestStats((LoadTestStatsData)message.Data!),
+                    
+                _ => Task.CompletedTask
+            };
+            
+            // Continue error handling on any available thread
+            _ = sendTask.ContinueWith(t =>
+            {
+                if (t.IsFaulted)
+                {
+                    _logger.LogWarning(t.Exception?.InnerException, "SignalR send failed for {Type}", message.Type);
+                }
+            }, TaskContinuationOptions.OnlyOnFaulted);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error broadcasting {Type} message", message.Type);
+            _logger.LogWarning(ex, "Error initiating broadcast for {Type} message", message.Type);
         }
+    }
+    
+    private Task FireSimulationStarted(SimulationEventArgs args)
+    {
+        _logger.LogDebug("Broadcast SimulationStarted: {Type} {Id}", args.Type, args.SimulationId);
+        return _hubContext.Clients.All.SimulationStarted(args.Type.ToString(), args.SimulationId);
+    }
+    
+    private Task FireSimulationCompleted(SimulationEventArgs args)
+    {
+        _logger.LogDebug("Broadcast SimulationCompleted: {Type} {Id}", args.Type, args.SimulationId);
+        return _hubContext.Clients.All.SimulationCompleted(args.Type.ToString(), args.SimulationId);
     }
 
     private void OnMetricsCollected(object? sender, MetricsSnapshot snapshot)
