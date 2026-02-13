@@ -423,183 +423,141 @@ public class LoadTestService : ILoadTestService
     public async Task<LoadTestResult> ExecuteWorkAsync(LoadTestRequest request, CancellationToken cancellationToken)
     {
         /*
-         * STEP 1: INCREMENT CONCURRENT COUNTER
+         * =====================================================================
+         * REDESIGNED ALGORITHM: Sustained Resource Consumption
          * =====================================================================
          * 
-         * Interlocked.Increment atomically increments and returns the NEW value.
-         * This is crucial - we need to know how many requests are running
-         * INCLUDING this one to calculate degradation.
+         * PROBLEM WITH PREVIOUS DESIGN:
+         * - CPU work was brief (~5ms) then sleep → CPU spikes didn't accumulate
+         * - Memory was allocated at end and immediately released
+         * - Result: Either 0% CPU (sleep) or 100% CPU (spin-wait), nothing in between
          * 
-         * MUST decrement in finally block to ensure counter stays accurate
-         * even if an exception is thrown.
+         * NEW DESIGN:
+         * - Allocate memory FIRST and hold for entire request duration
+         * - Calculate total work duration based on concurrent requests
+         * - Loop throughout duration doing INTERLEAVED CPU work and brief sleeps
+         * - This creates SUSTAINED load where CPU%, Memory, and Thread Pool all scale
+         * 
+         * PSEUDOCODE:
+         *   concurrent = atomicIncrement(counter)
+         *   buffer = allocateMemory(bufferSizeKb)  # Hold for entire request
+         *   
+         *   totalDurationMs = baselineDelayMs + degradationDelay(concurrent)
+         *   cpuWorkPerCycleMs = min(50, workIterations / 100)  # ~50ms CPU per cycle
+         *   sleepPerCycleMs = 50  # 50ms sleep per cycle
+         *   
+         *   while elapsed < totalDurationMs:
+         *       doCpuWork(cpuWorkPerCycleMs worth of iterations)
+         *       touchMemory(buffer)  # Keep memory active
+         *       sleep(sleepPerCycleMs)
+         *       checkTimeout()
+         *   
+         *   return result
+         *   # buffer released here - memory held for ENTIRE request duration
          */
-        var currentConcurrent = Interlocked.Increment(ref _concurrentRequests);
         
-        // Track peak concurrent for the current reporting period
+        var currentConcurrent = Interlocked.Increment(ref _concurrentRequests);
         UpdatePeakConcurrent(currentConcurrent);
         
-        /*
-         * STEP 2: START TIMING
-         * =====================================================================
-         * 
-         * Stopwatch provides high-resolution timing.
-         * 
-         * PORTING:
-         * - PHP: $start = microtime(true); ... $elapsed = microtime(true) - $start;
-         * - Node.js: const start = process.hrtime.bigint(); or performance.now()
-         * - Java: long start = System.nanoTime(); or Instant.now()
-         * - Python: import time; start = time.perf_counter()
-         */
         var stopwatch = Stopwatch.StartNew();
-        var degradationDelayApplied = 0;
+        var totalCpuWorkDone = 0;
         var workCompleted = false;
+        byte[]? buffer = null;
 
         try
         {
             /*
-             * STEP 3A: APPLY BASELINE BLOCKING DELAY
+             * STEP 1: ALLOCATE MEMORY UP FRONT
              * =================================================================
-             * 
-             * Every request blocks for at least baselineDelayMs, regardless of
-             * concurrent request count. This GUARANTEES thread pool exhaustion
-             * under any significant load.
-             * 
-             * THREAD BLOCKING (NOT CPU):
-             * We use Thread.Sleep to block threads WITHOUT consuming CPU.
-             * This simulates I/O-bound operations (database calls, API calls).
-             * For CPU stress, use workIterations parameter instead.
-             */
-            if (request.BaselineDelayMs > 0)
-            {
-                _logger.LogDebug(
-                    "Applying baseline blocking delay: {Delay}ms", 
-                    request.BaselineDelayMs);
-                    
-                Thread.Sleep(request.BaselineDelayMs);
-                degradationDelayApplied += request.BaselineDelayMs;
-                
-                // Check for timeout exception after baseline delay
-                CheckAndThrowTimeoutException(stopwatch);
-            }
-            
-            /*
-             * STEP 3B: CALCULATE DEGRADATION DELAY
-             * =================================================================
-             * 
-             * FORMULA:
-             *   overLimit = max(0, currentConcurrent - softLimit)
-             *   delayMs = overLimit * degradationFactor
-             * 
-             * EXAMPLES (with softLimit=5, degradationFactor=200):
-             *   - 5 concurrent → overLimit=0 → delay=0ms
-             *   - 10 concurrent → overLimit=5 → delay=1000ms
-             *   - 20 concurrent → overLimit=15 → delay=3000ms
-             *   - 50 concurrent → overLimit=45 → delay=9000ms
-             *   - 100 concurrent → overLimit=95 → delay=19000ms
-             * 
-             * Combined with baseline 500ms, total delays become significant quickly.
-             */
-            var overLimit = Math.Max(0, currentConcurrent - request.SoftLimit);
-            var totalDegradationDelayMs = overLimit * request.DegradationFactor;
-            
-            _logger.LogDebug(
-                "Load test: Concurrent={Concurrent}, OverLimit={OverLimit}, BaselineDelay={Baseline}ms, DegradationDelay={Delay}ms",
-                currentConcurrent, overLimit, request.BaselineDelayMs, totalDegradationDelayMs);
-
-            /*
-             * STEP 4: APPLY DEGRADATION DELAY (with exception checks)
-             * =================================================================
-             * 
-             * We apply the delay in chunks so we can periodically check:
-             * 1. Cancellation token (request aborted)
-             * 2. Timeout threshold for exception throwing
-             * 
-             * THREAD BLOCKING (NOT CPU):
-             * Thread.Sleep blocks threads WITHOUT consuming CPU. This simulates
-             * realistic I/O-bound blocking. For CPU stress, use workIterations.
-             * 
-             * WHY CHUNKS:
-             * By chunking into 1s intervals, we can check for cancellation and
-             * throw exceptions promptly after crossing the threshold.
-             */
-            var remainingDelay = totalDegradationDelayMs;
-            while (remainingDelay > 0)
-            {
-                // Check for cancellation (request aborted by client)
-                cancellationToken.ThrowIfCancellationRequested();
-                
-                // Wait for up to 1 second (or remaining delay, whichever is smaller)
-                var delayMs = Math.Min(remainingDelay, ExceptionCheckIntervalMs);
-                
-                // Block thread without CPU usage (simulates waiting for I/O)
-                Thread.Sleep(delayMs);
-                
-                remainingDelay -= delayMs;
-                degradationDelayApplied += delayMs;
-                
-                // Check for timeout exception trigger
-                CheckAndThrowTimeoutException(stopwatch);
-            }
-
-            /*
-             * STEP 5: PERFORM CPU WORK (hash iterations)
-             * =================================================================
-             * 
-             * We perform actual CPU work by computing SHA256 hashes.
-             * This is "real" work that stresses the CPU.
-             * 
-             * WHY HASHING:
-             * - Consistent, predictable CPU usage
-             * - Cannot be optimized away by compiler
-             * - Scales linearly with iteration count
-             * 
-             * PORTING:
-             * - PHP: hash('sha256', $data) in a loop
-             * - Node.js: crypto.createHash('sha256').update(data).digest()
-             * - Java: MessageDigest.getInstance("SHA-256").digest(data)
-             * - Python: hashlib.sha256(data).digest()
-             */
-            PerformCpuWork(request.WorkIterations);
-            
-            // Check for timeout exception after CPU work
-            CheckAndThrowTimeoutException(stopwatch);
-
-            /*
-             * STEP 6: ALLOCATE AND USE MEMORY
-             * =================================================================
-             * 
-             * We allocate a byte array of the requested size. This memory is
-             * automatically released when the method exits (garbage collected).
-             * 
-             * WHY "TOUCH" THE MEMORY:
-             * Modern compilers and runtimes may optimize away unused allocations.
-             * By writing to and reading from the array, we ensure the memory is
-             * actually allocated and used.
-             * 
-             * PORTING:
-             * - PHP: $buffer = str_repeat("\0", $sizeBytes); // or SplFixedArray
-             * - Node.js: const buffer = Buffer.alloc(sizeBytes);
-             * - Java: byte[] buffer = new byte[sizeBytes];
-             * - Python: buffer = bytearray(sizeBytes)
+             * Allocate memory at the START and hold it for the entire request.
+             * This ensures memory scales with concurrent requests.
              */
             var bufferSize = request.BufferSizeKb * 1024;
-            var buffer = AllocateAndUseMemory(bufferSize);
+            buffer = new byte[bufferSize];
             
-            // Final check for timeout exception
-            CheckAndThrowTimeoutException(stopwatch);
-
-            workCompleted = true;
+            // Touch memory immediately to ensure actual allocation
+            TouchMemoryBuffer(buffer);
             
             /*
-             * STEP 7: BUILD SUCCESS RESULT
+             * STEP 2: CALCULATE TOTAL REQUEST DURATION
              * =================================================================
+             * 
+             * Formula: baselineDelayMs + (overLimit * degradationFactor)
+             * 
+             * This determines how long the request will hold resources.
              */
+            var overLimit = Math.Max(0, currentConcurrent - request.SoftLimit);
+            var degradationDelayMs = overLimit * request.DegradationFactor;
+            var totalDurationMs = request.BaselineDelayMs + degradationDelayMs;
+            
+            _logger.LogDebug(
+                "Load test: Concurrent={Concurrent}, Duration={Duration}ms (base={Base}ms + degradation={Degradation}ms)",
+                currentConcurrent, totalDurationMs, request.BaselineDelayMs, degradationDelayMs);
+            
+            /*
+             * STEP 3: SUSTAINED WORK LOOP
+             * =================================================================
+             * 
+             * Instead of doing all CPU work at once then sleeping, we interleave:
+             * - Do ~50ms worth of CPU work (hash iterations)
+             * - Touch the memory buffer (keeps it active, prevents GC optimization)
+             * - Sleep briefly (~50ms)
+             * - Repeat until total duration reached
+             * 
+             * This creates ~50% CPU utilization per active thread, allowing
+             * CPU to scale with concurrency without immediately hitting 100%.
+             * 
+             * TUNING:
+             * - workIterations controls CPU intensity per cycle
+             * - Higher workIterations = more CPU per cycle
+             * - 0 workIterations = pure thread blocking (minimal CPU)
+             */
+            const int CycleMs = 100;  // Each cycle is ~100ms (50ms work + 50ms sleep)
+            const int SleepPerCycleMs = 50;
+            
+            // Calculate iterations per cycle to spread workIterations across duration
+            var totalCycles = Math.Max(1, totalDurationMs / CycleMs);
+            var iterationsPerCycle = request.WorkIterations > 0 
+                ? Math.Max(100, request.WorkIterations / totalCycles)
+                : 0;
+            
+            while (stopwatch.ElapsedMilliseconds < totalDurationMs)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                
+                // CPU work phase
+                if (iterationsPerCycle > 0)
+                {
+                    PerformCpuWork(iterationsPerCycle);
+                    totalCpuWorkDone += iterationsPerCycle;
+                }
+                
+                // Keep memory active (prevents GC from collecting early)
+                TouchMemoryBuffer(buffer);
+                
+                // Check for timeout exception
+                CheckAndThrowTimeoutException(stopwatch);
+                
+                // Sleep phase (allows other threads to run, prevents 100% CPU)
+                var remainingMs = totalDurationMs - (int)stopwatch.ElapsedMilliseconds;
+                var sleepMs = Math.Min(SleepPerCycleMs, Math.Max(0, remainingMs));
+                if (sleepMs > 0)
+                {
+                    Thread.Sleep(sleepMs);
+                }
+            }
+            
+            // Final memory touch before returning
+            TouchMemoryBuffer(buffer);
+            
+            workCompleted = true;
             stopwatch.Stop();
+            
             return BuildResult(
                 stopwatch.ElapsedMilliseconds,
                 currentConcurrent,
-                degradationDelayApplied,
-                request.WorkIterations,
+                (int)(stopwatch.ElapsedMilliseconds),  // Total time blocked
+                totalCpuWorkDone,
                 buffer.Length,
                 workCompleted,
                 exceptionThrown: false,
@@ -607,19 +565,11 @@ public class LoadTestService : ILoadTestService
         }
         catch (OperationCanceledException)
         {
-            // Request was cancelled (client disconnected)
             stopwatch.Stop();
-            throw; // Re-throw to let ASP.NET Core handle it
+            throw;
         }
         catch (Exception ex)
         {
-            /*
-             * EXCEPTION HANDLING
-             * =================================================================
-             * 
-             * If we threw a random exception (from CheckAndThrowTimeoutException),
-             * we still want to record metrics before re-throwing.
-             */
             stopwatch.Stop();
             Interlocked.Increment(ref _totalExceptionsThrown);
             Interlocked.Increment(ref _periodExceptions);
@@ -630,33 +580,40 @@ public class LoadTestService : ILoadTestService
                 stopwatch.ElapsedMilliseconds,
                 ex.GetType().Name);
             
-            throw; // Re-throw to return 500 to client
+            throw;
         }
         finally
         {
-            /*
-             * STEP 8: CLEANUP (always runs)
-             * =================================================================
-             * 
-             * CRITICAL: This block runs whether the method succeeds or fails.
-             * We MUST decrement the concurrent counter here to keep it accurate.
-             * 
-             * PORTING:
-             * - PHP: try/finally works the same
-             * - Node.js: try/finally works the same
-             * - Java: try/finally works the same
-             * - Python: try/finally works the same
-             */
+            // Memory (buffer) is released here when method exits
+            // Counter updates
             Interlocked.Decrement(ref _concurrentRequests);
             Interlocked.Increment(ref _totalRequestsProcessed);
             Interlocked.Add(ref _totalResponseTimeMs, stopwatch.ElapsedMilliseconds);
             
-            // Track period stats for event log broadcasting
             var elapsedMs = stopwatch.ElapsedMilliseconds;
             Interlocked.Increment(ref _periodRequestsCompleted);
             Interlocked.Add(ref _periodResponseTimeSum, elapsedMs);
             UpdateMaxResponseTime(elapsedMs);
         }
+    }
+    
+    /// <summary>
+    /// Touches all bytes in the memory buffer to keep it active.
+    /// This prevents the GC from collecting the memory early and ensures
+    /// it shows up in memory metrics.
+    /// </summary>
+    private void TouchMemoryBuffer(byte[] buffer)
+    {
+        // XOR through buffer to ensure memory is actually accessed
+        // This is fast but prevents optimization
+        var checksum = 0;
+        for (var i = 0; i < buffer.Length; i += 4096) // Touch every page
+        {
+            buffer[i] = (byte)(buffer[i] ^ 0xFF);
+            checksum += buffer[i];
+        }
+        // Use checksum to prevent optimization
+        if (checksum < -1000000) _logger.LogTrace("Checksum: {Checksum}", checksum);
     }
 
     /*
@@ -762,70 +719,6 @@ public class LoadTestService : ILoadTestService
         // (compiler can't remove work if result is used)
         _ = data.Length;
     }
-
-    /*
-     * =========================================================================
-     * HELPER: Allocate and Use Memory
-     * =========================================================================
-     * 
-     * ALGORITHM:
-     *   buffer = new byte[size]
-     *   fill buffer with pattern  # Prevents optimization
-     *   verify pattern            # Ensures memory was actually used
-     *   return buffer
-     */
-    
-    /// <summary>
-    /// Allocates a byte array and touches it to ensure actual memory use.
-    /// </summary>
-    /// <param name="sizeBytes">Size of buffer to allocate in bytes.</param>
-    /// <returns>The allocated buffer (released when caller's scope ends).</returns>
-    private byte[] AllocateAndUseMemory(int sizeBytes)
-    {
-        /*
-         * MEMORY ALLOCATION NOTES:
-         * 
-         * WHY WE "TOUCH" THE MEMORY:
-         * Modern memory allocators use "lazy allocation" - they may not
-         * actually allocate physical memory until it's accessed. By writing
-         * to every byte, we ensure real memory is allocated.
-         * 
-         * PATTERN:
-         * We fill with index-based pattern and verify it. This:
-         * 1. Forces actual memory allocation
-         * 2. Creates memory access patterns visible in profilers
-         * 3. Prevents compiler from optimizing away the allocation
-         * 
-         * PORTING:
-         * - PHP: $buffer = str_repeat(chr($i % 256), $size) or use array
-         * - Node.js: buffer.fill(pattern) or loop with buffer[i] = i % 256
-         * - Java: Arrays.fill(buffer, (byte)(i % 256)) or loop
-         * - Python: buffer = bytearray(i % 256 for i in range(size))
-         */
-        var buffer = new byte[sizeBytes];
-        
-        // Write pattern to ensure memory is allocated
-        for (var i = 0; i < buffer.Length; i++)
-        {
-            buffer[i] = (byte)(i % 256);
-        }
-        
-        // Verify pattern to prevent optimization
-        var checksum = 0;
-        for (var i = 0; i < buffer.Length; i++)
-        {
-            checksum += buffer[i];
-        }
-        
-        // Use checksum to prevent optimization
-        if (checksum < 0)
-        {
-            _logger.LogWarning("Unexpected checksum: {Checksum}", checksum);
-        }
-        
-        return buffer;
-    }
-
     /*
      * =========================================================================
      * HELPER: Build Result

@@ -227,6 +227,16 @@
             margin: 1rem 0;
         }
 
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .table-wrapper .api-table {
+            margin: 0;
+            min-width: 700px;
+        }
+
         .api-table th, .api-table td {
             padding: 0.75rem 1rem;
             text-align: left;
@@ -882,8 +892,8 @@ procdump -ma -h w3wp.exe
             <h3>Load Test Endpoint</h3>
             <p>The <code>/api/loadtest</code> endpoint is designed to:</p>
             <ul>
-                <li>Perform lightweight CPU work (SHA256 hash iterations)</li>
-                <li>Allocate small memory buffers (released after each request)</li>
+                <li>Perform sustained CPU work (interleaved SHA256 cycles at ~50% CPU per thread)</li>
+                <li>Hold memory buffers for entire request duration (creates visible memory pressure)</li>
                 <li>Degrade gracefully as concurrent requests increase (soft limit pattern)</li>
                 <li>Throw random exceptions after 120 seconds (20% probability)</li>
                 <li>Eventually trigger Azure's 230-second timeout under extreme load</li>
@@ -909,9 +919,9 @@ https://your-app.azurewebsites.net/api/loadtest/probe?baselineDelayMs=0&amp;soft
             </div>
             <p><strong>Query Parameters:</strong></p>
             <ul>
-                <li><code>workIterations</code> - CPU work iterations (default: 1000)</li>
-                <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 100)</li>
-                <li><code>baselineDelayMs</code> - Minimum blocking delay per request (default: 500)</li>
+                <li><code>workIterations</code> - SHA256 iterations per CPU work cycle (default: 1000)</li>
+                <li><code>bufferSizeKb</code> - Memory buffer held for request duration in KB (default: 100)</li>
+                <li><code>baselineDelayMs</code> - Minimum request duration in ms (default: 500)</li>
                 <li><code>softLimit</code> - Concurrent requests before degradation (default: 5)</li>
                 <li><code>degradationFactor</code> - Delay ms per request over limit (default: 200)</li>
             </ul>
@@ -987,19 +997,19 @@ GET /api/loadtest/stats
                         <td><code>workIterations</code></td>
                         <td>1000</td>
                         <td><strong>CPU</strong></td>
-                        <td>SHA256 hash iterations per request. Controls CPU usage.</td>
+                        <td>SHA256 hash iterations per CPU work cycle. Controls sustained CPU usage (~50% per thread).</td>
                     </tr>
                     <tr>
                         <td><code>bufferSizeKb</code></td>
                         <td>100</td>
                         <td><strong>Memory</strong></td>
-                        <td>Memory allocated per request in KB. Released after request.</td>
+                        <td>Memory held for entire request duration. Creates sustained memory pressure.</td>
                     </tr>
                     <tr>
                         <td><code>baselineDelayMs</code></td>
                         <td>500</td>
                         <td><strong>Thread Pool</strong></td>
-                        <td>Minimum blocking delay (ms). Blocks thread without CPU usage.</td>
+                        <td>Minimum request duration (ms). CPU work and sleep interleaved throughout.</td>
                     </tr>
                     <tr>
                         <td><code>softLimit</code></td>
@@ -1018,6 +1028,7 @@ GET /api/loadtest/stats
 
             <h3>Tuning Parameters for Different Scenarios</h3>
             <p>Complete request body examples for various test scenarios:</p>
+            <div class="table-wrapper">
             <table class="api-table">
                 <thead>
                     <tr>
@@ -1078,6 +1089,7 @@ GET /api/loadtest/stats
                     </tr>
                 </tbody>
             </table>
+            </div>
         </section>
 
         <!-- Recommended Monitoring Setup Section -->

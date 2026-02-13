@@ -921,16 +921,17 @@ GET /api/loadtest/probe?baselineDelayMs=0&amp;softLimit=50&amp;degradationFactor
             </div>
             <p><strong>Parameters:</strong></p>
             <ul>
-                <li><code>workIterations</code>: Number of SHA256 hash iterations for CPU work (default: 1000)</li>
-                <li><code>bufferSizeKb</code>: Memory buffer size in KB, released after request (default: 100)</li>
-                <li><code>baselineDelayMs</code>: Minimum blocking delay applied to every request (default: 500)</li>
+                <li><code>workIterations</code>: SHA256 hash iterations per CPU work cycle (default: 1000). Controls CPU intensity.</li>
+                <li><code>bufferSizeKb</code>: Memory buffer held for entire request duration (default: 100). Creates sustained memory pressure.</li>
+                <li><code>baselineDelayMs</code>: Minimum request duration in milliseconds (default: 500). Combined with degradation delay.</li>
                 <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 5)</li>
-                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 200)</li>
+                <li><code>degradationFactor</code>: Additional delay (ms) per request over soft limit (default: 200)</li>
             </ul>
-            <p><strong>Behavior:</strong></p>
+            <p><strong>Behavior (Sustained Resource Consumption):</strong></p>
             <ul>
-                <li><strong>Every request:</strong> 500ms minimum blocking delay (thread pool exhaustion)</li>
-                <li><strong>Above soft limit:</strong> Additional delay = (concurrent - softLimit) × 200ms</li>
+                <li><strong>Memory:</strong> Allocated up front and held for entire request duration (visible in Azure Memory metrics)</li>
+                <li><strong>CPU:</strong> Interleaved work cycles (~50ms CPU work + ~50ms sleep) creating ~50% CPU per active thread</li>
+                <li><strong>Thread Pool:</strong> Blocking delay = baselineDelayMs + (concurrent - softLimit) × degradationFactor</li>
                 <li><strong>After 120 seconds:</strong> 20% chance of throwing a random exception per check interval</li>
                 <li><strong>Extreme load:</strong> Can reach Azure's 230-second timeout threshold</li>
             </ul>
