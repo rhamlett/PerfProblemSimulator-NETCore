@@ -138,22 +138,20 @@ public class LoadTestController : ControllerBase
      * 
      * ALTERNATIVE: GET with query parameters
      * GET /api/loadtest?workIterations=1000&bufferSizeKb=100
-     * Simpler but less flexible for complex parameters.
      * 
      * URL PATTERN:
      * The [controller] token is replaced with "loadtest" (class name minus "Controller")
-     * Full URL: POST https://your-app.azurewebsites.net/api/loadtest
+     * Full URL: GET https://your-app.azurewebsites.net/api/loadtest
      */
 
     /// <summary>
-    /// Executes a load test probe request that performs lightweight work.
+    /// Executes a load test request with configurable resource consumption.
     /// </summary>
-    /// <param name="bodyRequest">Load test parameters as JSON body (optional).</param>
-    /// <param name="workIterations">CPU work ms per cycle (workIterations/100). Query param fallback.</param>
-    /// <param name="bufferSizeKb">Memory buffer size in KB. Query param fallback.</param>
-    /// <param name="baselineDelayMs">Minimum request duration in ms. Query param fallback.</param>
-    /// <param name="softLimit">Concurrent requests before degradation. Query param fallback.</param>
-    /// <param name="degradationFactor">Additional delay ms per request over limit. Query param fallback.</param>
+    /// <param name="workIterations">CPU work intensity (ms of spin per cycle = workIterations / 100). Default: 1000.</param>
+    /// <param name="bufferSizeKb">Memory buffer held for request duration in KB. Default: 100.</param>
+    /// <param name="baselineDelayMs">Minimum request duration in ms. Default: 500.</param>
+    /// <param name="softLimit">Concurrent requests before degradation begins. Default: 5.</param>
+    /// <param name="degradationFactor">Additional delay (ms) per request over soft limit. Default: 200.</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -213,39 +211,38 @@ public class LoadTestController : ControllerBase
     /// </remarks>
     /// <response code="200">Load test completed successfully with timing details.</response>
     /// <response code="500">Request exceeded 120s and random exception was triggered.</response>
-    [HttpPost]
-    [Consumes("application/json", "text/plain", "application/x-www-form-urlencoded")]
+    [HttpGet]
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
-        [FromBody] LoadTestRequest? bodyRequest = null,
-        [FromQuery] int? workIterations = null,
-        [FromQuery] int? bufferSizeKb = null,
-        [FromQuery] int? baselineDelayMs = null,
-        [FromQuery] int? softLimit = null,
-        [FromQuery] int? degradationFactor = null,
+        [FromQuery] int workIterations = 1000,
+        [FromQuery] int bufferSizeKb = 100,
+        [FromQuery] int baselineDelayMs = 500,
+        [FromQuery] int softLimit = 5,
+        [FromQuery] int degradationFactor = 200,
         CancellationToken cancellationToken = default)
     {
         /*
          * =====================================================================
-         * FLEXIBLE ENDPOINT - JSON BODY OR QUERY PARAMETERS
+         * QUERY PARAMETER ENDPOINT
          * =====================================================================
          * 
-         * Accepts either:
-         * 1. POST with JSON body (Content-Type: application/json)
-         * 2. GET/POST with query parameters (no Content-Type required)
+         * GET /api/loadtest?workIterations=5000&bufferSizeKb=1000&baselineDelayMs=500
          * 
-         * JSON body takes precedence if provided.
+         * Simple to use from:
+         * - Browser: just paste URL
+         * - curl: curl "http://localhost/api/loadtest?workIterations=5000"
+         * - Azure Load Testing: set URL directly
+         * - JMeter: HTTP Request sampler
          */
         
-        // Use body if provided, otherwise build from query params with defaults
-        var request = bodyRequest ?? new LoadTestRequest
+        var request = new LoadTestRequest
         {
-            WorkIterations = workIterations ?? 1000,
-            BufferSizeKb = bufferSizeKb ?? 100,
-            BaselineDelayMs = baselineDelayMs ?? 500,
-            SoftLimit = softLimit ?? 5,
-            DegradationFactor = degradationFactor ?? 200
+            WorkIterations = workIterations,
+            BufferSizeKb = bufferSizeKb,
+            BaselineDelayMs = baselineDelayMs,
+            SoftLimit = softLimit,
+            DegradationFactor = degradationFactor
         };
         
         _logger.LogDebug(
