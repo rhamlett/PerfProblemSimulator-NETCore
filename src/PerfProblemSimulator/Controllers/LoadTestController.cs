@@ -148,11 +148,7 @@ public class LoadTestController : ControllerBase
     /// <summary>
     /// Executes a load test probe request that performs lightweight work.
     /// </summary>
-    /// <param name="workIterations">Number of SHA256 hash iterations (default: 1000).</param>
-    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
-    /// <param name="baselineDelayMs">Minimum blocking delay in ms (default: 500).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 5).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 200).</param>
+    /// <param name="request">Load test parameters as JSON body.</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -213,87 +209,36 @@ public class LoadTestController : ControllerBase
     /// <response code="200">Load test completed successfully with timing details.</response>
     /// <response code="500">Request exceeded 120s and random exception was triggered.</response>
     [HttpPost]
-    [HttpGet]
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
-        [FromQuery] int workIterations = 1000,
-        [FromQuery] int bufferSizeKb = 100,
-        [FromQuery] int baselineDelayMs = 500,
-        [FromQuery] int softLimit = 5,
-        [FromQuery] int degradationFactor = 200,
+        [FromBody] LoadTestRequest request,
         CancellationToken cancellationToken = default)
     {
         /*
          * =====================================================================
-         * REQUEST HANDLING FLOW
+         * JSON BODY ENDPOINT
          * =====================================================================
          * 
-         * This endpoint now accepts query parameters for maximum compatibility
-         * with Azure Load Testing, JMeter, and browser testing.
-         * 
-         * Examples:
-         * - GET/POST /api/loadtest (uses all defaults - maximum stress)
-         * - GET/POST /api/loadtest?baselineDelayMs=200&softLimit=20&degradationFactor=50
-         * 
-         * PORTING NOTES:
-         * - Query parameters are universal across HTTP clients
-         * - No Content-Type header required
-         * - Works with any load testing tool
+         * POST /api/loadtest with JSON body:
+         * {
+         *   "workIterations": 5000,
+         *   "bufferSizeKb": 1000,
+         *   "baselineDelayMs": 500,
+         *   "softLimit": 5,
+         *   "degradationFactor": 200
+         * }
          */
         
-        // Build request from query parameters
-        var request = new LoadTestRequest
-        {
-            WorkIterations = workIterations,
-            BufferSizeKb = bufferSizeKb,
-            BaselineDelayMs = baselineDelayMs,
-            SoftLimit = softLimit,
-            DegradationFactor = degradationFactor
-        };
-
         _logger.LogDebug(
-            "Load test request received: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, SoftLimit={SoftLimit}",
+            "Load test: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, BaselineDelayMs={BaselineDelayMs}, SoftLimit={SoftLimit}, DegradationFactor={DegradationFactor}",
             request.WorkIterations,
             request.BufferSizeKb,
-            request.SoftLimit);
+            request.BaselineDelayMs,
+            request.SoftLimit,
+            request.DegradationFactor);
 
-        /*
-         * =====================================================================
-         * SERVICE DELEGATION
-         * =====================================================================
-         * 
-         * WHY SEPARATE SERVICE:
-         * - Controller handles HTTP concerns (routing, request/response)
-         * - Service handles business logic (the actual algorithm)
-         * - This separation makes the logic testable and reusable
-         * 
-         * ASYNC/AWAIT:
-         * The "await" keyword suspends this method until the service completes.
-         * This does NOT block a thread - the thread returns to the pool.
-         * 
-         * PORTING:
-         * - Node.js: const result = await loadTestService.executeWork(...)
-         * - Python: result = await load_test_service.execute_work(...)
-         * - Java: Result result = loadTestService.executeWork(...).get()
-         * - PHP: $result = $loadTestService->executeWork(...) (sync or with ReactPHP)
-         */
         var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
-
-        /*
-         * =====================================================================
-         * RESPONSE FORMATTING
-         * =====================================================================
-         * 
-         * Ok(result) returns HTTP 200 with JSON body
-         * The framework automatically serializes the result object to JSON
-         * 
-         * PORTING:
-         * - Node.js: res.json(result) or return result (Fastify)
-         * - Python: return result (FastAPI auto-serializes)
-         * - Java: return ResponseEntity.ok(result)
-         * - PHP: return response()->json($result)
-         */
         return Ok(result);
     }
 
@@ -342,8 +287,17 @@ public class LoadTestController : ControllerBase
          * - PHP: $request->query('workIterations', 1000)
          */
 
-        // Delegate to main endpoint - both now use query parameters
-        return await ExecuteLoadTest(workIterations, bufferSizeKb, baselineDelayMs, softLimit, degradationFactor, cancellationToken);
+        var request = new LoadTestRequest
+        {
+            WorkIterations = workIterations,
+            BufferSizeKb = bufferSizeKb,
+            BaselineDelayMs = baselineDelayMs,
+            SoftLimit = softLimit,
+            DegradationFactor = degradationFactor
+        };
+        
+        var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
+        return Ok(result);
     }
 
     /*
