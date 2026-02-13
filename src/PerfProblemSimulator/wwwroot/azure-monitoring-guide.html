@@ -221,7 +221,28 @@
             color: var(--color-text);
         }
 
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
 
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+            white-space: nowrap;
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
 
         .resource-links {
             display: grid;
@@ -950,45 +971,90 @@ GET /api/loadtest/stats
 }
             </div>
 
+            <h3>Request Body Parameters Reference</h3>
+            <p>All 5 parameters can be specified in the JSON request body or as query parameters:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Default</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>workIterations</code></td>
+                        <td>1000</td>
+                        <td>CPU work per request (SHA256 hash iterations). Higher = more CPU time.</td>
+                    </tr>
+                    <tr>
+                        <td><code>bufferSizeKb</code></td>
+                        <td>100</td>
+                        <td>Memory allocated per request in KB. Released after request completes.</td>
+                    </tr>
+                    <tr>
+                        <td><code>baselineDelayMs</code></td>
+                        <td>500</td>
+                        <td>Minimum blocking delay (ms) for every request. Guarantees thread pool exhaustion.</td>
+                    </tr>
+                    <tr>
+                        <td><code>softLimit</code></td>
+                        <td>5</td>
+                        <td>Concurrent request threshold before degradation starts. Lower = earlier degradation.</td>
+                    </tr>
+                    <tr>
+                        <td><code>degradationFactor</code></td>
+                        <td>200</td>
+                        <td>Additional delay (ms) per concurrent request over softLimit.</td>
+                    </tr>
+                </tbody>
+            </table>
+
             <h3>Tuning Parameters for Different Scenarios</h3>
+            <p>Complete request body examples for various test scenarios:</p>
             <table class="api-table">
                 <thead>
                     <tr>
                         <th>Scenario</th>
+                        <th>workIterations</th>
+                        <th>bufferSizeKb</th>
                         <th>baselineDelayMs</th>
                         <th>softLimit</th>
                         <th>degradationFactor</th>
-                        <th>Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td>Maximum stress (default)</td>
+                        <td>1000</td>
+                        <td>100</td>
                         <td>500</td>
                         <td>5</td>
                         <td>200</td>
-                        <td>Default - guarantees thread exhaustion</td>
                     </tr>
                     <tr>
                         <td>Moderate stress</td>
+                        <td>1000</td>
+                        <td>50</td>
                         <td>200</td>
                         <td>20</td>
                         <td>50</td>
-                        <td>Less aggressive, still shows degradation</td>
                     </tr>
                     <tr>
                         <td>Light stress</td>
+                        <td>500</td>
+                        <td>10</td>
                         <td>0</td>
                         <td>50</td>
                         <td>20</td>
-                        <td>No baseline blocking, gradual curve</td>
                     </tr>
                     <tr>
                         <td>High-capacity testing</td>
+                        <td>2000</td>
+                        <td>200</td>
                         <td>100</td>
                         <td>100</td>
                         <td>10</td>
-                        <td>Requires more load to see effects</td>
                     </tr>
                 </tbody>
             </table>
