@@ -301,7 +301,21 @@ public class LoadTestService : ILoadTestService
     /// Timer callback that broadcasts load test stats to event log every 60 seconds.
     /// Only broadcasts if there was activity during the period.
     /// </summary>
-    private async void BroadcastStats(object? state)
+    /// <remarks>
+    /// <para>
+    /// <strong>Thread Pool Independence:</strong>
+    /// </para>
+    /// <para>
+    /// Uses synchronous GetAwaiter().GetResult() instead of async/await to avoid
+    /// depending on thread pool threads for continuations. This ensures broadcasts
+    /// can still work during thread pool starvation from load tests.
+    /// </para>
+    /// <para>
+    /// Timer callbacks run on thread pool threads, but the broadcast itself doesn't
+    /// then need additional thread pool threads for async continuations.
+    /// </para>
+    /// </remarks>
+    private void BroadcastStats(object? state)
     {
         try
         {
@@ -347,7 +361,8 @@ public class LoadTestService : ILoadTestService
                 "Broadcasting load test stats: {Requests} requests, {AvgMs}ms avg, {MaxMs}ms max, {RPS} RPS",
                 requestsCompleted, avgResponseTime, maxResponseTime, requestsPerSecond);
             
-            await _hubContext.Clients.All.ReceiveLoadTestStats(statsData);
+            // Use synchronous call to avoid thread pool dependency for continuations
+            _hubContext.Clients.All.ReceiveLoadTestStats(statsData).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {
