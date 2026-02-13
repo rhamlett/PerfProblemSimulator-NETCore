@@ -67,6 +67,18 @@ public interface IMetricsClient
     /// </para>
     /// </remarks>
     Task ReceiveSlowRequestLatency(SlowRequestLatencyData data);
+
+    /// <summary>
+    /// Receives load test statistics update for event log display.
+    /// </summary>
+    /// <param name="data">The load test statistics data.</param>
+    /// <remarks>
+    /// <para>
+    /// This is broadcast every 60 seconds while the load test endpoint is receiving
+    /// traffic. Shows concurrent requests, average response time, and throughput.
+    /// </para>
+    /// </remarks>
+    Task ReceiveLoadTestStats(LoadTestStatsData data);
 }
 
 /// <summary>
@@ -108,4 +120,51 @@ public class SlowRequestLatencyData
     /// Error message if the request failed.
     /// </summary>
     public string? ErrorMessage { get; set; }
+}
+
+/// <summary>
+/// Data about load test endpoint statistics for event log display.
+/// Broadcast every 60 seconds while the endpoint is receiving traffic.
+/// </summary>
+public class LoadTestStatsData
+{
+    /// <summary>
+    /// Current number of concurrent requests being processed.
+    /// </summary>
+    public int CurrentConcurrent { get; set; }
+    
+    /// <summary>
+    /// Peak concurrent requests observed in this reporting period.
+    /// </summary>
+    public int PeakConcurrent { get; set; }
+    
+    /// <summary>
+    /// Total requests completed in this reporting period.
+    /// </summary>
+    public long RequestsCompleted { get; set; }
+    
+    /// <summary>
+    /// Average response time in milliseconds for this period.
+    /// </summary>
+    public double AvgResponseTimeMs { get; set; }
+    
+    /// <summary>
+    /// Maximum response time observed in this period.
+    /// </summary>
+    public double MaxResponseTimeMs { get; set; }
+    
+    /// <summary>
+    /// Requests per second throughput.
+    /// </summary>
+    public double RequestsPerSecond { get; set; }
+    
+    /// <summary>
+    /// Number of exceptions thrown (after 120s of traffic).
+    /// </summary>
+    public int ExceptionCount { get; set; }
+    
+    /// <summary>
+    /// When this stats snapshot was taken.
+    /// </summary>
+    public DateTimeOffset Timestamp { get; set; }
 }

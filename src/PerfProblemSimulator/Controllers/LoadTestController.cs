@@ -150,8 +150,8 @@ public class LoadTestController : ControllerBase
     /// </summary>
     /// <param name="workIterations">Number of SHA256 hash iterations (default: 1000).</param>
     /// <param name="bufferSizeKb">Memory buffer size in KB (default: 5).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 50).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 5).</param>
+    /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
+    /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -180,11 +180,11 @@ public class LoadTestController : ControllerBase
     /// <description>Size of memory buffer to allocate in kilobytes. Released after request.</description>
     /// </item>
     /// <item>
-    /// <term>softLimit (default: 50)</term>
+    /// <term>softLimit (default: 10)</term>
     /// <description>Concurrent request count before degradation delays begin.</description>
     /// </item>
     /// <item>
-    /// <term>degradationFactor (default: 5)</term>
+    /// <term>degradationFactor (default: 50)</term>
     /// <description>Milliseconds of delay added per concurrent request over the soft limit.</description>
     /// </item>
     /// </list>
@@ -212,8 +212,8 @@ public class LoadTestController : ControllerBase
     public async Task<IActionResult> ExecuteLoadTest(
         [FromQuery] int workIterations = 1000,
         [FromQuery] int bufferSizeKb = 5,
-        [FromQuery] int softLimit = 50,
-        [FromQuery] int degradationFactor = 5,
+        [FromQuery] int softLimit = 10,
+        [FromQuery] int degradationFactor = 50,
         CancellationToken cancellationToken = default)
     {
         /*
@@ -302,8 +302,8 @@ public class LoadTestController : ControllerBase
     /// </summary>
     /// <param name="workIterations">Number of hash iterations (default: 1000).</param>
     /// <param name="bufferSizeKb">Memory buffer size in KB (default: 5).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 50).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 5).</param>
+    /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
+    /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Load test result with timing details.</returns>
     [HttpGet("probe")]
@@ -312,8 +312,8 @@ public class LoadTestController : ControllerBase
     public async Task<IActionResult> ExecuteLoadTestProbe(
         [FromQuery] int workIterations = 1000,
         [FromQuery] int bufferSizeKb = 5,
-        [FromQuery] int softLimit = 50,
-        [FromQuery] int degradationFactor = 5,
+        [FromQuery] int softLimit = 10,
+        [FromQuery] int degradationFactor = 50,
         CancellationToken cancellationToken = default)
     {
         /*

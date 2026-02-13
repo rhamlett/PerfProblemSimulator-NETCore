@@ -890,8 +890,8 @@ https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=10&amp;degradati
             <ul>
                 <li><code>workIterations</code> - CPU work iterations (default: 1000)</li>
                 <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 5)</li>
-                <li><code>softLimit</code> - Concurrent requests before degradation (default: 50)</li>
-                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 5)</li>
+                <li><code>softLimit</code> - Concurrent requests before degradation (default: 10)</li>
+                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 50)</li>
             </ul>
 
             <h4>Option 2: POST with JSON Body</h4>
@@ -917,17 +917,17 @@ Content-Type: application/json
                 <thead>
                     <tr>
                         <th>Concurrent Requests</th>
-                        <th>Over Soft Limit (50)</th>
-                        <th>Added Delay (factor=5)</th>
+                        <th>Over Soft Limit (10)</th>
+                        <th>Added Delay (factor=50)</th>
                         <th>Expected Response Time</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td>30</td><td>0</td><td>0ms</td><td>~100ms</td></tr>
-                    <tr><td>60</td><td>10</td><td>50ms</td><td>~150ms</td></tr>
-                    <tr><td>100</td><td>50</td><td>250ms</td><td>~350ms</td></tr>
-                    <tr><td>200</td><td>150</td><td>750ms</td><td>~850ms</td></tr>
-                    <tr><td>500</td><td>450</td><td>2250ms</td><td>~2350ms</td></tr>
+                    <tr><td>5</td><td>0</td><td>0ms</td><td>~100ms</td></tr>
+                    <tr><td>20</td><td>10</td><td>500ms</td><td>~600ms</td></tr>
+                    <tr><td>50</td><td>40</td><td>2000ms</td><td>~2100ms</td></tr>
+                    <tr><td>100</td><td>90</td><td>4500ms</td><td>~4600ms</td></tr>
+                    <tr><td>200</td><td>190</td><td>9500ms</td><td>~9600ms</td></tr>
                 </tbody>
             </table>
 
@@ -974,27 +974,33 @@ GET /api/loadtest/stats
                 <tbody>
                     <tr>
                         <td>Quick degradation testing</td>
-                        <td>10</td>
-                        <td>20</td>
+                        <td>5</td>
+                        <td>100</td>
                         <td>Degrades quickly with few requests</td>
                     </tr>
                     <tr>
-                        <td>Realistic production simulation</td>
+                        <td>Aggressive (default)</td>
+                        <td>10</td>
                         <td>50</td>
-                        <td>5</td>
-                        <td>Default - gradual degradation</td>
+                        <td>Default - reaches high latency quickly</td>
+                    </tr>
+                    <tr>
+                        <td>Moderate production simulation</td>
+                        <td>50</td>
+                        <td>10</td>
+                        <td>Gradual degradation curve</td>
                     </tr>
                     <tr>
                         <td>High-capacity testing</td>
                         <td>200</td>
-                        <td>2</td>
+                        <td>5</td>
                         <td>Requires more load to see effects</td>
                     </tr>
                     <tr>
                         <td>Timeout testing</td>
-                        <td>10</td>
-                        <td>100</td>
-                        <td>Reaches 230s faster</td>
+                        <td>5</td>
+                        <td>200</td>
+                        <td>Reaches 230s timeout fastest</td>
                     </tr>
                 </tbody>
             </table>

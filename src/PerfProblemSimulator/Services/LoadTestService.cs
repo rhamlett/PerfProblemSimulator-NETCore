@@ -42,6 +42,8 @@
  * =============================================================================
  */
 
+using Microsoft.AspNetCore.SignalR;
+using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -125,6 +127,50 @@ public class LoadTestService : ILoadTestService
     /// Running sum of response times for average calculation. Thread-safe via Interlocked.
     /// </summary>
     private long _totalResponseTimeMs = 0;
+    
+    /*
+     * =========================================================================
+     * PERIOD STATS FOR EVENT LOG BROADCASTING
+     * =========================================================================
+     * 
+     * These fields track statistics for the current 60-second reporting period.
+     * They are reset after each broadcast to the event log.
+     */
+    
+    /// <summary>
+    /// Requests completed in the current 60-second period.
+    /// </summary>
+    private long _periodRequestsCompleted = 0;
+    
+    /// <summary>
+    /// Sum of response times in the current period (for average calculation).
+    /// </summary>
+    private long _periodResponseTimeSum = 0;
+    
+    /// <summary>
+    /// Maximum response time observed in the current period.
+    /// </summary>
+    private long _periodMaxResponseTimeMs = 0;
+    
+    /// <summary>
+    /// Peak concurrent requests observed in the current period.
+    /// </summary>
+    private int _periodPeakConcurrent = 0;
+    
+    /// <summary>
+    /// Exceptions thrown in the current period.
+    /// </summary>
+    private long _periodExceptions = 0;
+    
+    /// <summary>
+    /// Timer for broadcasting stats to event log every 60 seconds.
+    /// </summary>
+    private Timer? _broadcastTimer;
+    
+    /// <summary>
+    /// Tracks when load test traffic started for this period.
+    /// </summary>
+    private DateTimeOffset _periodStartTime = DateTimeOffset.UtcNow;
 
     /*
      * =========================================================================
@@ -221,17 +267,89 @@ public class LoadTestService : ILoadTestService
     /// while still being responsive to the timeout threshold.
     /// </remarks>
     private const int ExceptionCheckIntervalMs = 1000;
+    
+    /// <summary>
+    /// Interval in seconds between event log broadcasts.
+    /// </summary>
+    private const int BroadcastIntervalSeconds = 60;
 
     private readonly ILogger<LoadTestService> _logger;
+    private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
     private readonly Random _random = new();
 
     /// <summary>
     /// Initializes a new instance of the LoadTestService.
     /// </summary>
     /// <param name="logger">Logger for diagnostic output.</param>
-    public LoadTestService(ILogger<LoadTestService> logger)
+    /// <param name="hubContext">SignalR hub context for broadcasting stats.</param>
+    public LoadTestService(
+        ILogger<LoadTestService> logger, 
+        IHubContext<MetricsHub, IMetricsClient> hubContext)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
+        
+        // Start timer for periodic broadcasting (fires every 60 seconds)
+        _broadcastTimer = new Timer(
+            callback: BroadcastStats,
+            state: null,
+            dueTime: TimeSpan.FromSeconds(BroadcastIntervalSeconds),
+            period: TimeSpan.FromSeconds(BroadcastIntervalSeconds));
+    }
+    
+    /// <summary>
+    /// Timer callback that broadcasts load test stats to event log every 60 seconds.
+    /// Only broadcasts if there was activity during the period.
+    /// </summary>
+    private async void BroadcastStats(object? state)
+    {
+        // Read and reset period stats atomically
+        var requestsCompleted = Interlocked.Exchange(ref _periodRequestsCompleted, 0);
+        
+        // Only broadcast if there was activity
+        if (requestsCompleted == 0)
+        {
+            return;
+        }
+        
+        var responseTimeSum = Interlocked.Exchange(ref _periodResponseTimeSum, 0);
+        var maxResponseTime = Interlocked.Exchange(ref _periodMaxResponseTimeMs, 0);
+        var peakConcurrent = Interlocked.Exchange(ref _periodPeakConcurrent, 0);
+        var exceptions = Interlocked.Exchange(ref _periodExceptions, 0);
+        var currentConcurrent = Interlocked.CompareExchange(ref _concurrentRequests, 0, 0);
+        
+        // Calculate averages
+        var avgResponseTime = requestsCompleted > 0 
+            ? (double)responseTimeSum / requestsCompleted 
+            : 0;
+        var requestsPerSecond = (double)requestsCompleted / BroadcastIntervalSeconds;
+        
+        var statsData = new LoadTestStatsData
+        {
+            CurrentConcurrent = currentConcurrent,
+            PeakConcurrent = peakConcurrent,
+            RequestsCompleted = requestsCompleted,
+            AvgResponseTimeMs = Math.Round(avgResponseTime, 2),
+            MaxResponseTimeMs = maxResponseTime,
+            RequestsPerSecond = Math.Round(requestsPerSecond, 2),
+            ExceptionCount = (int)exceptions,
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        
+        try
+        {
+            await _hubContext.Clients.All.ReceiveLoadTestStats(statsData);
+            _logger.LogDebug(
+                "Load test stats broadcast: {Requests} requests, {AvgMs}ms avg, {MaxMs}ms max, {RPS} RPS",
+                requestsCompleted, avgResponseTime, maxResponseTime, requestsPerSecond);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error broadcasting load test stats");
+        }
+        
+        // Reset period start time
+        _periodStartTime = DateTimeOffset.UtcNow;
     }
 
     /*
@@ -298,6 +416,9 @@ public class LoadTestService : ILoadTestService
          * even if an exception is thrown.
          */
         var currentConcurrent = Interlocked.Increment(ref _concurrentRequests);
+        
+        // Track peak concurrent for the current reporting period
+        UpdatePeakConcurrent(currentConcurrent);
         
         /*
          * STEP 2: START TIMING
@@ -451,6 +572,7 @@ public class LoadTestService : ILoadTestService
              */
             stopwatch.Stop();
             Interlocked.Increment(ref _totalExceptionsThrown);
+            Interlocked.Increment(ref _periodExceptions);
             
             _logger.LogWarning(
                 ex,
@@ -478,6 +600,12 @@ public class LoadTestService : ILoadTestService
             Interlocked.Decrement(ref _concurrentRequests);
             Interlocked.Increment(ref _totalRequestsProcessed);
             Interlocked.Add(ref _totalResponseTimeMs, stopwatch.ElapsedMilliseconds);
+            
+            // Track period stats for event log broadcasting
+            var elapsedMs = stopwatch.ElapsedMilliseconds;
+            Interlocked.Increment(ref _periodRequestsCompleted);
+            Interlocked.Add(ref _periodResponseTimeSum, elapsedMs);
+            UpdateMaxResponseTime(elapsedMs);
         }
     }
 
@@ -710,6 +838,51 @@ public class LoadTestService : ILoadTestService
             TotalExceptionsThrown: Interlocked.Read(ref _totalExceptionsThrown),
             AverageResponseTimeMs: avgResponseTime
         );
+    }
+    
+    /*
+     * =========================================================================
+     * PERIOD STATS HELPER METHODS
+     * =========================================================================
+     * 
+     * These methods track statistics for the current 60-second reporting period.
+     * They use compare-and-swap (CAS) loops for thread-safe max tracking.
+     */
+    
+    /// <summary>
+    /// Thread-safe update of peak concurrent requests for the current period.
+    /// Uses compare-and-swap pattern for atomic max tracking.
+    /// </summary>
+    private void UpdatePeakConcurrent(int currentConcurrent)
+    {
+        int currentPeak;
+        do
+        {
+            currentPeak = _periodPeakConcurrent;
+            if (currentConcurrent <= currentPeak)
+            {
+                return; // Current peak is already higher
+            }
+        }
+        while (Interlocked.CompareExchange(ref _periodPeakConcurrent, currentConcurrent, currentPeak) != currentPeak);
+    }
+    
+    /// <summary>
+    /// Thread-safe update of max response time for the current period.
+    /// Uses compare-and-swap pattern for atomic max tracking.
+    /// </summary>
+    private void UpdateMaxResponseTime(long responseTimeMs)
+    {
+        long currentMax;
+        do
+        {
+            currentMax = Interlocked.Read(ref _periodMaxResponseTimeMs);
+            if (responseTimeMs <= currentMax)
+            {
+                return; // Current max is already higher
+            }
+        }
+        while (Interlocked.CompareExchange(ref _periodMaxResponseTimeMs, responseTimeMs, currentMax) != currentMax);
     }
 }
 

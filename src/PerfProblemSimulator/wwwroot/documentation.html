@@ -914,16 +914,16 @@ GET /api/loadtest/probe?softLimit=10&amp;degradationFactor=50
 {
   <span class="string">"workIterations"</span>: 1000,
   <span class="string">"bufferSizeKb"</span>: 5,
-  <span class="string">"softLimit"</span>: 50,
-  <span class="string">"degradationFactor"</span>: 5
+  <span class="string">"softLimit"</span>: 10,
+  <span class="string">"degradationFactor"</span>: 50
 }
             </div>
             <p><strong>Parameters:</strong></p>
             <ul>
                 <li><code>workIterations</code>: Number of SHA256 hash iterations for CPU work (default: 1000)</li>
                 <li><code>bufferSizeKb</code>: Memory buffer size in KB, released after request (default: 5)</li>
-                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 50)</li>
-                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 5)</li>
+                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 10)</li>
+                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 50)</li>
             </ul>
             <p><strong>Behavior:</strong></p>
             <ul>

@@ -11,8 +11,8 @@
  * {
  *     "workIterations": 1000,
  *     "bufferSizeKb": 5,
- *     "softLimit": 50,
- *     "degradationFactor": 5
+ *     "softLimit": 10,
+ *     "degradationFactor": 50
  * }
  * 
  * OR with defaults (empty body or null):
@@ -56,19 +56,19 @@ namespace PerfProblemSimulator.Models;
 /// <term>softLimit</term>
 /// <description>
 /// Concurrent requests before degradation starts. Lower = earlier degradation.
-/// Tune based on expected normal load. 50 is good for typical web apps.
+/// Tune based on expected normal load. 10 is aggressive for testing timeouts.
 /// </description>
 /// </item>
 /// <item>
 /// <term>degradationFactor</term>
 /// <description>
 /// Milliseconds of delay added per request OVER the soft limit.
-/// Higher = steeper degradation curve. 5ms is moderate.
+/// Higher = steeper degradation curve. 50ms is aggressive.
 /// 
-/// Example: softLimit=50, degradationFactor=5
-/// - 60 concurrent: (60-50) * 5 = 50ms added delay
-/// - 100 concurrent: (100-50) * 5 = 250ms added delay
-/// - 200 concurrent: (200-50) * 5 = 750ms added delay
+/// Example: softLimit=10, degradationFactor=50
+/// - 20 concurrent: (20-10) * 50 = 500ms added delay
+/// - 50 concurrent: (50-10) * 50 = 2000ms added delay
+/// - 100 concurrent: (100-10) * 50 = 4500ms added delay
 /// </description>
 /// </item>
 /// </list>
@@ -134,7 +134,7 @@ public class LoadTestRequest
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 50</strong>
+    /// <strong>DEFAULT: 10</strong>
     /// </para>
     /// <para>
     /// When concurrent requests exceed this limit, additional delay is
@@ -154,14 +154,14 @@ public class LoadTestRequest
     /// </list>
     /// </para>
     /// </remarks>
-    public int SoftLimit { get; set; } = 50;
+    public int SoftLimit { get; set; } = 10;
 
     /// <summary>
     /// Milliseconds of delay added per concurrent request over the soft limit.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 5 ms</strong>
+    /// <strong>DEFAULT: 50 ms</strong>
     /// </para>
     /// <para>
     /// <strong>DEGRADATION FORMULA:</strong>
@@ -170,25 +170,25 @@ public class LoadTestRequest
     /// </code>
     /// </para>
     /// <para>
-    /// <strong>EXAMPLES (softLimit=50, degradationFactor=5):</strong>
+    /// <strong>EXAMPLES (softLimit=10, degradationFactor=50):</strong>
     /// <list type="bullet">
-    /// <item>30 concurrent → 0ms added (below soft limit)</item>
-    /// <item>60 concurrent → 50ms added ((60-50) × 5)</item>
-    /// <item>100 concurrent → 250ms added ((100-50) × 5)</item>
-    /// <item>200 concurrent → 750ms added ((200-50) × 5)</item>
-    /// <item>500 concurrent → 2250ms added ((500-50) × 5)</item>
+    /// <item>5 concurrent → 0ms added (below soft limit)</item>
+    /// <item>20 concurrent → 500ms added ((20-10) × 50)</item>
+    /// <item>50 concurrent → 2000ms added ((50-10) × 50)</item>
+    /// <item>100 concurrent → 4500ms added ((100-10) × 50)</item>
+    /// <item>200 concurrent → 9500ms added ((200-10) × 50)</item>
     /// </list>
     /// </para>
     /// <para>
     /// <strong>REACHING 230s TIMEOUT:</strong>
     /// To reach Azure's 230s timeout with these defaults:
-    /// (230000ms - 100ms base) / 5ms = 45980 requests over soft limit
-    /// So: 50 + 45980 = ~46000 concurrent requests
+    /// (230000ms - 100ms base) / 50ms = 4598 requests over soft limit
+    /// So: 10 + 4598 = ~4608 concurrent requests
     /// 
-    /// For faster degradation, increase degradationFactor:
-    /// - degradationFactor=50: ~4650 concurrent requests to timeout
-    /// - degradationFactor=100: ~2350 concurrent requests to timeout
+    /// For lighter degradation, decrease degradationFactor:
+    /// - degradationFactor=25: ~9200 concurrent requests to timeout
+    /// - degradationFactor=10: ~23000 concurrent requests to timeout
     /// </para>
     /// </remarks>
-    public int DegradationFactor { get; set; } = 5;
+    public int DegradationFactor { get; set; } = 50;
 }

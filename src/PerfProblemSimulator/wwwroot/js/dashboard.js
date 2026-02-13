@@ -131,6 +131,8 @@ async function initializeSignalR() {
     state.connection.on('receiveLatency', handleLatencyUpdate);
     state.connection.on('ReceiveSlowRequestLatency', handleSlowRequestLatency);
     state.connection.on('receiveSlowRequestLatency', handleSlowRequestLatency);
+    state.connection.on('ReceiveLoadTestStats', handleLoadTestStats);
+    state.connection.on('receiveLoadTestStats', handleLoadTestStats);
 
     // Start connection
     try {
@@ -588,6 +590,38 @@ function handleSlowRequestLatency(data) {
     } else {
         let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
         logEvent('warning', msg);
+    }
+}
+
+/**
+ * Handle incoming load test statistics from server.
+ * Broadcast every 60 seconds while /api/loadtest endpoint is receiving traffic.
+ */
+function handleLoadTestStats(data) {
+    console.log('📊 Load test stats:', data);
+    
+    const avgMs = data.avgResponseTimeMs.toFixed(1);
+    const maxMs = data.maxResponseTimeMs.toFixed(0);
+    const rps = data.requestsPerSecond.toFixed(1);
+    const completed = data.requestsCompleted;
+    const concurrent = data.currentConcurrent;
+    const peak = data.peakConcurrent;
+    const exceptions = data.exceptionCount;
+    
+    // Build status message
+    let msg = `📊 Load Test Stats (60s): ${completed} requests, ${avgMs}ms avg, ${maxMs}ms max, ${rps} RPS`;
+    
+    // Add concurrent info if significant
+    if (concurrent > 0 || peak > 10) {
+        msg += ` | Concurrent: ${concurrent} (peak: ${peak})`;
+    }
+    
+    // Add exception count if any
+    if (exceptions > 0) {
+        msg += ` | ⚠️ ${exceptions} exceptions`;
+        logEvent('warning', msg);
+    } else {
+        logEvent('info', msg);
     }
 }
 
