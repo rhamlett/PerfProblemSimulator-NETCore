@@ -972,12 +972,13 @@ GET /api/loadtest/stats
             </div>
 
             <h3>Request Body Parameters Reference</h3>
-            <p>All 5 parameters can be specified in the JSON request body or as query parameters:</p>
+            <p>Each parameter controls a specific resource independently:</p>
             <table class="api-table">
                 <thead>
                     <tr>
                         <th>Parameter</th>
                         <th>Default</th>
+                        <th>Resource</th>
                         <th>Purpose</th>
                     </tr>
                 </thead>
@@ -985,27 +986,32 @@ GET /api/loadtest/stats
                     <tr>
                         <td><code>workIterations</code></td>
                         <td>1000</td>
-                        <td>CPU work per request (SHA256 hash iterations). Higher = more CPU time.</td>
+                        <td><strong>CPU</strong></td>
+                        <td>SHA256 hash iterations per request. Controls CPU usage.</td>
                     </tr>
                     <tr>
                         <td><code>bufferSizeKb</code></td>
                         <td>100</td>
-                        <td>Memory allocated per request in KB. Released after request completes.</td>
+                        <td><strong>Memory</strong></td>
+                        <td>Memory allocated per request in KB. Released after request.</td>
                     </tr>
                     <tr>
                         <td><code>baselineDelayMs</code></td>
                         <td>500</td>
-                        <td>Minimum blocking delay (ms) for every request. Burns CPU while blocking threads.</td>
+                        <td><strong>Thread Pool</strong></td>
+                        <td>Minimum blocking delay (ms). Blocks thread without CPU usage.</td>
                     </tr>
                     <tr>
                         <td><code>softLimit</code></td>
                         <td>5</td>
-                        <td>Concurrent request threshold before degradation starts. Lower = earlier degradation.</td>
+                        <td><strong>Thread Pool</strong></td>
+                        <td>Concurrent requests before degradation. Lower = faster exhaustion.</td>
                     </tr>
                     <tr>
                         <td><code>degradationFactor</code></td>
                         <td>200</td>
-                        <td>Additional delay (ms) per concurrent request over softLimit.</td>
+                        <td><strong>Thread Pool</strong></td>
+                        <td>Additional delay (ms) per request over softLimit.</td>
                     </tr>
                 </tbody>
             </table>
@@ -1021,40 +1027,54 @@ GET /api/loadtest/stats
                         <th>baselineDelayMs</th>
                         <th>softLimit</th>
                         <th>degradationFactor</th>
+                        <th>Primary Stress</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Maximum stress (default)</td>
+                        <td>Thread pool only</td>
+                        <td>0</td>
+                        <td>10</td>
+                        <td>500</td>
+                        <td>5</td>
+                        <td>200</td>
+                        <td>Thread pool exhaustion, minimal CPU</td>
+                    </tr>
+                    <tr>
+                        <td>CPU intensive</td>
+                        <td>50000</td>
+                        <td>10</td>
+                        <td>0</td>
+                        <td>100</td>
+                        <td>10</td>
+                        <td>High CPU, minimal thread blocking</td>
+                    </tr>
+                    <tr>
+                        <td>Memory pressure</td>
+                        <td>100</td>
+                        <td>1000</td>
+                        <td>100</td>
+                        <td>20</td>
+                        <td>50</td>
+                        <td>High memory allocation (1MB/request)</td>
+                    </tr>
+                    <tr>
+                        <td>Balanced (default)</td>
                         <td>1000</td>
                         <td>100</td>
                         <td>500</td>
                         <td>5</td>
                         <td>200</td>
+                        <td>Thread pool + moderate CPU + memory</td>
                     </tr>
                     <tr>
-                        <td>Moderate stress</td>
-                        <td>1000</td>
-                        <td>50</td>
-                        <td>200</td>
-                        <td>20</td>
-                        <td>50</td>
-                    </tr>
-                    <tr>
-                        <td>Light stress</td>
+                        <td>High concurrency</td>
                         <td>500</td>
-                        <td>10</td>
-                        <td>0</td>
+                        <td>50</td>
+                        <td>200</td>
                         <td>50</td>
                         <td>20</td>
-                    </tr>
-                    <tr>
-                        <td>High-capacity testing</td>
-                        <td>2000</td>
-                        <td>200</td>
-                        <td>100</td>
-                        <td>100</td>
-                        <td>10</td>
+                        <td>Gradual degradation under high load</td>
                     </tr>
                 </tbody>
             </table>

@@ -36,47 +36,48 @@ namespace PerfProblemSimulator.Models;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>PARAMETER TUNING GUIDE:</strong>
+/// <strong>RESOURCE MODEL:</strong>
+/// Each parameter controls a specific resource independently:
 /// </para>
 /// <list type="bullet">
 /// <item>
-/// <term>workIterations</term>
+/// <term>workIterations → CPU</term>
 /// <description>
-/// Higher values = more CPU time per request. Start with 1000 and adjust
-/// based on your instance size. On a Basic B1, 1000 iterations takes ~5-10ms.
+/// SHA256 hash iterations per request. Higher = more CPU time.
+/// On a Basic B1, 1000 iterations ≈ 5-10ms, 50000 iterations creates high CPU.
+/// Set to 0 to skip CPU work entirely.
 /// </description>
 /// </item>
 /// <item>
-/// <term>bufferSizeKb</term>
+/// <term>bufferSizeKb → Memory</term>
 /// <description>
 /// Memory allocated per request. Released after request completes.
-/// 100KB provides meaningful memory pressure during load testing.
+/// 100KB is moderate, 1000KB (1MB) per request creates memory pressure.
 /// </description>
 /// </item>
 /// <item>
-/// <term>softLimit</term>
+/// <term>baselineDelayMs → Thread Pool</term>
+/// <description>
+/// Minimum blocking delay (Thread.Sleep) for every request.
+/// Blocks threads WITHOUT consuming CPU. Default 500ms exhausts thread pool.
+/// </description>
+/// </item>
+/// <item>
+/// <term>softLimit → Thread Pool</term>
 /// <description>
 /// Concurrent requests before degradation starts. Lower = earlier degradation.
 /// Default of 5 ensures rapid escalation under load.
 /// </description>
 /// </item>
 /// <item>
-/// <term>degradationFactor</term>
+/// <term>degradationFactor → Thread Pool</term>
 /// <description>
-/// Milliseconds of delay added per request OVER the soft limit.
-/// Default of 200ms creates steep degradation curve.
+/// Milliseconds of delay (Thread.Sleep) added per request OVER the soft limit.
+/// Blocks threads WITHOUT consuming CPU. Default of 200ms creates steep curve.
 /// 
 /// Example: softLimit=5, degradationFactor=200
-/// - 10 concurrent: (10-5) * 200 = 1000ms added delay
-/// - 20 concurrent: (20-5) * 200 = 3000ms added delay
-/// - 50 concurrent: (50-5) * 200 = 9000ms added delay
-/// </description>
-/// </item>
-/// <item>
-/// <term>baselineDelayMs</term>
-/// <description>
-/// Minimum blocking delay for every request. Default 500ms ensures
-/// thread pool exhaustion under any significant load.
+/// - 10 concurrent: (10-5) × 200 = 1000ms added delay
+/// - 20 concurrent: (20-5) × 200 = 3000ms added delay
 /// </description>
 /// </item>
 /// </list>

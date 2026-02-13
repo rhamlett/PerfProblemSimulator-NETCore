@@ -464,10 +464,10 @@ public class LoadTestService : ILoadTestService
              * concurrent request count. This GUARANTEES thread pool exhaustion
              * under any significant load.
              * 
-             * THREAD BLOCKING WITH CPU WORK:
-             * We use SpinWait (CPU-intensive) instead of Thread.Sleep to ensure
-             * CPU usage scales with thread pool blocking. This creates balanced
-             * stress across CPU, memory, and thread pool.
+             * THREAD BLOCKING (NOT CPU):
+             * We use Thread.Sleep to block threads WITHOUT consuming CPU.
+             * This simulates I/O-bound operations (database calls, API calls).
+             * For CPU stress, use workIterations parameter instead.
              */
             if (request.BaselineDelayMs > 0)
             {
@@ -475,7 +475,7 @@ public class LoadTestService : ILoadTestService
                     "Applying baseline blocking delay: {Delay}ms", 
                     request.BaselineDelayMs);
                     
-                SpinWaitCpuIntensive(request.BaselineDelayMs);
+                Thread.Sleep(request.BaselineDelayMs);
                 degradationDelayApplied += request.BaselineDelayMs;
                 
                 // Check for timeout exception after baseline delay
@@ -514,9 +514,9 @@ public class LoadTestService : ILoadTestService
              * 1. Cancellation token (request aborted)
              * 2. Timeout threshold for exception throwing
              * 
-             * THREAD BLOCKING WITH CPU WORK:
-             * SpinWait burns CPU during delays, creating balanced stress where
-             * CPU usage scales with blocked threads.
+             * THREAD BLOCKING (NOT CPU):
+             * Thread.Sleep blocks threads WITHOUT consuming CPU. This simulates
+             * realistic I/O-bound blocking. For CPU stress, use workIterations.
              * 
              * WHY CHUNKS:
              * By chunking into 1s intervals, we can check for cancellation and
@@ -531,8 +531,8 @@ public class LoadTestService : ILoadTestService
                 // Wait for up to 1 second (or remaining delay, whichever is smaller)
                 var delayMs = Math.Min(remainingDelay, ExceptionCheckIntervalMs);
                 
-                // Burn CPU cycles during delay (balanced stress)
-                SpinWaitCpuIntensive(delayMs);
+                // Block thread without CPU usage (simulates waiting for I/O)
+                Thread.Sleep(delayMs);
                 
                 remainingDelay -= delayMs;
                 degradationDelayApplied += delayMs;
@@ -824,61 +824,6 @@ public class LoadTestService : ILoadTestService
         }
         
         return buffer;
-    }
-
-    /*
-     * =========================================================================
-     * HELPER: CPU-Intensive Spin Wait
-     * =========================================================================
-     * 
-     * ALGORITHM:
-     *   targetEnd = now() + delayMs
-     *   while now() < targetEnd:
-     *       # Do CPU work instead of sleeping
-     *       hash = sha256(hash)  # Burns CPU cycles
-     * 
-     * WHY SPIN-WAIT INSTEAD OF THREAD.SLEEP:
-     * Spin-wait burns CPU while blocking threads, creating balanced stress
-     * where both CPU and thread pool show high utilization. Thread.Sleep
-     * would only show thread pool exhaustion with 0% CPU during delays.
-     */
-    
-    /// <summary>
-    /// Performs a CPU-intensive wait for the specified duration.
-    /// Unlike Thread.Sleep, this actively burns CPU cycles.
-    /// </summary>
-    /// <param name="milliseconds">Duration to spin-wait in milliseconds.</param>
-    /// <remarks>
-    /// <para>
-    /// <strong>PORTING NOTES:</strong>
-    /// </para>
-    /// <para>
-    /// Most languages have spin-wait or busy-wait constructs:
-    /// <list type="bullet">
-    /// <item>PHP: while (microtime(true) &lt; $end) { hash('sha256', $data); }</item>
-    /// <item>Node.js: while (Date.now() &lt; end) { crypto.createHash('sha256').update(data).digest(); }</item>
-    /// <item>Java: while (System.nanoTime() &lt; end) { MessageDigest.digest(data); }</item>
-    /// <item>Python: while time.perf_counter() &lt; end: hashlib.sha256(data).digest()</item>
-    /// </list>
-    /// </para>
-    /// </remarks>
-    private void SpinWaitCpuIntensive(int milliseconds)
-    {
-        if (milliseconds <= 0) return;
-        
-        var stopwatch = Stopwatch.StartNew();
-        using var sha256 = SHA256.Create();
-        var data = Encoding.UTF8.GetBytes($"SpinWait-{Guid.NewGuid()}");
-        
-        // Spin until target duration reached
-        while (stopwatch.ElapsedMilliseconds < milliseconds)
-        {
-            // Do CPU work to burn cycles
-            data = sha256.ComputeHash(data);
-        }
-        
-        // Use result to prevent optimization
-        _ = data.Length;
     }
 
     /*
