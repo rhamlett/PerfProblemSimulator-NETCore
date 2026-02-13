@@ -303,49 +303,55 @@ public class LoadTestService : ILoadTestService
     /// </summary>
     private async void BroadcastStats(object? state)
     {
-        // Read and reset period stats atomically
-        var requestsCompleted = Interlocked.Exchange(ref _periodRequestsCompleted, 0);
-        
-        // Only broadcast if there was activity
-        if (requestsCompleted == 0)
-        {
-            return;
-        }
-        
-        var responseTimeSum = Interlocked.Exchange(ref _periodResponseTimeSum, 0);
-        var maxResponseTime = Interlocked.Exchange(ref _periodMaxResponseTimeMs, 0);
-        var peakConcurrent = Interlocked.Exchange(ref _periodPeakConcurrent, 0);
-        var exceptions = Interlocked.Exchange(ref _periodExceptions, 0);
-        var currentConcurrent = Interlocked.CompareExchange(ref _concurrentRequests, 0, 0);
-        
-        // Calculate averages
-        var avgResponseTime = requestsCompleted > 0 
-            ? (double)responseTimeSum / requestsCompleted 
-            : 0;
-        var requestsPerSecond = (double)requestsCompleted / BroadcastIntervalSeconds;
-        
-        var statsData = new LoadTestStatsData
-        {
-            CurrentConcurrent = currentConcurrent,
-            PeakConcurrent = peakConcurrent,
-            RequestsCompleted = requestsCompleted,
-            AvgResponseTimeMs = Math.Round(avgResponseTime, 2),
-            MaxResponseTimeMs = maxResponseTime,
-            RequestsPerSecond = Math.Round(requestsPerSecond, 2),
-            ExceptionCount = (int)exceptions,
-            Timestamp = DateTimeOffset.UtcNow
-        };
-        
         try
         {
-            await _hubContext.Clients.All.ReceiveLoadTestStats(statsData);
-            _logger.LogDebug(
-                "Load test stats broadcast: {Requests} requests, {AvgMs}ms avg, {MaxMs}ms max, {RPS} RPS",
+            // Read and reset period stats atomically
+            var requestsCompleted = Interlocked.Exchange(ref _periodRequestsCompleted, 0);
+            
+            _logger.LogInformation(
+                "Load test timer fired - requests in period: {Requests}, currentConcurrent: {Concurrent}",
+                requestsCompleted,
+                _concurrentRequests);
+            
+            // Only broadcast if there was activity
+            if (requestsCompleted == 0)
+            {
+                return;
+            }
+            
+            var responseTimeSum = Interlocked.Exchange(ref _periodResponseTimeSum, 0);
+            var maxResponseTime = Interlocked.Exchange(ref _periodMaxResponseTimeMs, 0);
+            var peakConcurrent = Interlocked.Exchange(ref _periodPeakConcurrent, 0);
+            var exceptions = Interlocked.Exchange(ref _periodExceptions, 0);
+            var currentConcurrent = Interlocked.CompareExchange(ref _concurrentRequests, 0, 0);
+            
+            // Calculate averages
+            var avgResponseTime = requestsCompleted > 0 
+                ? (double)responseTimeSum / requestsCompleted 
+                : 0;
+            var requestsPerSecond = (double)requestsCompleted / BroadcastIntervalSeconds;
+            
+            var statsData = new LoadTestStatsData
+            {
+                CurrentConcurrent = currentConcurrent,
+                PeakConcurrent = peakConcurrent,
+                RequestsCompleted = requestsCompleted,
+                AvgResponseTimeMs = Math.Round(avgResponseTime, 2),
+                MaxResponseTimeMs = maxResponseTime,
+                RequestsPerSecond = Math.Round(requestsPerSecond, 2),
+                ExceptionCount = (int)exceptions,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+            
+            _logger.LogInformation(
+                "Broadcasting load test stats: {Requests} requests, {AvgMs}ms avg, {MaxMs}ms max, {RPS} RPS",
                 requestsCompleted, avgResponseTime, maxResponseTime, requestsPerSecond);
+            
+            await _hubContext.Clients.All.ReceiveLoadTestStats(statsData);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error broadcasting load test stats");
+            _logger.LogError(ex, "Error in BroadcastStats timer callback");
         }
         
         // Reset period start time
