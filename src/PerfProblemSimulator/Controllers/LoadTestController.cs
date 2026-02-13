@@ -148,7 +148,12 @@ public class LoadTestController : ControllerBase
     /// <summary>
     /// Executes a load test probe request that performs lightweight work.
     /// </summary>
-    /// <param name="request">Load test parameters as JSON body.</param>
+    /// <param name="bodyRequest">Load test parameters as JSON body (optional).</param>
+    /// <param name="workIterations">CPU work ms per cycle (workIterations/100). Query param fallback.</param>
+    /// <param name="bufferSizeKb">Memory buffer size in KB. Query param fallback.</param>
+    /// <param name="baselineDelayMs">Minimum request duration in ms. Query param fallback.</param>
+    /// <param name="softLimit">Concurrent requests before degradation. Query param fallback.</param>
+    /// <param name="degradationFactor">Additional delay ms per request over limit. Query param fallback.</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
