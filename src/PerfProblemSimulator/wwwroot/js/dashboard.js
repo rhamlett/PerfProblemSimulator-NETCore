@@ -514,7 +514,7 @@ function handleLatencyUpdate(measurement) {
         logEvent('error', `⚠️ Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
     } else if (measurement.isTimeout) {
         logEvent('warning', `⚠️ Health Probe Critical (>30s): ${formatLatency(measurement.latencyMs)}`);
-    } else if (measurement.latencyMs > 5000) {
+    } else if (measurement.latencyMs > 10000) {
         // Log extremely high latency (starvation)
         logEvent('warning', `⚠️ High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
     }
