@@ -464,14 +464,18 @@ public class LoadTestService : ILoadTestService
              * concurrent request count. This GUARANTEES thread pool exhaustion
              * under any significant load.
              * 
-             * THREAD BLOCKING:
-             * We use Thread.Sleep to BLOCK threads. At 500ms baseline with 
-             * high request rate, threads will exhaust rapidly.
+             * THREAD BLOCKING WITH CPU WORK:
+             * We use SpinWait (CPU-intensive) instead of Thread.Sleep to ensure
+             * CPU usage scales with thread pool blocking. This creates balanced
+             * stress across CPU, memory, and thread pool.
              */
             if (request.BaselineDelayMs > 0)
             {
-                _logger.LogDebug("Applying baseline blocking delay: {Delay}ms", request.BaselineDelayMs);
-                Thread.Sleep(request.BaselineDelayMs);
+                _logger.LogDebug(
+                    "Applying baseline blocking delay: {Delay}ms", 
+                    request.BaselineDelayMs);
+                    
+                SpinWaitCpuIntensive(request.BaselineDelayMs);
                 degradationDelayApplied += request.BaselineDelayMs;
                 
                 // Check for timeout exception after baseline delay
@@ -510,10 +514,9 @@ public class LoadTestService : ILoadTestService
              * 1. Cancellation token (request aborted)
              * 2. Timeout threshold for exception throwing
              * 
-             * THREAD BLOCKING:
-             * We use Thread.Sleep instead of Task.Delay to BLOCK threads.
-             * This causes thread pool starvation under load, which is a realistic
-             * simulation of poorly-written synchronous code in production apps.
+             * THREAD BLOCKING WITH CPU WORK:
+             * SpinWait burns CPU during delays, creating balanced stress where
+             * CPU usage scales with blocked threads.
              * 
              * WHY CHUNKS:
              * By chunking into 1s intervals, we can check for cancellation and
@@ -525,12 +528,14 @@ public class LoadTestService : ILoadTestService
                 // Check for cancellation (request aborted by client)
                 cancellationToken.ThrowIfCancellationRequested();
                 
-                // Sleep for up to 1 second (or remaining delay, whichever is smaller)
-                // Using Thread.Sleep to BLOCK the thread (causes thread pool starvation)
-                var sleepMs = Math.Min(remainingDelay, ExceptionCheckIntervalMs);
-                Thread.Sleep(sleepMs);
-                remainingDelay -= sleepMs;
-                degradationDelayApplied += sleepMs;
+                // Wait for up to 1 second (or remaining delay, whichever is smaller)
+                var delayMs = Math.Min(remainingDelay, ExceptionCheckIntervalMs);
+                
+                // Burn CPU cycles during delay (balanced stress)
+                SpinWaitCpuIntensive(delayMs);
+                
+                remainingDelay -= delayMs;
+                degradationDelayApplied += delayMs;
                 
                 // Check for timeout exception trigger
                 CheckAndThrowTimeoutException(stopwatch);
@@ -819,6 +824,61 @@ public class LoadTestService : ILoadTestService
         }
         
         return buffer;
+    }
+
+    /*
+     * =========================================================================
+     * HELPER: CPU-Intensive Spin Wait
+     * =========================================================================
+     * 
+     * ALGORITHM:
+     *   targetEnd = now() + delayMs
+     *   while now() < targetEnd:
+     *       # Do CPU work instead of sleeping
+     *       hash = sha256(hash)  # Burns CPU cycles
+     * 
+     * WHY SPIN-WAIT INSTEAD OF THREAD.SLEEP:
+     * Spin-wait burns CPU while blocking threads, creating balanced stress
+     * where both CPU and thread pool show high utilization. Thread.Sleep
+     * would only show thread pool exhaustion with 0% CPU during delays.
+     */
+    
+    /// <summary>
+    /// Performs a CPU-intensive wait for the specified duration.
+    /// Unlike Thread.Sleep, this actively burns CPU cycles.
+    /// </summary>
+    /// <param name="milliseconds">Duration to spin-wait in milliseconds.</param>
+    /// <remarks>
+    /// <para>
+    /// <strong>PORTING NOTES:</strong>
+    /// </para>
+    /// <para>
+    /// Most languages have spin-wait or busy-wait constructs:
+    /// <list type="bullet">
+    /// <item>PHP: while (microtime(true) &lt; $end) { hash('sha256', $data); }</item>
+    /// <item>Node.js: while (Date.now() &lt; end) { crypto.createHash('sha256').update(data).digest(); }</item>
+    /// <item>Java: while (System.nanoTime() &lt; end) { MessageDigest.digest(data); }</item>
+    /// <item>Python: while time.perf_counter() &lt; end: hashlib.sha256(data).digest()</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    private void SpinWaitCpuIntensive(int milliseconds)
+    {
+        if (milliseconds <= 0) return;
+        
+        var stopwatch = Stopwatch.StartNew();
+        using var sha256 = SHA256.Create();
+        var data = Encoding.UTF8.GetBytes($"SpinWait-{Guid.NewGuid()}");
+        
+        // Spin until target duration reached
+        while (stopwatch.ElapsedMilliseconds < milliseconds)
+        {
+            // Do CPU work to burn cycles
+            data = sha256.ComputeHash(data);
+        }
+        
+        // Use result to prevent optimization
+        _ = data.Length;
     }
 
     /*
