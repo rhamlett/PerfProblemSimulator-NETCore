@@ -227,14 +227,16 @@
             margin: 1rem 0;
         }
 
-        .table-wrapper {
-            overflow-x: auto;
-            margin: 1rem 0;
+        .api-table.compact {
+            font-size: 0.85rem;
         }
 
-        .table-wrapper .api-table {
-            margin: 0;
-            min-width: 700px;
+        .api-table.compact th, .api-table.compact td {
+            padding: 0.5rem 0.5rem;
+        }
+
+        .api-table.compact th {
+            white-space: normal;
         }
 
         .api-table th, .api-table td {
@@ -1028,8 +1030,7 @@ GET /api/loadtest/stats
 
             <h3>Tuning Parameters for Different Scenarios</h3>
             <p>Complete request body examples for various test scenarios:</p>
-            <div class="table-wrapper">
-            <table class="api-table">
+            <table class="api-table compact">
                 <thead>
                     <tr>
                         <th>Scenario</th>
@@ -1089,7 +1090,6 @@ GET /api/loadtest/stats
                     </tr>
                 </tbody>
             </table>
-            </div>
         </section>
 
         <!-- Recommended Monitoring Setup Section -->

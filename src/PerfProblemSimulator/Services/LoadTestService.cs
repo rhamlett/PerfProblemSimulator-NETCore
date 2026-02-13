@@ -36,8 +36,8 @@
  * DEPENDENCIES:
  * - Models/LoadTestRequest.cs - Input parameters
  * - Models/LoadTestResult.cs - Output format
- * - System.Security.Cryptography - For SHA256 hash work
  * - System.Diagnostics - For Stopwatch timing
+ * - System.Threading - For Thread.SpinWait CPU work
  * 
  * =============================================================================
  */
@@ -46,8 +46,6 @@ using Microsoft.AspNetCore.SignalR;
 using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace PerfProblemSimulator.Services;
 
@@ -499,37 +497,36 @@ public class LoadTestService : ILoadTestService
              * =================================================================
              * 
              * Instead of doing all CPU work at once then sleeping, we interleave:
-             * - Do ~50ms worth of CPU work (hash iterations)
+             * - Do CPU work for cpuWorkMs milliseconds (spin loop)
              * - Touch the memory buffer (keeps it active, prevents GC optimization)
              * - Sleep briefly (~50ms)
              * - Repeat until total duration reached
              * 
-             * This creates ~50% CPU utilization per active thread, allowing
-             * CPU to scale with concurrency without immediately hitting 100%.
+             * This creates tunable CPU utilization per active thread:
+             * - workIterations / 100 = ms of CPU work per cycle
+             * - workIterations = 1000 → 10ms work + 50ms sleep = ~17% CPU per thread
+             * - workIterations = 5000 → 50ms work + 50ms sleep = ~50% CPU per thread
              * 
              * TUNING:
-             * - workIterations controls CPU intensity per cycle
+             * - workIterations controls CPU intensity (divide by 100 for ms per cycle)
              * - Higher workIterations = more CPU per cycle
-             * - 0 workIterations = pure thread blocking (minimal CPU)
+             * - 0 workIterations = pure thread blocking (0% CPU)
              */
-            const int CycleMs = 100;  // Each cycle is ~100ms (50ms work + 50ms sleep)
             const int SleepPerCycleMs = 50;
             
-            // Calculate iterations per cycle to spread workIterations across duration
-            var totalCycles = Math.Max(1, totalDurationMs / CycleMs);
-            var iterationsPerCycle = request.WorkIterations > 0 
-                ? Math.Max(100, request.WorkIterations / totalCycles)
-                : 0;
+            // Calculate CPU work time: workIterations / 100 = ms per cycle
+            // Examples: 1000 → 10ms, 5000 → 50ms, 10000 → 100ms
+            var cpuWorkMsPerCycle = request.WorkIterations / 100;
             
             while (stopwatch.ElapsedMilliseconds < totalDurationMs)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 
-                // CPU work phase
-                if (iterationsPerCycle > 0)
+                // CPU work phase (spin loop for precise duration)
+                if (cpuWorkMsPerCycle > 0)
                 {
-                    PerformCpuWork(iterationsPerCycle);
-                    totalCpuWorkDone += iterationsPerCycle;
+                    PerformCpuWork(cpuWorkMsPerCycle);
+                    totalCpuWorkDone += cpuWorkMsPerCycle;  // Track total ms of CPU work
                 }
                 
                 // Keep memory active (prevents GC from collecting early)
@@ -670,55 +667,54 @@ public class LoadTestService : ILoadTestService
 
     /*
      * =========================================================================
-     * HELPER: Perform CPU Work
+     * HELPER: Perform CPU Work (Time-Based)
      * =========================================================================
      * 
      * ALGORITHM:
-     *   data = "LoadTest-" + randomBytes
-     *   for i in range(iterations):
-     *       hash = SHA256(data)
-     *       data = hash  # Feed output back as input
+     *   start = now()
+     *   while (now() - start < workMs):
+     *       spinWait()  # Busy loop consuming CPU
      * 
-     * This creates consistent, non-optimizable CPU work.
+     * This creates consistent, measurable CPU consumption for a specified duration.
      */
     
     /// <summary>
-    /// Performs CPU-intensive work by computing SHA256 hashes.
+    /// Performs CPU-intensive work using a spin loop for the specified duration.
     /// </summary>
-    /// <param name="iterations">Number of hash iterations to perform.</param>
-    private void PerformCpuWork(int iterations)
+    /// <param name="workMs">Milliseconds of CPU work to perform.</param>
+    private void PerformCpuWork(int workMs)
     {
         /*
          * IMPLEMENTATION NOTES:
          * 
-         * We start with a seed value and repeatedly hash it.
-         * Each hash output becomes the input for the next iteration.
-         * This prevents the compiler from optimizing away the work.
+         * We use a spin loop (busy wait) to consume CPU for a precise duration.
+         * This is more predictable than hash iterations because:
+         * - Hash speed varies by CPU, making iteration counts unreliable
+         * - Time-based approach gives consistent CPU utilization
          * 
-         * SHA256 CHOICE:
-         * - Consistent performance across platforms
-         * - Available in all languages' standard libraries
-         * - Sufficient CPU load without being excessive
+         * SPIN LOOP vs HASH:
+         * - Spin loop gives precise time control
+         * - Creates visible CPU load in monitoring tools
+         * - SpinWait(1000) per iteration prevents compiler optimization
          * 
          * PORTING:
-         * Replace SHA256 with your language's equivalent:
-         * - PHP: hash('sha256', $data, true)
-         * - Node.js: crypto.createHash('sha256').update(data).digest()
-         * - Java: MessageDigest.getInstance("SHA-256").digest(data)
-         * - Python: hashlib.sha256(data).digest()
+         * Implement busy waiting in your language:
+         * - PHP: while (microtime(true) * 1000 < endTime) { spin; }
+         * - Node.js: while (Date.now() < endTime) { spin; }
+         * - Java: while (System.currentTimeMillis() < endTime) { Thread.onSpinWait(); }
+         * - Python: while time.time() * 1000 < end_time: pass
          */
-        using var sha256 = SHA256.Create();
-        var data = Encoding.UTF8.GetBytes($"LoadTest-{Guid.NewGuid()}");
+        if (workMs <= 0) return;
         
-        for (var i = 0; i < iterations; i++)
+        var sw = Stopwatch.StartNew();
+        while (sw.ElapsedMilliseconds < workMs)
         {
-            data = sha256.ComputeHash(data);
+            // SpinWait burns CPU cycles without yielding to OS scheduler
+            // 1000 iterations is ~1-2 microseconds, creates tight loop
+            Thread.SpinWait(1000);
         }
-        
-        // Use the result to prevent optimization
-        // (compiler can't remove work if result is used)
-        _ = data.Length;
     }
+
     /*
      * =========================================================================
      * HELPER: Build Result
@@ -871,7 +867,7 @@ public class LoadTestService : ILoadTestService
  *    Use atomic increment/decrement for concurrent request tracking
  * 
  * 4. CPU Work:
- *    Repeated SHA256 hashing with output fed back as input
+ *    Time-based spin loop (workIterations / 100 = ms per cycle)
  * 
  * 5. Memory Allocation:
  *    Allocate buffer and write pattern to force actual allocation
