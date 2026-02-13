@@ -149,7 +149,7 @@ public class LoadTestController : ControllerBase
     /// Executes a load test probe request that performs lightweight work.
     /// </summary>
     /// <param name="workIterations">Number of SHA256 hash iterations (default: 1000).</param>
-    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 5).</param>
+    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
     /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
     /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
@@ -176,7 +176,7 @@ public class LoadTestController : ControllerBase
     /// <description>Number of SHA256 hash computations to perform. Higher = more CPU work.</description>
     /// </item>
     /// <item>
-    /// <term>bufferSizeKb (default: 5)</term>
+    /// <term>bufferSizeKb (default: 100)</term>
     /// <description>Size of memory buffer to allocate in kilobytes. Released after request.</description>
     /// </item>
     /// <item>
@@ -211,7 +211,7 @@ public class LoadTestController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
         [FromQuery] int workIterations = 1000,
-        [FromQuery] int bufferSizeKb = 5,
+        [FromQuery] int bufferSizeKb = 100,
         [FromQuery] int softLimit = 10,
         [FromQuery] int degradationFactor = 50,
         CancellationToken cancellationToken = default)
@@ -301,7 +301,7 @@ public class LoadTestController : ControllerBase
     /// Simplified load test probe using query parameters.
     /// </summary>
     /// <param name="workIterations">Number of hash iterations (default: 1000).</param>
-    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 5).</param>
+    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
     /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
     /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -311,7 +311,7 @@ public class LoadTestController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTestProbe(
         [FromQuery] int workIterations = 1000,
-        [FromQuery] int bufferSizeKb = 5,
+        [FromQuery] int bufferSizeKb = 100,
         [FromQuery] int softLimit = 10,
         [FromQuery] int degradationFactor = 50,
         CancellationToken cancellationToken = default)

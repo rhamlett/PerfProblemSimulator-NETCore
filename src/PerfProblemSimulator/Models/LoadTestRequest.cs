@@ -10,7 +10,7 @@
  * JSON EXAMPLE:
  * {
  *     "workIterations": 1000,
- *     "bufferSizeKb": 5,
+ *     "bufferSizeKb": 100,
  *     "softLimit": 10,
  *     "degradationFactor": 50
  * }
@@ -49,7 +49,7 @@ namespace PerfProblemSimulator.Models;
 /// <term>bufferSizeKb</term>
 /// <description>
 /// Memory allocated per request. Released after request completes.
-/// 5KB is lightweight; increase for memory pressure testing.
+/// 100KB provides meaningful memory pressure during load testing.
 /// </description>
 /// </item>
 /// <item>
@@ -116,7 +116,7 @@ public class LoadTestRequest
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 5 KB</strong>
+    /// <strong>DEFAULT: 100 KB</strong>
     /// </para>
     /// <para>
     /// This memory is allocated at the start of request processing and
@@ -127,7 +127,7 @@ public class LoadTestRequest
     /// memory allocation occurs and isn't optimized away.
     /// </para>
     /// </remarks>
-    public int BufferSizeKb { get; set; } = 5;
+    public int BufferSizeKb { get; set; } = 100;
 
     /// <summary>
     /// Number of concurrent requests before degradation delays begin.

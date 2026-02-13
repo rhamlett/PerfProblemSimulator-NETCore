@@ -889,7 +889,7 @@ https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=10&amp;degradati
             <p><strong>Query Parameters:</strong></p>
             <ul>
                 <li><code>workIterations</code> - CPU work iterations (default: 1000)</li>
-                <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 5)</li>
+                <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 100)</li>
                 <li><code>softLimit</code> - Concurrent requests before degradation (default: 10)</li>
                 <li><code>degradationFactor</code> - Delay ms per request over limit (default: 50)</li>
             </ul>
@@ -912,24 +912,11 @@ Content-Type: application/json
             </ol>
 
             <h3>Understanding the Soft Limit</h3>
-            <p>The soft limit creates a realistic degradation curve:</p>
-            <table class="api-table">
-                <thead>
-                    <tr>
-                        <th>Concurrent Requests</th>
-                        <th>Over Soft Limit (10)</th>
-                        <th>Added Delay (factor=50)</th>
-                        <th>Expected Response Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>5</td><td>0</td><td>0ms</td><td>~100ms</td></tr>
-                    <tr><td>20</td><td>10</td><td>500ms</td><td>~600ms</td></tr>
-                    <tr><td>50</td><td>40</td><td>2000ms</td><td>~2100ms</td></tr>
-                    <tr><td>100</td><td>90</td><td>4500ms</td><td>~4600ms</td></tr>
-                    <tr><td>200</td><td>190</td><td>9500ms</td><td>~9600ms</td></tr>
-                </tbody>
-            </table>
+            <p>The soft limit creates a degradation curve where response times increase as concurrent requests exceed the threshold. The degradation formula is:</p>
+            <div class="code-block">
+additionalDelay = max(0, concurrent - softLimit) × degradationFactor
+            </div>
+            <p>Actual response times will vary based on your Azure App Service tier, current load, and other factors. Use Azure Load Testing to establish baseline performance for your specific environment.</p>
 
             <h3>Diagnosing Load Test Results</h3>
             <h4>1. Application Insights Integration</h4>

@@ -476,9 +476,13 @@ public class LoadTestService : ILoadTestService
              * 1. Cancellation token (request aborted)
              * 2. Timeout threshold for exception throwing
              * 
+             * THREAD BLOCKING:
+             * We use Thread.Sleep instead of Task.Delay to BLOCK threads.
+             * This causes thread pool starvation under load, which is a realistic
+             * simulation of poorly-written synchronous code in production apps.
+             * 
              * WHY CHUNKS:
-             * If we just did Task.Delay(750ms), we couldn't check for the 120s
-             * timeout during that delay. By chunking into 1s intervals, we can
+             * By chunking into 1s intervals, we can check for cancellation and
              * throw exceptions promptly after crossing the threshold.
              */
             var remainingDelay = totalDegradationDelayMs;
@@ -488,8 +492,9 @@ public class LoadTestService : ILoadTestService
                 cancellationToken.ThrowIfCancellationRequested();
                 
                 // Sleep for up to 1 second (or remaining delay, whichever is smaller)
+                // Using Thread.Sleep to BLOCK the thread (causes thread pool starvation)
                 var sleepMs = Math.Min(remainingDelay, ExceptionCheckIntervalMs);
-                await Task.Delay(sleepMs, cancellationToken);
+                Thread.Sleep(sleepMs);
                 remainingDelay -= sleepMs;
                 degradationDelayApplied += sleepMs;
                 

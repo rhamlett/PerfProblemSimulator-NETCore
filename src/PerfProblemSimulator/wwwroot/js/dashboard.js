@@ -600,21 +600,11 @@ function handleSlowRequestLatency(data) {
 function handleLoadTestStats(data) {
     console.log('📊 Load test stats:', data);
     
-    const avgMs = data.avgResponseTimeMs.toFixed(1);
-    const maxMs = data.maxResponseTimeMs.toFixed(0);
-    const rps = data.requestsPerSecond.toFixed(1);
     const completed = data.requestsCompleted;
-    const concurrent = data.currentConcurrent;
-    const peak = data.peakConcurrent;
     const exceptions = data.exceptionCount;
     
-    // Build status message
-    let msg = `📊 Load Test Stats (60s): ${completed} requests, ${avgMs}ms avg, ${maxMs}ms max, ${rps} RPS`;
-    
-    // Add concurrent info if significant
-    if (concurrent > 0 || peak > 10) {
-        msg += ` | Concurrent: ${concurrent} (peak: ${peak})`;
-    }
+    // Build simple status message - just request count
+    let msg = `📊 Load Test Stats (60s): ${completed.toLocaleString()} requests`;
     
     // Add exception count if any
     if (exceptions > 0) {
