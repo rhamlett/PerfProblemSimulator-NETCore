@@ -209,26 +209,39 @@ public class LoadTestController : ControllerBase
     /// <response code="200">Load test completed successfully with timing details.</response>
     /// <response code="500">Request exceeded 120s and random exception was triggered.</response>
     [HttpPost]
+    [Consumes("application/json", "text/plain", "application/x-www-form-urlencoded")]
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
-        [FromBody] LoadTestRequest request,
+        [FromBody] LoadTestRequest? bodyRequest = null,
+        [FromQuery] int? workIterations = null,
+        [FromQuery] int? bufferSizeKb = null,
+        [FromQuery] int? baselineDelayMs = null,
+        [FromQuery] int? softLimit = null,
+        [FromQuery] int? degradationFactor = null,
         CancellationToken cancellationToken = default)
     {
         /*
          * =====================================================================
-         * JSON BODY ENDPOINT
+         * FLEXIBLE ENDPOINT - JSON BODY OR QUERY PARAMETERS
          * =====================================================================
          * 
-         * POST /api/loadtest with JSON body:
-         * {
-         *   "workIterations": 5000,
-         *   "bufferSizeKb": 1000,
-         *   "baselineDelayMs": 500,
-         *   "softLimit": 5,
-         *   "degradationFactor": 200
-         * }
+         * Accepts either:
+         * 1. POST with JSON body (Content-Type: application/json)
+         * 2. GET/POST with query parameters (no Content-Type required)
+         * 
+         * JSON body takes precedence if provided.
          */
+        
+        // Use body if provided, otherwise build from query params with defaults
+        var request = bodyRequest ?? new LoadTestRequest
+        {
+            WorkIterations = workIterations ?? 1000,
+            BufferSizeKb = bufferSizeKb ?? 100,
+            BaselineDelayMs = baselineDelayMs ?? 500,
+            SoftLimit = softLimit ?? 5,
+            DegradationFactor = degradationFactor ?? 200
+        };
         
         _logger.LogDebug(
             "Load test: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, BaselineDelayMs={BaselineDelayMs}, SoftLimit={SoftLimit}, DegradationFactor={DegradationFactor}",
@@ -238,64 +251,6 @@ public class LoadTestController : ControllerBase
             request.SoftLimit,
             request.DegradationFactor);
 
-        var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
-        return Ok(result);
-    }
-
-    /*
-     * =========================================================================
-     * ADDITIONAL ENDPOINT: GET /api/loadtest/probe
-     * =========================================================================
-     * 
-     * This simpler endpoint uses query parameters instead of JSON body.
-     * Useful for quick testing from a browser or simple HTTP clients.
-     */
-
-    /// <summary>
-    /// Simplified load test probe using query parameters.
-    /// </summary>
-    /// <param name="workIterations">Number of hash iterations (default: 1000).</param>
-    /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
-    /// <param name="baselineDelayMs">Minimum blocking delay in ms (default: 500).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 5).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 200).</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Load test result with timing details.</returns>
-    [HttpGet("probe")]
-    [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> ExecuteLoadTestProbe(
-        [FromQuery] int workIterations = 1000,
-        [FromQuery] int bufferSizeKb = 100,
-        [FromQuery] int baselineDelayMs = 500,
-        [FromQuery] int softLimit = 5,
-        [FromQuery] int degradationFactor = 200,
-        CancellationToken cancellationToken = default)
-    {
-        /*
-         * QUERY PARAMETER BINDING:
-         * [FromQuery] tells the framework to read from URL query string
-         * Example: GET /api/loadtest/probe?workIterations=2000&softLimit=25
-         * 
-         * DEFAULT VALUES:
-         * The = 1000, = 5, etc. provide defaults if parameter is omitted
-         * 
-         * PORTING:
-         * - Node.js: req.query.workIterations || 1000
-         * - Python: request.args.get('workIterations', 1000, type=int)
-         * - Java: @RequestParam(defaultValue = "1000") int workIterations
-         * - PHP: $request->query('workIterations', 1000)
-         */
-
-        var request = new LoadTestRequest
-        {
-            WorkIterations = workIterations,
-            BufferSizeKb = bufferSizeKb,
-            BaselineDelayMs = baselineDelayMs,
-            SoftLimit = softLimit,
-            DegradationFactor = degradationFactor
-        };
-        
         var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
         return Ok(result);
     }
