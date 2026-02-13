@@ -11,8 +11,9 @@
  * {
  *     "workIterations": 1000,
  *     "bufferSizeKb": 100,
- *     "softLimit": 10,
- *     "degradationFactor": 50
+ *     "baselineDelayMs": 500,
+ *     "softLimit": 5,
+ *     "degradationFactor": 200
  * }
  * 
  * OR with defaults (empty body or null):
@@ -56,19 +57,26 @@ namespace PerfProblemSimulator.Models;
 /// <term>softLimit</term>
 /// <description>
 /// Concurrent requests before degradation starts. Lower = earlier degradation.
-/// Tune based on expected normal load. 10 is aggressive for testing timeouts.
+/// Default of 5 ensures rapid escalation under load.
 /// </description>
 /// </item>
 /// <item>
 /// <term>degradationFactor</term>
 /// <description>
 /// Milliseconds of delay added per request OVER the soft limit.
-/// Higher = steeper degradation curve. 50ms is aggressive.
+/// Default of 200ms creates steep degradation curve.
 /// 
-/// Example: softLimit=10, degradationFactor=50
-/// - 20 concurrent: (20-10) * 50 = 500ms added delay
-/// - 50 concurrent: (50-10) * 50 = 2000ms added delay
-/// - 100 concurrent: (100-10) * 50 = 4500ms added delay
+/// Example: softLimit=5, degradationFactor=200
+/// - 10 concurrent: (10-5) * 200 = 1000ms added delay
+/// - 20 concurrent: (20-5) * 200 = 3000ms added delay
+/// - 50 concurrent: (50-5) * 200 = 9000ms added delay
+/// </description>
+/// </item>
+/// <item>
+/// <term>baselineDelayMs</term>
+/// <description>
+/// Minimum blocking delay for every request. Default 500ms ensures
+/// thread pool exhaustion under any significant load.
 /// </description>
 /// </item>
 /// </list>
@@ -134,7 +142,7 @@ public class LoadTestRequest
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 10</strong>
+    /// <strong>DEFAULT: 5</strong>
     /// </para>
     /// <para>
     /// When concurrent requests exceed this limit, additional delay is
@@ -154,14 +162,14 @@ public class LoadTestRequest
     /// </list>
     /// </para>
     /// </remarks>
-    public int SoftLimit { get; set; } = 10;
+    public int SoftLimit { get; set; } = 5;
 
     /// <summary>
     /// Milliseconds of delay added per concurrent request over the soft limit.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 50 ms</strong>
+    /// <strong>DEFAULT: 200 ms</strong>
     /// </para>
     /// <para>
     /// <strong>DEGRADATION FORMULA:</strong>
@@ -170,25 +178,42 @@ public class LoadTestRequest
     /// </code>
     /// </para>
     /// <para>
-    /// <strong>EXAMPLES (softLimit=10, degradationFactor=50):</strong>
+    /// <strong>EXAMPLES (softLimit=5, degradationFactor=200):</strong>
     /// <list type="bullet">
-    /// <item>5 concurrent → 0ms added (below soft limit)</item>
-    /// <item>20 concurrent → 500ms added ((20-10) × 50)</item>
-    /// <item>50 concurrent → 2000ms added ((50-10) × 50)</item>
-    /// <item>100 concurrent → 4500ms added ((100-10) × 50)</item>
-    /// <item>200 concurrent → 9500ms added ((200-10) × 50)</item>
+    /// <item>5 concurrent → 0ms added (at soft limit)</item>
+    /// <item>10 concurrent → 1000ms added ((10-5) × 200)</item>
+    /// <item>20 concurrent → 3000ms added ((20-5) × 200)</item>
+    /// <item>50 concurrent → 9000ms added ((50-5) × 200)</item>
+    /// <item>100 concurrent → 19000ms added ((100-5) × 200)</item>
     /// </list>
     /// </para>
     /// <para>
     /// <strong>REACHING 230s TIMEOUT:</strong>
     /// To reach Azure's 230s timeout with these defaults:
-    /// (230000ms - 100ms base) / 50ms = 4598 requests over soft limit
-    /// So: 10 + 4598 = ~4608 concurrent requests
-    /// 
-    /// For lighter degradation, decrease degradationFactor:
-    /// - degradationFactor=25: ~9200 concurrent requests to timeout
-    /// - degradationFactor=10: ~23000 concurrent requests to timeout
+    /// (230000ms - 500ms baseline) / 200ms = ~1147 requests over soft limit
+    /// So: 5 + 1147 = ~1152 concurrent requests to timeout
     /// </para>
     /// </remarks>
-    public int DegradationFactor { get; set; } = 50;
+    public int DegradationFactor { get; set; } = 200;
+
+    /// <summary>
+    /// Minimum blocking delay applied to every request in milliseconds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>DEFAULT: 500 ms</strong>
+    /// </para>
+    /// <para>
+    /// This baseline delay is applied BEFORE the degradation calculation.
+    /// It ensures every request blocks a thread for at least this duration,
+    /// guaranteeing thread pool exhaustion under any significant load.
+    /// </para>
+    /// <para>
+    /// Combined with degradation factor, total delay is:
+    /// <code>
+    /// totalDelay = baselineDelayMs + max(0, concurrent - softLimit) * degradationFactor
+    /// </code>
+    /// </para>
+    /// </remarks>
+    public int BaselineDelayMs { get; set; } = 500;
 }

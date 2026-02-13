@@ -137,7 +137,7 @@ public class LoadTestController : ControllerBase
      * 3. Allows structured parameters in request body
      * 
      * ALTERNATIVE: GET with query parameters
-     * GET /api/loadtest?workIterations=1000&bufferSizeKb=5
+     * GET /api/loadtest?workIterations=1000&bufferSizeKb=100
      * Simpler but less flexible for complex parameters.
      * 
      * URL PATTERN:
@@ -150,8 +150,9 @@ public class LoadTestController : ControllerBase
     /// </summary>
     /// <param name="workIterations">Number of SHA256 hash iterations (default: 1000).</param>
     /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
+    /// <param name="baselineDelayMs">Minimum blocking delay in ms (default: 500).</param>
+    /// <param name="softLimit">Concurrent request soft limit (default: 5).</param>
+    /// <param name="degradationFactor">Delay ms per request over limit (default: 200).</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -160,12 +161,13 @@ public class LoadTestController : ControllerBase
     /// </para>
     /// <para>
     /// 1. Start a timer (Stopwatch)
-    /// 2. Check current concurrent request count
-    /// 3. If over soft limit, calculate and apply degradation delay
-    /// 4. Perform lightweight CPU work (hash iterations)
-    /// 5. Allocate small memory buffer (released when request ends)
-    /// 6. Periodically check if elapsed time > 120s; if so, 20% chance of exception
-    /// 7. Return response with timing details
+    /// 2. Apply baseline blocking delay (guarantees thread pool exhaustion)
+    /// 3. Check current concurrent request count
+    /// 4. If over soft limit, calculate and apply degradation delay
+    /// 5. Perform lightweight CPU work (hash iterations)
+    /// 6. Allocate memory buffer (released when request ends)
+    /// 7. Periodically check if elapsed time > 120s; if so, 20% chance of exception
+    /// 8. Return response with timing details
     /// </para>
     /// <para>
     /// <strong>PARAMETERS:</strong>
@@ -180,27 +182,32 @@ public class LoadTestController : ControllerBase
     /// <description>Size of memory buffer to allocate in kilobytes. Released after request.</description>
     /// </item>
     /// <item>
-    /// <term>softLimit (default: 10)</term>
+    /// <term>baselineDelayMs (default: 500)</term>
+    /// <description>Minimum blocking delay applied to every request. Ensures thread pool exhaustion.</description>
+    /// </item>
+    /// <item>
+    /// <term>softLimit (default: 5)</term>
     /// <description>Concurrent request count before degradation delays begin.</description>
     /// </item>
     /// <item>
-    /// <term>degradationFactor (default: 50)</term>
+    /// <term>degradationFactor (default: 200)</term>
     /// <description>Milliseconds of delay added per concurrent request over the soft limit.</description>
     /// </item>
     /// </list>
     /// <para>
-    /// <strong>DEGRADATION FORMULA:</strong>
+    /// <strong>TOTAL DELAY FORMULA:</strong>
     /// <code>
-    /// additionalDelayMs = max(0, currentConcurrent - softLimit) * degradationFactor
+    /// totalDelay = baselineDelayMs + max(0, currentConcurrent - softLimit) * degradationFactor
     /// </code>
     /// </para>
     /// <para>
-    /// <strong>EXAMPLE SCENARIOS:</strong>
+    /// <strong>EXAMPLE SCENARIOS (with defaults baselineDelayMs=500, softLimit=5, factor=200):</strong>
     /// </para>
     /// <list type="bullet">
-    /// <item>10 concurrent requests, softLimit=50 → 0ms added delay</item>
-    /// <item>60 concurrent requests, softLimit=50, factor=5 → 50ms added delay</item>
-    /// <item>150 concurrent requests, softLimit=50, factor=5 → 500ms added delay</item>
+    /// <item>1 concurrent request → 500ms baseline only</item>
+    /// <item>10 concurrent requests → 500ms + (10-5)×200 = 1500ms total</item>
+    /// <item>20 concurrent requests → 500ms + (20-5)×200 = 3500ms total</item>
+    /// <item>50 concurrent requests → 500ms + (50-5)×200 = 9500ms total</item>
     /// </list>
     /// </remarks>
     /// <response code="200">Load test completed successfully with timing details.</response>
@@ -212,8 +219,9 @@ public class LoadTestController : ControllerBase
     public async Task<IActionResult> ExecuteLoadTest(
         [FromQuery] int workIterations = 1000,
         [FromQuery] int bufferSizeKb = 100,
-        [FromQuery] int softLimit = 10,
-        [FromQuery] int degradationFactor = 50,
+        [FromQuery] int baselineDelayMs = 500,
+        [FromQuery] int softLimit = 5,
+        [FromQuery] int degradationFactor = 200,
         CancellationToken cancellationToken = default)
     {
         /*
@@ -225,8 +233,8 @@ public class LoadTestController : ControllerBase
          * with Azure Load Testing, JMeter, and browser testing.
          * 
          * Examples:
-         * - GET/POST /api/loadtest (uses all defaults)
-         * - GET/POST /api/loadtest?softLimit=25&degradationFactor=10
+         * - GET/POST /api/loadtest (uses all defaults - maximum stress)
+         * - GET/POST /api/loadtest?baselineDelayMs=200&softLimit=20&degradationFactor=50
          * 
          * PORTING NOTES:
          * - Query parameters are universal across HTTP clients
@@ -239,6 +247,7 @@ public class LoadTestController : ControllerBase
         {
             WorkIterations = workIterations,
             BufferSizeKb = bufferSizeKb,
+            BaselineDelayMs = baselineDelayMs,
             SoftLimit = softLimit,
             DegradationFactor = degradationFactor
         };
@@ -302,8 +311,9 @@ public class LoadTestController : ControllerBase
     /// </summary>
     /// <param name="workIterations">Number of hash iterations (default: 1000).</param>
     /// <param name="bufferSizeKb">Memory buffer size in KB (default: 100).</param>
-    /// <param name="softLimit">Concurrent request soft limit (default: 10).</param>
-    /// <param name="degradationFactor">Delay ms per request over limit (default: 50).</param>
+    /// <param name="baselineDelayMs">Minimum blocking delay in ms (default: 500).</param>
+    /// <param name="softLimit">Concurrent request soft limit (default: 5).</param>
+    /// <param name="degradationFactor">Delay ms per request over limit (default: 200).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Load test result with timing details.</returns>
     [HttpGet("probe")]
@@ -312,8 +322,9 @@ public class LoadTestController : ControllerBase
     public async Task<IActionResult> ExecuteLoadTestProbe(
         [FromQuery] int workIterations = 1000,
         [FromQuery] int bufferSizeKb = 100,
-        [FromQuery] int softLimit = 10,
-        [FromQuery] int degradationFactor = 50,
+        [FromQuery] int baselineDelayMs = 500,
+        [FromQuery] int softLimit = 5,
+        [FromQuery] int degradationFactor = 200,
         CancellationToken cancellationToken = default)
     {
         /*
@@ -332,7 +343,7 @@ public class LoadTestController : ControllerBase
          */
 
         // Delegate to main endpoint - both now use query parameters
-        return await ExecuteLoadTest(workIterations, bufferSizeKb, softLimit, degradationFactor, cancellationToken);
+        return await ExecuteLoadTest(workIterations, bufferSizeKb, baselineDelayMs, softLimit, degradationFactor, cancellationToken);
     }
 
     /*

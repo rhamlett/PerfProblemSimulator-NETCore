@@ -445,28 +445,50 @@ public class LoadTestService : ILoadTestService
         try
         {
             /*
-             * STEP 3: CALCULATE DEGRADATION DELAY
+             * STEP 3A: APPLY BASELINE BLOCKING DELAY
+             * =================================================================
+             * 
+             * Every request blocks for at least baselineDelayMs, regardless of
+             * concurrent request count. This GUARANTEES thread pool exhaustion
+             * under any significant load.
+             * 
+             * THREAD BLOCKING:
+             * We use Thread.Sleep to BLOCK threads. At 500ms baseline with 
+             * high request rate, threads will exhaust rapidly.
+             */
+            if (request.BaselineDelayMs > 0)
+            {
+                _logger.LogDebug("Applying baseline blocking delay: {Delay}ms", request.BaselineDelayMs);
+                Thread.Sleep(request.BaselineDelayMs);
+                degradationDelayApplied += request.BaselineDelayMs;
+                
+                // Check for timeout exception after baseline delay
+                CheckAndThrowTimeoutException(stopwatch);
+            }
+            
+            /*
+             * STEP 3B: CALCULATE DEGRADATION DELAY
              * =================================================================
              * 
              * FORMULA:
              *   overLimit = max(0, currentConcurrent - softLimit)
              *   delayMs = overLimit * degradationFactor
              * 
-             * EXAMPLES (with softLimit=50, degradationFactor=5):
-             *   - 30 concurrent → overLimit=0 → delay=0ms
-             *   - 50 concurrent → overLimit=0 → delay=0ms
-             *   - 60 concurrent → overLimit=10 → delay=50ms
-             *   - 100 concurrent → overLimit=50 → delay=250ms
-             *   - 200 concurrent → overLimit=150 → delay=750ms
+             * EXAMPLES (with softLimit=5, degradationFactor=200):
+             *   - 5 concurrent → overLimit=0 → delay=0ms
+             *   - 10 concurrent → overLimit=5 → delay=1000ms
+             *   - 20 concurrent → overLimit=15 → delay=3000ms
+             *   - 50 concurrent → overLimit=45 → delay=9000ms
+             *   - 100 concurrent → overLimit=95 → delay=19000ms
              * 
-             * This creates a LINEAR degradation curve above the soft limit.
+             * Combined with baseline 500ms, total delays become significant quickly.
              */
             var overLimit = Math.Max(0, currentConcurrent - request.SoftLimit);
             var totalDegradationDelayMs = overLimit * request.DegradationFactor;
             
             _logger.LogDebug(
-                "Load test: Concurrent={Concurrent}, OverLimit={OverLimit}, DegradationDelay={Delay}ms",
-                currentConcurrent, overLimit, totalDegradationDelayMs);
+                "Load test: Concurrent={Concurrent}, OverLimit={OverLimit}, BaselineDelay={Baseline}ms, DegradationDelay={Delay}ms",
+                currentConcurrent, overLimit, request.BaselineDelayMs, totalDegradationDelayMs);
 
             /*
              * STEP 4: APPLY DEGRADATION DELAY (with exception checks)

@@ -877,21 +877,22 @@ procdump -ma -h w3wp.exe
             <h4>Option 1: GET with Query Parameters (Simplest)</h4>
             <p>Use this for URL-based quick tests — no JMeter script required:</p>
             <div class="code-block">
-<span class="comment"># With defaults</span>
+<span class="comment"># With defaults (maximum stress)</span>
 https://your-app.azurewebsites.net/api/loadtest/probe
 
-<span class="comment"># Faster degradation (recommended for testing)</span>
-https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=25&amp;degradationFactor=10
+<span class="comment"># Less aggressive (for lighter testing)</span>
+https://your-app.azurewebsites.net/api/loadtest/probe?baselineDelayMs=200&amp;softLimit=20&amp;degradationFactor=50
 
-<span class="comment"># Aggressive timeout testing</span>
-https://your-app.azurewebsites.net/api/loadtest/probe?softLimit=10&amp;degradationFactor=50
+<span class="comment"># No baseline blocking (degradation only)</span>
+https://your-app.azurewebsites.net/api/loadtest/probe?baselineDelayMs=0&amp;softLimit=50&amp;degradationFactor=20
             </div>
             <p><strong>Query Parameters:</strong></p>
             <ul>
                 <li><code>workIterations</code> - CPU work iterations (default: 1000)</li>
                 <li><code>bufferSizeKb</code> - Memory buffer in KB (default: 100)</li>
-                <li><code>softLimit</code> - Concurrent requests before degradation (default: 10)</li>
-                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 50)</li>
+                <li><code>baselineDelayMs</code> - Minimum blocking delay per request (default: 500)</li>
+                <li><code>softLimit</code> - Concurrent requests before degradation (default: 5)</li>
+                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 200)</li>
             </ul>
 
             <h4>Option 2: POST with JSON Body</h4>
@@ -901,8 +902,9 @@ POST https://your-app.azurewebsites.net/api/loadtest
 Content-Type: application/json
 
 {
-  "softLimit": 25,
-  "degradationFactor": 10
+  "baselineDelayMs": 200,
+  "softLimit": 20,
+  "degradationFactor": 50
 }
             </div>
 
@@ -953,6 +955,7 @@ GET /api/loadtest/stats
                 <thead>
                     <tr>
                         <th>Scenario</th>
+                        <th>baselineDelayMs</th>
                         <th>softLimit</th>
                         <th>degradationFactor</th>
                         <th>Notes</th>
@@ -960,34 +963,32 @@ GET /api/loadtest/stats
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Quick degradation testing</td>
+                        <td>Maximum stress (default)</td>
+                        <td>500</td>
                         <td>5</td>
-                        <td>100</td>
-                        <td>Degrades quickly with few requests</td>
+                        <td>200</td>
+                        <td>Default - guarantees thread exhaustion</td>
                     </tr>
                     <tr>
-                        <td>Aggressive (default)</td>
-                        <td>10</td>
+                        <td>Moderate stress</td>
+                        <td>200</td>
+                        <td>20</td>
                         <td>50</td>
-                        <td>Default - reaches high latency quickly</td>
+                        <td>Less aggressive, still shows degradation</td>
                     </tr>
                     <tr>
-                        <td>Moderate production simulation</td>
+                        <td>Light stress</td>
+                        <td>0</td>
                         <td>50</td>
-                        <td>10</td>
-                        <td>Gradual degradation curve</td>
+                        <td>20</td>
+                        <td>No baseline blocking, gradual curve</td>
                     </tr>
                     <tr>
                         <td>High-capacity testing</td>
-                        <td>200</td>
-                        <td>5</td>
+                        <td>100</td>
+                        <td>100</td>
+                        <td>10</td>
                         <td>Requires more load to see effects</td>
-                    </tr>
-                    <tr>
-                        <td>Timeout testing</td>
-                        <td>5</td>
-                        <td>200</td>
-                        <td>Reaches 230s timeout fastest</td>
                     </tr>
                 </tbody>
             </table>

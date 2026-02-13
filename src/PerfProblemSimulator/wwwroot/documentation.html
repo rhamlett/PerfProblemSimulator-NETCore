@@ -898,14 +898,14 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <h4>Option 1: GET with Query Parameters (Recommended for Azure Load Testing)</h4>
             <p>Use for URL-based quick tests in Azure Load Testing:</p>
             <div class="code-block">
-<span class="comment"># With defaults</span>
+<span class="comment"># With defaults (maximum stress - 500ms baseline blocking)</span>
 GET /api/loadtest/probe
 
-<span class="comment"># Faster degradation (recommended for testing)</span>
-GET /api/loadtest/probe?softLimit=25&amp;degradationFactor=10
+<span class="comment"># Less aggressive (for lighter testing)</span>
+GET /api/loadtest/probe?baselineDelayMs=200&amp;softLimit=20&amp;degradationFactor=50
 
-<span class="comment"># Aggressive timeout testing</span>
-GET /api/loadtest/probe?softLimit=10&amp;degradationFactor=50
+<span class="comment"># No baseline blocking (degradation only)</span>
+GET /api/loadtest/probe?baselineDelayMs=0&amp;softLimit=50&amp;degradationFactor=20
             </div>
 
             <h4>Option 2: POST with JSON Body</h4>
@@ -914,21 +914,23 @@ GET /api/loadtest/probe?softLimit=10&amp;degradationFactor=50
 {
   <span class="string">"workIterations"</span>: 1000,
   <span class="string">"bufferSizeKb"</span>: 100,
-  <span class="string">"softLimit"</span>: 10,
-  <span class="string">"degradationFactor"</span>: 50
+  <span class="string">"baselineDelayMs"</span>: 500,
+  <span class="string">"softLimit"</span>: 5,
+  <span class="string">"degradationFactor"</span>: 200
 }
             </div>
             <p><strong>Parameters:</strong></p>
             <ul>
                 <li><code>workIterations</code>: Number of SHA256 hash iterations for CPU work (default: 1000)</li>
                 <li><code>bufferSizeKb</code>: Memory buffer size in KB, released after request (default: 100)</li>
-                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 10)</li>
-                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 50)</li>
+                <li><code>baselineDelayMs</code>: Minimum blocking delay applied to every request (default: 500)</li>
+                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 5)</li>
+                <li><code>degradationFactor</code>: Milliseconds delay per request over soft limit (default: 200)</li>
             </ul>
             <p><strong>Behavior:</strong></p>
             <ul>
-                <li><strong>Low load:</strong> Fast baseline response time</li>
-                <li><strong>Above soft limit:</strong> Response time increases linearly (delay = (concurrent - softLimit) × degradationFactor)</li>
+                <li><strong>Every request:</strong> 500ms minimum blocking delay (thread pool exhaustion)</li>
+                <li><strong>Above soft limit:</strong> Additional delay = (concurrent - softLimit) × 200ms</li>
                 <li><strong>After 120 seconds:</strong> 20% chance of throwing a random exception per check interval</li>
                 <li><strong>Extreme load:</strong> Can reach Azure's 230-second timeout threshold</li>
             </ul>
