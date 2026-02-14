@@ -8,10 +8,110 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
         /* Azure Deployment Page Styles */
-        .deploy-container {
-            max-width: 1100px;
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .deploy-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
         }
 
         .deploy-header {
@@ -30,44 +130,13 @@
             font-size: 1.1rem;
         }
 
-        .deploy-nav {
-            background: var(--color-card);
-            border-radius: var(--radius-md);
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .deploy-nav ul {
-            list-style: none;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            justify-content: center;
-        }
-
-        .deploy-nav a {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: var(--color-bg);
-            border-radius: var(--radius-sm);
-            text-decoration: none;
-            color: var(--color-text);
-            font-size: 0.9rem;
-            transition: all var(--transition-fast);
-        }
-
-        .deploy-nav a:hover {
-            background: var(--color-primary);
-            color: white;
-        }
-
         .card {
             background: var(--color-card);
             border-radius: var(--radius-md);
             padding: 1.5rem 2rem;
             margin-bottom: 1.5rem;
             box-shadow: var(--shadow-sm);
+            scroll-margin-top: 80px;
         }
 
         .card h2 {
@@ -191,14 +260,48 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .deploy-container {
-                padding: 1rem;
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
             }
 
-            .deploy-nav ul {
-                flex-direction: column;
-                align-items: center;
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
             }
 
             table {
@@ -263,24 +366,13 @@
         </div>
     </aside>
 
-    <main class="deploy-container">
+    <div class="doc-layout">
+        <div class="doc-main">
+        <main class="deploy-container">
         <div class="deploy-header">
             <h1>🚀 Azure Deployment Guide</h1>
             <p>Deploy Performance Problem Simulator to Azure App Service using GitHub Actions with OIDC authentication</p>
         </div>
-
-        <nav class="deploy-nav">
-            <ul>
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#app-service">1. Create App Service</a></li>
-                <li><a href="#app-registration">2. App Registration</a></li>
-                <li><a href="#federated-credentials">3. Federated Credentials</a></li>
-                <li><a href="#permissions">4. Permissions</a></li>
-                <li><a href="#github-secrets">5. GitHub Secrets</a></li>
-                <li><a href="#deploy">6. Deploy</a></li>
-                <li><a href="#troubleshooting">Troubleshooting</a></li>
-            </ul>
-        </nav>
 
         <section id="overview" class="card">
             <h2>Overview</h2>
@@ -624,6 +716,47 @@ echo "AZURE_TENANT_ID=$TENANT_ID"
 echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
         </section>
     </main>
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">On This Page</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">📋</span>Overview</a>
+                        </li>
+                        <div class="doc-toc-divider"></div>
+                        <div class="doc-toc-section-label">Setup Steps</div>
+                        <li class="doc-toc-item">
+                            <a href="#app-service"><span class="toc-icon">1️⃣</span>Create App Service</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#app-registration"><span class="toc-icon">2️⃣</span>App Registration</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#federated-credentials"><span class="toc-icon">3️⃣</span>Federated Creds</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#permissions"><span class="toc-icon">4️⃣</span>Permissions</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#github-secrets"><span class="toc-icon">5️⃣</span>GitHub Secrets</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#deploy"><span class="toc-icon">6️⃣</span>Deploy</a>
+                        </li>
+                        <div class="doc-toc-divider"></div>
+                        <div class="doc-toc-section-label">Reference</div>
+                        <li class="doc-toc-item">
+                            <a href="#troubleshooting"><span class="toc-icon">🔧</span>Troubleshooting</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
 
     <footer class="footer">
         <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
@@ -657,6 +790,32 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeSidebar();
         });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.card');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (sectionId && scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
     </script>
 </body>
 </html>

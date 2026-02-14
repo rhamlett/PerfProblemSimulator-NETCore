@@ -8,41 +8,110 @@
     <link rel="stylesheet" href="css/dashboard.css">
     <style>
         /* Documentation-specific styles */
-        .doc-container {
-            max-width: 1000px;
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 2rem;
         }
 
-        .doc-nav {
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
             background: var(--color-card);
             border-radius: var(--radius-md);
             box-shadow: var(--shadow-sm);
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            padding: 1.25rem;
         }
 
-        .doc-nav ul {
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
             list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
             display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .doc-nav a {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-weight: 500;
-            padding: 0.25rem 0.5rem;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
             border-radius: var(--radius-sm);
-            transition: background var(--transition-fast);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
         }
 
-        .doc-nav a:hover {
-            background: rgba(0, 120, 212, 0.1);
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
         }
 
         .doc-section {
@@ -51,6 +120,7 @@
             box-shadow: var(--shadow-sm);
             padding: 2rem;
             margin-bottom: 2rem;
+            scroll-margin-top: 80px;
         }
 
         .doc-section h2 {
@@ -237,14 +307,48 @@
             font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .doc-container {
-                padding: 1rem;
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
             }
 
-            .doc-nav ul {
-                flex-direction: column;
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
                 gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
             }
 
             .api-table {
@@ -309,23 +413,9 @@
         </div>
     </aside>
 
-    <div class="doc-container">
-        <!-- Navigation -->
-        <nav class="doc-nav">
-            <ul>
-                <li><a href="#overview">Overview</a></li>
-                <li><a href="#quick-start">Quick Start</a></li>
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#latency">Latency Monitor</a></li>
-                <li><a href="#slowrequest">Slow Requests</a></li>
-                <li><a href="#crash">Crash Simulation</a></li>
-                <li><a href="#api">API Reference</a></li>
-                <li><a href="#configuration">Configuration</a></li>
-                <li><a href="#azure">Azure Deployment</a></li>
-                <li><a href="#architecture">Architecture</a></li>
-                <li><a href="#testing">Testing</a></li>
-            </ul>
-        </nav>
+    <div class="doc-layout">
+        <div class="doc-main">
+        <div class="doc-container">
 
         <!-- Overview Section -->
         <section id="overview" class="doc-section">
@@ -879,13 +969,8 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 <tbody>
                     <tr>
                         <td><code>/api/loadtest</code></td>
-                        <td><span class="method-badge method-get">GET</span> <span class="method-badge method-post">POST</span></td>
-                        <td>Execute load test probe (GET uses defaults, POST accepts JSON body)</td>
-                    </tr>
-                    <tr>
-                        <td><code>/api/loadtest/probe</code></td>
                         <td><span class="method-badge method-get">GET</span></td>
-                        <td>Execute load test probe with query parameters</td>
+                        <td>Execute load test with query parameters</td>
                     </tr>
                     <tr>
                         <td><code>/api/loadtest/stats</code></td>
@@ -895,37 +980,25 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 </tbody>
             </table>
 
-            <h4>Option 1: GET with Query Parameters (Recommended for Azure Load Testing)</h4>
-            <p>Use for URL-based quick tests in Azure Load Testing:</p>
+            <h4>GET with Query Parameters</h4>
+            <p>The load test endpoint uses query parameters for simplicity. Works with browsers, curl, and any load testing tool:</p>
             <div class="code-block">
-<span class="comment"># With defaults (maximum stress - 500ms baseline blocking)</span>
-GET /api/loadtest/probe
+<span class="comment"># With defaults (tuned for Premium0V3)</span>
+GET /api/loadtest
 
-<span class="comment"># Less aggressive (for lighter testing)</span>
-GET /api/loadtest/probe?baselineDelayMs=200&amp;softLimit=20&amp;degradationFactor=50
+<span class="comment"># Custom parameters</span>
+GET /api/loadtest?workIterations=500&amp;bufferSizeKb=10000&amp;softLimit=50
 
-<span class="comment"># No baseline blocking (degradation only)</span>
-GET /api/loadtest/probe?baselineDelayMs=0&amp;softLimit=50&amp;degradationFactor=20
-            </div>
-
-            <h4>Option 2: POST with JSON Body</h4>
-            <p>Use when you need a JMeter script or want to send a request body:</p>
-            <div class="code-block">
-{
-  <span class="string">"workIterations"</span>: 1000,
-  <span class="string">"bufferSizeKb"</span>: 100,
-  <span class="string">"baselineDelayMs"</span>: 500,
-  <span class="string">"softLimit"</span>: 5,
-  <span class="string">"degradationFactor"</span>: 200
-}
+<span class="comment"># Thread pool only (no CPU work)</span>
+GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
             </div>
             <p><strong>Parameters:</strong></p>
             <ul>
-                <li><code>workIterations</code>: SHA256 hash iterations per CPU work cycle (default: 1000). Controls CPU intensity.</li>
-                <li><code>bufferSizeKb</code>: Memory buffer held for entire request duration (default: 100). Creates sustained memory pressure.</li>
+                <li><code>workIterations</code>: SHA256 hash iterations per CPU work cycle (default: 200). Controls CPU intensity.</li>
+                <li><code>bufferSizeKb</code>: Memory buffer held for entire request duration (default: 20000). Creates sustained memory pressure.</li>
                 <li><code>baselineDelayMs</code>: Minimum request duration in milliseconds (default: 500). Combined with degradation delay.</li>
-                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 5)</li>
-                <li><code>degradationFactor</code>: Additional delay (ms) per request over soft limit (default: 200)</li>
+                <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 25)</li>
+                <li><code>degradationFactor</code>: Additional delay (ms) per request over soft limit (default: 500)</li>
             </ul>
             <p><strong>Behavior (Sustained Resource Consumption):</strong></p>
             <ul>
@@ -1093,29 +1166,70 @@ az webapp config appsettings set \
         └── <span class="file">dashboard.js</span></div>
         </section>
 
-        <!-- Testing Section -->
-        <section id="testing" class="doc-section">
-            <h2>🧪 Testing</h2>
-            <p>The project includes comprehensive unit and integration tests:</p>
+        <!-- Azure Load Testing Section -->
+        <section id="load-testing" class="doc-section">
+            <h2>📈 Azure Load Testing</h2>
+            <p>The Performance Problem Simulator includes a dedicated load testing endpoint designed for use with Azure Load Testing. This endpoint simulates realistic application behavior that degrades gracefully under load.</p>
+
+            <h3>Load Test Endpoint</h3>
+            <p>Use the <code>GET /api/loadtest</code> endpoint directly in Azure Load Testing — no JMeter script required:</p>
             <div class="code-block">
-<span class="comment"># Run all tests</span>
-dotnet test
+<span class="comment"># With defaults (tuned for Premium0V3)</span>
+https://your-app.azurewebsites.net/api/loadtest
 
-<span class="comment"># Run with verbose output</span>
-dotnet test --logger <span class="string">"console;verbosity=detailed"</span>
-
-<span class="comment"># Run specific test category</span>
-dotnet test --filter <span class="string">"Category=Unit"</span>
+<span class="comment"># Custom parameters</span>
+https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSizeKb=10000
             </div>
 
-            <h3>Contributing</h3>
-            <ol>
-                <li>Fork the repository</li>
-                <li>Create a feature branch (<code>git checkout -b feature/amazing-feature</code>)</li>
-                <li>Commit your changes (<code>git commit -m 'Add amazing feature'</code>)</li>
-                <li>Push to the branch (<code>git push origin feature/amazing-feature</code>)</li>
-                <li>Open a Pull Request</li>
-            </ol>
+            <h3>Query Parameters</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Default</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>workIterations</code></td>
+                        <td>200</td>
+                        <td>SHA256 iterations per CPU work cycle</td>
+                    </tr>
+                    <tr>
+                        <td><code>bufferSizeKb</code></td>
+                        <td>20000</td>
+                        <td>Memory buffer held for request duration (KB)</td>
+                    </tr>
+                    <tr>
+                        <td><code>baselineDelayMs</code></td>
+                        <td>500</td>
+                        <td>Minimum request duration (ms)</td>
+                    </tr>
+                    <tr>
+                        <td><code>softLimit</code></td>
+                        <td>25</td>
+                        <td>Concurrent requests before degradation</td>
+                    </tr>
+                    <tr>
+                        <td><code>degradationFactor</code></td>
+                        <td>500</td>
+                        <td>Delay ms added per request over limit</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>What It Tests</h3>
+            <ul>
+                <li><strong>CPU</strong> - Sustained SHA256 cycles (~50% CPU per thread)</li>
+                <li><strong>Memory</strong> - Buffers held for entire request duration</li>
+                <li><strong>Thread Pool</strong> - Graceful degradation under concurrent load</li>
+                <li><strong>Timeouts</strong> - Random exceptions after 120s (20% probability)</li>
+            </ul>
+
+            <div class="info-box" style="background: rgba(0, 120, 212, 0.1); border-left: 4px solid var(--color-primary); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+                <strong>📘 Full Documentation:</strong> See the <a href="/azure-monitoring-guide.html#load-testing">Azure Diagnostics Guide</a> for detailed setup instructions, tuning scenarios, and diagnostic techniques.
+            </div>
         </section>
 
         <!-- Footer -->
@@ -1123,7 +1237,57 @@ dotnet test --filter <span class="string">"Category=Unit"</span>
             <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
             <p>Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> in collaboration with <a href="mailto:rhamlett@microsoft.com">Richard Hamlett</a></p>
         </footer>
-    </div>
+        </div><!-- /.doc-container -->
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">On This Page</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">🎯</span>Overview</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#quick-start"><span class="toc-icon">🚀</span>Quick Start</a>
+                        </li>
+                        <div class="doc-toc-divider"></div>
+                        <div class="doc-toc-section-label">Features</div>
+                        <li class="doc-toc-item">
+                            <a href="#dashboard"><span class="toc-icon">🎮</span>Dashboard</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#latency"><span class="toc-icon">⏱️</span>Latency Monitor</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#slowrequest"><span class="toc-icon">🐌</span>Slow Requests</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#crash"><span class="toc-icon">💥</span>Crash Simulation</a>
+                        </li>
+                        <div class="doc-toc-divider"></div>
+                        <div class="doc-toc-section-label">Reference</div>
+                        <li class="doc-toc-item">
+                            <a href="#api"><span class="toc-icon">📡</span>API Reference</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#configuration"><span class="toc-icon">⚙️</span>Configuration</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#azure"><span class="toc-icon">☁️</span>Azure Deployment</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#architecture"><span class="toc-icon">🏗️</span>Architecture</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#load-testing"><span class="toc-icon">📈</span>Load Testing</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
 
     <script>
         // Sidebar drawer toggle
@@ -1152,6 +1316,32 @@ dotnet test --filter <span class="string">"Category=Unit"</span>
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeSidebar();
         });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.doc-section');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
     </script>
 </body>
 </html>

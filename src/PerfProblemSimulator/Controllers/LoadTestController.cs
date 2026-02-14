@@ -137,7 +137,7 @@ public class LoadTestController : ControllerBase
      * 3. Allows structured parameters in request body
      * 
      * ALTERNATIVE: GET with query parameters
-     * GET /api/loadtest?workIterations=1000&bufferSizeKb=100
+     * GET /api/loadtest?workIterations=200&bufferSizeKb=20000
      * 
      * URL PATTERN:
      * The [controller] token is replaced with "loadtest" (class name minus "Controller")
@@ -147,11 +147,11 @@ public class LoadTestController : ControllerBase
     /// <summary>
     /// Executes a load test request with configurable resource consumption.
     /// </summary>
-    /// <param name="workIterations">CPU work intensity (ms of spin per cycle = workIterations / 100). Default: 1000.</param>
-    /// <param name="bufferSizeKb">Memory buffer held for request duration in KB. Default: 100.</param>
+    /// <param name="workIterations">CPU work intensity (ms of spin per cycle = workIterations / 100). Default: 200.</param>
+    /// <param name="bufferSizeKb">Memory buffer held for request duration in KB. Default: 20000.</param>
     /// <param name="baselineDelayMs">Minimum request duration in ms. Default: 500.</param>
-    /// <param name="softLimit">Concurrent requests before degradation begins. Default: 5.</param>
-    /// <param name="degradationFactor">Additional delay (ms) per request over soft limit. Default: 200.</param>
+    /// <param name="softLimit">Concurrent requests before degradation begins. Default: 25.</param>
+    /// <param name="degradationFactor">Additional delay (ms) per request over soft limit. Default: 500.</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -215,11 +215,11 @@ public class LoadTestController : ControllerBase
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ExecuteLoadTest(
-        [FromQuery] int workIterations = 1000,
-        [FromQuery] int bufferSizeKb = 100,
+        [FromQuery] int workIterations = 200,
+        [FromQuery] int bufferSizeKb = 20000,
         [FromQuery] int baselineDelayMs = 500,
-        [FromQuery] int softLimit = 5,
-        [FromQuery] int degradationFactor = 200,
+        [FromQuery] int softLimit = 25,
+        [FromQuery] int degradationFactor = 500,
         CancellationToken cancellationToken = default)
     {
         /*

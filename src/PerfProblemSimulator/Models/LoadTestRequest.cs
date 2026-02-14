@@ -118,14 +118,14 @@ public class LoadTestRequest
     /// </list>
     /// </para>
     /// </remarks>
-    public int WorkIterations { get; set; } = 1000;
+    public int WorkIterations { get; set; } = 200;
 
     /// <summary>
     /// Size of memory buffer to allocate in kilobytes.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 100 KB</strong>
+    /// <strong>DEFAULT: 20000 KB (20 MB)</strong>
     /// </para>
     /// <para>
     /// This memory is allocated at the start of request processing and
@@ -136,14 +136,14 @@ public class LoadTestRequest
     /// memory allocation occurs and isn't optimized away.
     /// </para>
     /// </remarks>
-    public int BufferSizeKb { get; set; } = 100;
+    public int BufferSizeKb { get; set; } = 20000;
 
     /// <summary>
     /// Number of concurrent requests before degradation delays begin.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 5</strong>
+    /// <strong>DEFAULT: 25</strong>
     /// </para>
     /// <para>
     /// When concurrent requests exceed this limit, additional delay is
@@ -163,14 +163,14 @@ public class LoadTestRequest
     /// </list>
     /// </para>
     /// </remarks>
-    public int SoftLimit { get; set; } = 5;
+    public int SoftLimit { get; set; } = 25;
 
     /// <summary>
     /// Milliseconds of delay added per concurrent request over the soft limit.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// <strong>DEFAULT: 200 ms</strong>
+    /// <strong>DEFAULT: 500 ms</strong>
     /// </para>
     /// <para>
     /// <strong>DEGRADATION FORMULA:</strong>
@@ -195,7 +195,7 @@ public class LoadTestRequest
     /// So: 5 + 1147 = ~1152 concurrent requests to timeout
     /// </para>
     /// </remarks>
-    public int DegradationFactor { get; set; } = 200;
+    public int DegradationFactor { get; set; } = 500;
 
     /// <summary>
     /// Minimum blocking delay applied to every request in milliseconds.

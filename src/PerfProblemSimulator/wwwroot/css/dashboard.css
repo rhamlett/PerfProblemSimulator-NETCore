@@ -63,7 +63,9 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: var(--shadow-md);
-    position: relative;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 .header h1 {
