@@ -41,6 +41,8 @@ tags:
     description: Memory pressure simulation endpoints
   - name: ThreadPool
     description: Thread pool starvation simulation endpoints
+  - name: LoadTest
+    description: Azure Load Testing integration endpoint
   - name: Metrics
     description: Application metrics and health endpoints
   - name: Control
@@ -317,6 +319,91 @@ paths:
                     type: string
                     format: date-time
 
+  /api/loadtest:
+    get:
+      tags:
+        - LoadTest
+      summary: Execute load test request
+      description: |
+        Endpoint designed for Azure Load Testing. Simulates realistic application
+        behavior that degrades gracefully under concurrent load.
+        
+        **Behavior:**
+        - Performs sustained CPU work (SHA256 hash iterations)
+        - Holds memory buffer for entire request duration
+        - Applies degradation delay when concurrent requests exceed soft limit
+        - Throws random exceptions after 120 seconds (20% probability)
+        
+        **Use Cases:**
+        - Azure Load Testing URL-based tests (no JMeter script required)
+        - Performance baseline establishment
+        - Thread pool exhaustion testing
+      operationId: executeLoadTest
+      parameters:
+        - name: workIterations
+          in: query
+          description: SHA256 iterations per CPU work cycle. Controls sustained CPU usage.
+          schema:
+            type: integer
+            default: 200
+            minimum: 0
+        - name: bufferSizeKb
+          in: query
+          description: Memory buffer held for entire request duration (KB).
+          schema:
+            type: integer
+            default: 20000
+            minimum: 0
+        - name: baselineDelayMs
+          in: query
+          description: Minimum request duration in milliseconds.
+          schema:
+            type: integer
+            default: 500
+            minimum: 0
+        - name: softLimit
+          in: query
+          description: Concurrent requests before degradation begins.
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+        - name: degradationFactor
+          in: query
+          description: Delay milliseconds added per request over soft limit.
+          schema:
+            type: integer
+            default: 500
+            minimum: 0
+      responses:
+        '200':
+          description: Load test request completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadTestResult'
+        '500':
+          description: Random exception thrown (expected after 120s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadTestResult'
+
+  /api/loadtest/stats:
+    get:
+      tags:
+        - LoadTest
+      summary: Get load test statistics
+      description: Returns current load test statistics including concurrent requests and totals.
+      operationId: getLoadTestStats
+      responses:
+        '200':
+          description: Load test statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoadTestStats'
+
 components:
   schemas:
     CpuStressRequest:
@@ -547,3 +634,70 @@ components:
         timestamp:
           type: string
           format: date-time
+
+    LoadTestResult:
+      type: object
+      required:
+        - elapsedMs
+        - concurrentRequestsAtStart
+        - degradationDelayAppliedMs
+        - workIterationsCompleted
+        - memoryAllocatedBytes
+        - workCompleted
+        - exceptionThrown
+        - timestamp
+      properties:
+        elapsedMs:
+          type: integer
+          format: int64
+          description: Total request duration in milliseconds
+        concurrentRequestsAtStart:
+          type: integer
+          description: Number of concurrent requests when this request started
+        degradationDelayAppliedMs:
+          type: integer
+          description: Additional delay applied due to exceeding soft limit
+        workIterationsCompleted:
+          type: integer
+          description: SHA256 iterations completed
+        memoryAllocatedBytes:
+          type: integer
+          format: int64
+          description: Memory buffer size allocated
+        workCompleted:
+          type: boolean
+          description: Whether all work completed successfully
+        exceptionThrown:
+          type: boolean
+          description: Whether a random exception was thrown
+        exceptionType:
+          type: string
+          nullable: true
+          description: Exception type if thrown
+        timestamp:
+          type: string
+          format: date-time
+
+    LoadTestStats:
+      type: object
+      required:
+        - currentConcurrentRequests
+        - totalRequestsProcessed
+        - totalExceptionsThrown
+        - averageResponseTimeMs
+      properties:
+        currentConcurrentRequests:
+          type: integer
+          description: Current number of in-flight requests
+        totalRequestsProcessed:
+          type: integer
+          format: int64
+          description: Total requests processed since startup
+        totalExceptionsThrown:
+          type: integer
+          format: int64
+          description: Total random exceptions thrown
+        averageResponseTimeMs:
+          type: number
+          format: double
+          description: Average response time in milliseconds

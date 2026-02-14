@@ -187,6 +187,41 @@ The slow request simulator generates requests using three different sync-over-as
 |----------|--------|-------------|
 | `/api/admin/stats` | GET | Get current simulation statistics |
 
+### Azure Load Testing Endpoint
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/loadtest` | GET | Execute load test with configurable parameters |
+| `/api/loadtest/stats` | GET | Get load test statistics |
+
+**Query Parameters:**
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `workIterations` | 200 | SHA256 iterations per CPU work cycle |
+| `bufferSizeKb` | 20000 | Memory buffer held for request duration (KB) |
+| `baselineDelayMs` | 500 | Minimum request duration (ms) |
+| `softLimit` | 25 | Concurrent requests before degradation |
+| `degradationFactor` | 500 | Delay ms added per request over limit |
+
+**Example URLs:**
+```bash
+# Default parameters (tuned for Premium0V3)
+GET /api/loadtest
+
+# Custom CPU stress
+GET /api/loadtest?workIterations=10000&bufferSizeKb=2000
+
+# Thread pool only (no CPU work)
+GET /api/loadtest?workIterations=0&bufferSizeKb=100
+```
+
+**What it tests:**
+- **CPU** - Sustained SHA256 cycles (~50% CPU per thread)
+- **Memory** - Buffers held for entire request duration
+- **Thread Pool** - Graceful degradation under concurrent load
+- **Timeouts** - Random exceptions after 120s (20% probability)
+
 ## ⏱️ Request Latency Monitor
 
 The dashboard includes a **Request Latency Monitor** that demonstrates how thread pool starvation affects real-world request processing.
@@ -287,7 +322,7 @@ This application is designed to work with Azure App Service diagnostics:
 4. **CPU Profiling** - Capture and analyze CPU traces
 5. **Memory Dumps** - Analyze memory allocations
 
-See [Azure Monitoring Guide](./docs/azure-monitoring-guide.md) for detailed instructions.
+See the [Azure Diagnostics Guide](/azure-monitoring-guide.html) in the application for detailed instructions on diagnosing each type of performance problem.
 
 ## 📐 Architecture
 
@@ -298,6 +333,7 @@ src/PerfProblemSimulator/
 │   ├── CpuController.cs
 │   ├── CrashController.cs
 │   ├── HealthController.cs
+│   ├── LoadTestController.cs
 │   ├── MemoryController.cs
 │   ├── MetricsController.cs
 │   ├── SlowRequestController.cs
@@ -306,6 +342,7 @@ src/PerfProblemSimulator/
 │   ├── CpuStressService.cs
 │   ├── CrashService.cs
 │   ├── LatencyProbeService.cs
+│   ├── LoadTestService.cs
 │   ├── MemoryPressureService.cs
 │   ├── MetricsBroadcastService.cs
 │   ├── MetricsCollector.cs
@@ -322,6 +359,7 @@ src/PerfProblemSimulator/
     ├── index.html
     ├── documentation.html
     ├── azure-monitoring-guide.html
+    ├── azure-deployment.html
     ├── css/dashboard.css
     └── js/dashboard.js
 ```

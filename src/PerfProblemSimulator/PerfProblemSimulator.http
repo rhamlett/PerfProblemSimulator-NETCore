@@ -1,6 +1,98 @@
 @PerfProblemSimulator_HostAddress = http://localhost:5221
 
-GET {{PerfProblemSimulator_HostAddress}}/weatherforecast/
+### =============================================================================
+### LOAD TEST ENDPOINT - For Azure Load Testing
+### =============================================================================
+
+### Load Test - Default parameters (tuned for Premium0V3)
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest
 Accept: application/json
+
+###
+
+### Load Test - Custom CPU work (high CPU stress)
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest?workIterations=10000&bufferSizeKb=2000&baselineDelayMs=0&softLimit=500&degradationFactor=25
+Accept: application/json
+
+###
+
+### Load Test - Memory pressure scenario
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest?workIterations=20&bufferSizeKb=100000&baselineDelayMs=100&softLimit=100&degradationFactor=125
+Accept: application/json
+
+###
+
+### Load Test - Thread pool only (no CPU work)
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest?workIterations=0&bufferSizeKb=2000&baselineDelayMs=500&softLimit=25&degradationFactor=500
+Accept: application/json
+
+###
+
+### Load Test - High concurrency scenario
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest?workIterations=100&bufferSizeKb=10000&baselineDelayMs=200&softLimit=250&degradationFactor=50
+Accept: application/json
+
+###
+
+### Load Test Statistics
+GET {{PerfProblemSimulator_HostAddress}}/api/loadtest/stats
+Accept: application/json
+
+###
+
+### =============================================================================
+### HEALTH & METRICS
+### =============================================================================
+
+### Health Check
+GET {{PerfProblemSimulator_HostAddress}}/api/health
+Accept: application/json
+
+###
+
+### Get All Metrics
+GET {{PerfProblemSimulator_HostAddress}}/api/metrics
+Accept: application/json
+
+###
+
+### =============================================================================
+### SIMULATION CONTROLS
+### =============================================================================
+
+### Trigger High CPU (10 seconds)
+POST {{PerfProblemSimulator_HostAddress}}/api/cpu/trigger
+Content-Type: application/json
+
+{
+    "durationSeconds": 10
+}
+
+###
+
+### Allocate Memory (512 MB)
+POST {{PerfProblemSimulator_HostAddress}}/api/memory/allocate
+Content-Type: application/json
+
+{
+    "sizeMegabytes": 512
+}
+
+###
+
+### Release Memory
+POST {{PerfProblemSimulator_HostAddress}}/api/memory/release
+Accept: application/json
+
+###
+
+### Block Threads
+POST {{PerfProblemSimulator_HostAddress}}/api/threadblock/trigger
+Content-Type: application/json
+
+{
+    "delaySeconds": 10,
+    "concurrentCount": 100
+}
 
 ###
