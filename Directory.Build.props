@@ -7,7 +7,10 @@
 
   <PropertyGroup>
     <!-- Multi-target .NET 8.0 and .NET 10.0 for diagnostics compatibility -->
+    <!-- .NET 8 disabled - uncomment to re-enable dual targeting:
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
 
     <!-- Enable nullable reference types for defensive programming (Constitution Principle IV) -->
     <Nullable>enable</Nullable>
