@@ -13,7 +13,7 @@
     --color-danger: #d13438;
     --color-secondary: #6c757d;
     
-    --color-bg: #f3f2f1;
+    --color-bg: #e8f1f8;
     --color-card: #ffffff;
     --color-text: #323130;
     --color-text-muted: #605e5c;
@@ -23,9 +23,11 @@
     --color-threads: #8764b8;
     --color-queue: #ffb900;
     
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
-    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
-    --shadow-lg: 0 10px 20px rgba(0,0,0,0.15);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.15);
+    --shadow-md: 0 6px 12px rgba(0,0,0,0.18);
+    --shadow-lg: 0 12px 24px rgba(0,0,0,0.2);
+    
+    --border-card: 1px solid #d0d0d0;
     
     --radius-sm: 4px;
     --radius-md: 8px;
@@ -349,6 +351,7 @@ body {
     flex-direction: column;
     gap: 0.5rem;
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    border: var(--border-card);
     border-left: 4px solid transparent;
 }
 
@@ -437,6 +440,7 @@ body {
     border-radius: var(--radius-md);
     padding: 1rem;
     box-shadow: var(--shadow-sm);
+    border: var(--border-card);
 }
 
 .chart-container h3 {
@@ -458,6 +462,7 @@ body {
     border-radius: var(--radius-md);
     padding: 1rem;
     box-shadow: var(--shadow-sm);
+    border: var(--border-card);
 }
 
 .controls-section h2 {
@@ -939,6 +944,7 @@ body {
     border-radius: var(--radius-md);
     padding: 1rem;
     box-shadow: var(--shadow-sm);
+    border: var(--border-card);
 }
 
 .latency-section h2 {
@@ -969,7 +975,7 @@ body {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
-    border: 2px solid transparent;
+    border: 2px solid var(--color-primary);
     transition: border-color var(--transition-fast);
 }
 
