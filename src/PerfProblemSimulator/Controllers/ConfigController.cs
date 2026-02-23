@@ -67,7 +67,6 @@ public class ConfigController : ControllerBase
         
         return Ok(new ClientConfig
         {
-            AppTitle = _options.AppTitle,
             PageFooter = pageFooter
         });
     }
@@ -78,11 +77,6 @@ public class ConfigController : ControllerBase
 /// </summary>
 public class ClientConfig
 {
-    /// <summary>
-    /// The title displayed in the dashboard header.
-    /// </summary>
-    public required string AppTitle { get; init; }
-
     /// <summary>
     /// Custom HTML content for the page footer. Empty string if not configured.
     /// </summary>

@@ -12,18 +12,11 @@ namespace PerfProblemSimulator.Models;
 /// <para>
 /// <strong>CONFIGURATION SOURCES (in priority order):</strong>
 /// <list type="number">
-/// <item>Environment variables (highest priority, e.g., ProblemSimulator__AppTitle)</item>
+/// <item>Environment variables (highest priority)</item>
 /// <item>appsettings.{Environment}.json (Development, Production)</item>
 /// <item>appsettings.json (base settings)</item>
 /// <item>Default values in this class (lowest priority)</item>
 /// </list>
-/// </para>
-/// <para>
-/// <strong>AZURE APP SERVICE CONFIGURATION:</strong>
-/// In Azure Portal > App Service > Configuration > Application settings:
-/// - Name: ProblemSimulator__AppTitle
-/// - Value: "My Custom Title"
-/// The double underscore (__) translates to colon (:) for nested JSON properties.
 /// </para>
 /// <para>
 /// <strong>PORTING TO OTHER LANGUAGES:</strong>
@@ -50,13 +43,4 @@ public class ProblemSimulatorOptions
     /// dashboard updates but consumes more resources.
     /// </remarks>
     public int MetricsCollectionIntervalMs { get; set; } = 1000;
-
-    /// <summary>
-    /// The title displayed in the dashboard header.
-    /// </summary>
-    /// <remarks>
-    /// Can be overridden via Azure App Service configuration using
-    /// the environment variable: ProblemSimulator__AppTitle
-    /// </remarks>
-    public string AppTitle { get; set; } = "Performance Problem Simulator";
 }

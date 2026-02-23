@@ -1304,20 +1304,13 @@ async function fetchBuildInfo() {
 
 /**
  * Fetches app configuration and updates the UI.
- * The AppTitle can be set via Azure App Service environment variable:
- * ProblemSimulator__AppTitle
- * The PageFooter can be set via: PAGE_FOOTER
+ * The PageFooter can be set via Azure App Service environment variable: PAGE_FOOTER
  */
 async function fetchAppConfig() {
     try {
         const response = await fetch(`${CONFIG.apiBaseUrl}/config`);
         if (response.ok) {
             const config = await response.json();
-            const titleElement = document.getElementById('appTitle');
-            if (titleElement && config.appTitle) {
-                titleElement.textContent = `🔥 ${config.appTitle}`;
-                document.title = `${config.appTitle} - Dashboard`;
-            }
             
             // Update page footer if configured
             const footerElement = document.getElementById('pageFooterContent');
