@@ -84,7 +84,7 @@ public class CpuStressService : ICpuStressService
     }
 
     /// <inheritdoc />
-    public Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken, int targetPercentage = 100)
+    public Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken, string level = "high")
     {
         // ==========================================================================
         // STEP 1: Validate the duration (no upper limits - app is meant to break)
@@ -93,7 +93,12 @@ public class CpuStressService : ICpuStressService
             ? DefaultDurationSeconds
             : durationSeconds;
 
-        var actualPercentage = Math.Clamp(targetPercentage, 1, 100);
+        // Normalize level to lowercase and default to "high" if invalid
+        var normalizedLevel = (level?.ToLowerInvariant()) switch
+        {
+            "moderate" => "moderate",
+            _ => "high"
+        };
 
         var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;
@@ -111,17 +116,17 @@ public class CpuStressService : ICpuStressService
         {
             ["DurationSeconds"] = actualDuration,
             ["ProcessorCount"] = processorCount,
-            ["TargetPercentage"] = actualPercentage
+            ["Level"] = normalizedLevel
         };
 
         // Register this simulation with the tracker
         _simulationTracker.RegisterSimulation(simulationId, SimulationType.Cpu, parameters, cts);
 
         _logger.LogInformation(
-            "Starting CPU stress simulation {SimulationId}: {Duration}s @ {Percentage}% across {ProcessorCount} cores",
+            "Starting CPU stress simulation {SimulationId}: {Duration}s @ {Level} across {ProcessorCount} cores",
             simulationId,
             actualDuration,
-            actualPercentage,
+            normalizedLevel,
             processorCount);
 
         // ==========================================================================
@@ -132,7 +137,7 @@ public class CpuStressService : ICpuStressService
         // This is important because the caller (HTTP request) shouldn't be blocked
         // waiting for the entire duration.
 
-        _ = Task.Run(() => ExecuteCpuStress(simulationId, actualDuration, actualPercentage, cts.Token), cts.Token);
+        _ = Task.Run(() => ExecuteCpuStress(simulationId, actualDuration, normalizedLevel, cts.Token), cts.Token);
 
         // ==========================================================================
         // STEP 4: Return the result immediately
@@ -145,7 +150,7 @@ public class CpuStressService : ICpuStressService
             SimulationId = simulationId,
             Type = SimulationType.Cpu,
             Status = "Started",
-            Message = $"CPU stress started on {processorCount} cores for {actualDuration} seconds at {actualPercentage}%. " +
+            Message = $"CPU stress started on {processorCount} cores for {actualDuration} seconds ({normalizedLevel} intensity). " +
                       "Observe CPU metrics in Task Manager, dotnet-counters, or Application Insights. " +
                       "High CPU like this is typically caused by spin loops, inefficient algorithms, or infinite loops.",
             ActualParameters = parameters,
@@ -165,8 +170,8 @@ public class CpuStressService : ICpuStressService
     /// </para>
     /// <para>
     /// This method uses dedicated threads with spin loops to consume available CPU.
-    /// If targetPercentage is 100, it runs a tight loop.
-    /// If targetPercentage is less than 100, it uses a duty cycle (work/sleep) to simulate load.
+    /// For "high" level, it runs a tight loop for ~100% usage.
+    /// For "moderate" level, it uses a duty cycle (work/sleep) to simulate ~65% load.
     /// </para>
     /// <para>
     /// <strong>Why Dedicated Threads Instead of Parallel.For?</strong>
@@ -175,8 +180,11 @@ public class CpuStressService : ICpuStressService
     /// thread pool remains available for the dashboard and metrics collection.
     /// </para>
     /// </remarks>
-    private void ExecuteCpuStress(Guid simulationId, int durationSeconds, int targetPercentage, CancellationToken cancellationToken)
+    private void ExecuteCpuStress(Guid simulationId, int durationSeconds, string level, CancellationToken cancellationToken)
     {
+        // Convert level to internal percentage: moderate = 65%, high = 100%
+        var targetPercentage = level == "moderate" ? 65 : 100;
+        
         try
         {
             // Calculate the end time using Stopwatch for high precision

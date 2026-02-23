@@ -26,8 +26,8 @@ public interface ICpuStressService
     /// <param name="cancellationToken">
     /// Token to request early cancellation of the stress operation.
     /// </param>
-    /// <param name="targetPercentage">
-    /// Target CPU usage percentage (1-100). Default is 100.
+    /// <param name="level">
+    /// Intensity level: "moderate" (~65% CPU) or "high" (~100% CPU). Default is "high".
     /// </param>
     /// <returns>
     /// A result containing the simulation ID, actual parameters used, and timing information.
@@ -43,8 +43,9 @@ public interface ICpuStressService
     /// <list type="bullet">
     /// <item><term>DurationSeconds</term><description>Actual duration used (may be capped)</description></item>
     /// <item><term>ProcessorCount</term><description>Number of cores being stressed</description></item>
+    /// <item><term>Level</term><description>The intensity level used</description></item>
     /// </list>
     /// </para>
     /// </remarks>
-    Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken, int targetPercentage = 100);
+    Task<SimulationResult> TriggerCpuStressAsync(int durationSeconds, CancellationToken cancellationToken, string level = "high");
 }

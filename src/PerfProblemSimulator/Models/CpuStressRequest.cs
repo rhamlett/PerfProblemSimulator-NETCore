@@ -28,23 +28,19 @@ public class CpuStressRequest
     /// Default: 30 seconds. This is enough time to observe CPU metrics spike
     /// in monitoring tools like Task Manager, dotnet-counters, or Application Insights.
     /// </para>
-    /// <para>
-    /// Values exceeding the configured maximum (default: 300 seconds) will be
-    /// automatically capped to prevent runaway CPU consumption.
-    /// </para>
     /// </remarks>
     [Range(1, int.MaxValue, ErrorMessage = "Duration must be at least 1 second")]
     public int DurationSeconds { get; set; } = 30;
 
     /// <summary>
-    /// The target CPU usage percentage (1-100).
+    /// The intensity level: "moderate" (~65% CPU) or "high" (~100% CPU).
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Default: 100%. Lower values use a duty cycle (work/sleep) to simulate
-    /// partial CPU load.
+    /// Default: "high". 
+    /// - Moderate: Uses duty cycling to target approximately 65% CPU usage
+    /// - High: Full spin loops for maximum CPU consumption
     /// </para>
     /// </remarks>
-    [Range(1, 100, ErrorMessage = "Target percentage must be between 1 and 100")]
-    public int TargetPercentage { get; set; } = 100;
+    public string Level { get; set; } = "high";
 }

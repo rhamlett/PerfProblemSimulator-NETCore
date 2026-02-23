@@ -269,11 +269,11 @@ function initializeCharts() {
                     borderColor: '#0078d4',
                     backgroundColor: 'rgba(0, 120, 212, 0.1)',
                     tension: 0.3,
-                    fill: true,
+                    fill: 'origin',
                     yAxisID: 'y',
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    borderWidth: 2
+                    borderWidth: 1
                 },
                 {
                     label: 'Memory MB',
@@ -281,11 +281,11 @@ function initializeCharts() {
                     borderColor: '#107c10',
                     backgroundColor: 'rgba(16, 124, 16, 0.1)',
                     tension: 0.3,
-                    fill: true,
+                    fill: 'origin',
                     yAxisID: 'y1',
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    borderWidth: 2
+                    borderWidth: 1
                 }
             ]
         },
@@ -341,25 +341,25 @@ function initializeCharts() {
                     label: 'Active Threads',
                     data: [],
                     borderColor: '#8764b8',
-                    backgroundColor: 'rgba(135, 100, 184, 0.1)',
+                    backgroundColor: 'rgba(135, 100, 184, 0.3)',
                     tension: 0.3,
-                    fill: true,
+                    fill: 'origin',
                     yAxisID: 'y',
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    borderWidth: 2
+                    borderWidth: 1
                 },
                 {
                     label: 'Queue Length',
                     data: [],
                     borderColor: '#ffb900',
-                    backgroundColor: 'rgba(255, 185, 0, 0.1)',
+                    backgroundColor: 'rgba(255, 185, 0, 0.3)',
                     tension: 0.3,
-                    fill: true,
+                    fill: 'origin',
                     yAxisID: 'y1',
                     pointRadius: 0,
                     pointHoverRadius: 0,
-                    borderWidth: 2
+                    borderWidth: 1
                 }
             ]
         },
@@ -416,10 +416,10 @@ function initializeCharts() {
                     borderColor: '#0078d4',
                     backgroundColor: 'rgba(0, 120, 212, 0.1)',
                     tension: 0.2,
-                    fill: true,
+                    fill: 'origin',
                     pointRadius: 0, // Hide points for performance with many data points
                     pointHoverRadius: 0, // Disable hover circles to prevent visual artifacts
-                    borderWidth: 1.5
+                    borderWidth: 1
                 }
             ]
         },
@@ -814,23 +814,24 @@ function stopClientProbe() {
 // ==========================================================================
 
 async function triggerCpuStress() {
-    const duration = parseInt(document.getElementById('cpuDuration').value) || 10;
-    const target = parseInt(document.getElementById('cpuTarget').value) || 100;
+    const duration = parseInt(document.getElementById('cpuDuration').value) || 30;
+    const level = document.getElementById('cpuLevel').value || 'high';
     
     try {
-        logEvent('info', `Triggering CPU stress for ${duration} seconds @ ${target}%...`);
+        logEvent('info', `Triggering CPU stress for ${duration} seconds (${level})...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/trigger-high-cpu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 durationSeconds: duration,
-                targetPercentage: target
+                level: level
             })
         });
         
         if (response.ok) {
             const result = await response.json();
-            addActiveSimulation(result.simulationId, 'cpu', `CPU Stress (${target}%)`);
+            const displayLevel = level.charAt(0).toUpperCase() + level.slice(1);
+            addActiveSimulation(result.simulationId, 'cpu', `CPU Stress (${displayLevel})`);
             logEvent('success', `CPU stress started: ${result.simulationId}`);
         } else {
             const error = await response.json();

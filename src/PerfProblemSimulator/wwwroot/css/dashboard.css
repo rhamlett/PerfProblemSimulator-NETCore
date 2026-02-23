@@ -553,22 +553,13 @@ body {
 }
 
 .btn-danger {
-    background: var(--color-danger);
-    color: white;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background: #a52a2d;
-}
-
-.btn-crash {
     background: linear-gradient(135deg, #8b0000 0%, #4a0000 100%);
     color: white;
     border: 2px solid #ff0000;
     animation: pulse-danger 2s infinite;
 }
 
-.btn-crash:hover:not(:disabled) {
+.btn-danger:hover:not(:disabled) {
     background: linear-gradient(135deg, #a00000 0%, #600000 100%);
     border-color: #ff4444;
 }
@@ -576,6 +567,84 @@ body {
 @keyframes pulse-danger {
     0%, 100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.3); }
     50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.6); }
+}
+
+/* --------------------------------------------------------------------------
+   Button Groups & Trigger Buttons (PHP-style)
+   -------------------------------------------------------------------------- */
+.btn-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.btn-trigger {
+    color: white;
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+}
+
+.btn-cpu {
+    background: var(--color-cpu);
+}
+
+.btn-cpu:hover:not(:disabled) {
+    background: var(--color-primary-dark);
+}
+
+.btn-memory {
+    background: var(--color-success);
+    flex: 1;
+}
+
+.btn-memory:hover:not(:disabled) {
+    background: #0b5e0b;
+}
+
+.btn-release {
+    background: var(--color-secondary);
+    color: white;
+    flex: 1;
+}
+
+.btn-release:hover:not(:disabled) {
+    background: #5a6268;
+}
+
+.btn-threadblock {
+    background: var(--color-threads);
+}
+
+.btn-threadblock:hover:not(:disabled) {
+    background: #5c2d91;
+}
+
+.btn-stop {
+    background: #d13438 !important;
+    color: white !important;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    flex: 0 0 auto;
+    border: none;
+    box-shadow: 0 0 0 3px white;
+}
+
+.btn-stop:hover:not(:disabled) {
+    background: #a52a2d !important;
+}
+
+.btn-crash {
+    background: linear-gradient(135deg, #8b0000 0%, #4a0000 100%);
+    color: white;
+    border: 2px solid #ff0000;
+    animation: pulse-danger 2s infinite;
+    width: 100%;
+}
+
+.btn-crash:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a00000 0%, #600000 100%);
+    border-color: #ff4444;
 }
 
 .cpu-group {
@@ -611,6 +680,7 @@ body {
     color: white;
     border: 2px solid #ffa500;
     animation: pulse-slow 3s infinite;
+    flex: 1;
 }
 
 .btn-slowrequest:hover:not(:disabled) {
