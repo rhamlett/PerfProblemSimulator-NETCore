@@ -19,7 +19,7 @@ public class ConfigController : ControllerBase
 
     public ConfigController(IOptions<ProblemSimulatorOptions> options)
     {
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+        _options = options.Value;
     }
 
     /// <summary>
@@ -31,10 +31,13 @@ public class ConfigController : ControllerBase
     [ProducesResponseType(typeof(ClientConfig), StatusCodes.Status200OK)]
     public ActionResult<ClientConfig> GetConfig()
     {
+        // PAGE_FOOTER is read directly from environment variable
+        var pageFooter = Environment.GetEnvironmentVariable("PAGE_FOOTER") ?? "";
+        
         return Ok(new ClientConfig
         {
             AppTitle = _options.AppTitle,
-            PageFooter = _options.PageFooter
+            PageFooter = pageFooter
         });
     }
 }

@@ -1236,6 +1236,7 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
         <footer class="footer">
             <p>Performance Problem Simulator — Educational Tool for Azure App Service Diagnostics</p>
             <p id="pageFooterContent"></p>
+            <p>Build: <span id="buildTime">--</span></p>
         </footer>
         </div><!-- /.doc-container -->
         </div><!-- /.doc-main -->
@@ -1290,8 +1291,9 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
     </div><!-- /.doc-layout -->
 
     <script>
-        // Fetch and display custom page footer
+        // Fetch and display custom page footer and build info
         (async function() {
+            // Fetch app config for footer
             try {
                 const response = await fetch('/api/config');
                 if (response.ok) {
@@ -1307,6 +1309,20 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
                 }
             } catch (e) {
                 console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
             }
         })();
     </script>

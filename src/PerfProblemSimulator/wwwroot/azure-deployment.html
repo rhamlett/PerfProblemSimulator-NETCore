@@ -652,7 +652,7 @@ git push origin main</code></pre>
                     <th style="padding: 0.75rem; text-align: left; border: 1px solid #ddd;">Description</th>
                 </tr>
                 <tr>
-                    <td style="padding: 0.75rem; border: 1px solid #ddd;"><code>ProblemSimulator__PageFooter</code></td>
+                    <td style="padding: 0.75rem; border: 1px solid #ddd;"><code>PAGE_FOOTER</code></td>
                     <td style="padding: 0.75rem; border: 1px solid #ddd;">HTML content for the footer's second line. If not set, only the app description and build info are shown.</td>
                 </tr>
             </table>
@@ -663,14 +663,14 @@ git push origin main</code></pre>
             <h4>Setting via Azure CLI</h4>
             <pre><code># Set the footer via Azure CLI
 az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
-  --settings 'ProblemSimulator__PageFooter=Created by &lt;a href="https://speckit.org/"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot"&gt;Github Copilot&lt;/a&gt; in collaboration with &lt;a href="mailto:rhamlett@microsoft.com"&gt;Richard Hamlett&lt;/a&gt;'</code></pre>
+  --settings 'PAGE_FOOTER=Created by &lt;a href="https://speckit.org/"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot"&gt;Github Copilot&lt;/a&gt; in collaboration with &lt;a href="mailto:rhamlett@microsoft.com"&gt;Richard Hamlett&lt;/a&gt;'</code></pre>
 
             <h4>Setting via Azure Portal</h4>
             <ol>
                 <li>Navigate to your App Service in the Azure Portal</li>
                 <li>Go to <strong>Settings</strong> → <strong>Environment variables</strong></li>
                 <li>Click <strong>+ Add</strong></li>
-                <li>Set Name: <code>ProblemSimulator__PageFooter</code></li>
+                <li>Set Name: <code>PAGE_FOOTER</code></li>
                 <li>Set Value: Your HTML footer content</li>
                 <li>Click <strong>Apply</strong>, then <strong>Confirm</strong></li>
             </ol>
@@ -815,11 +815,13 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
     <footer class="footer">
         <p>Performance Problem Simulator — Educational Tool for Azure App Service Diagnostics</p>
         <p id="pageFooterContent"></p>
+        <p>Build: <span id="buildTime">--</span></p>
     </footer>
 
     <script>
-        // Fetch and display custom page footer
+        // Fetch and display custom page footer and build info
         (async function() {
+            // Fetch app config for footer
             try {
                 const response = await fetch('/api/config');
                 if (response.ok) {
@@ -835,6 +837,20 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
                 }
             } catch (e) {
                 console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
             }
         })();
     </script>

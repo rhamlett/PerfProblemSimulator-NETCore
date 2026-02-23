@@ -519,11 +519,6 @@ function handleLatencyUpdate(measurement) {
         logEvent('warning', `⚠️ High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
     }
     
-    // Debug log for console
-    if (measurement.isError || measurement.isTimeout || measurement.latencyMs > 500) {
-        console.log('Latency update:', measurement);
-    }
-    
     const timestamp = new Date(measurement.timestamp);
     const latencyMs = measurement.latencyMs;
     const isTimeout = measurement.isTimeout;
@@ -539,8 +534,6 @@ function handleLatencyUpdate(measurement) {
  * This shows the actual duration of slow requests (20+ seconds).
  */
 function handleSlowRequestLatency(data) {
-    console.log('🐌 Slow request latency:', data);
-    
     const timestamp = new Date(data.timestamp);
     const latencyMs = data.latencyMs;
     const scenario = data.scenario;
@@ -598,8 +591,6 @@ function handleSlowRequestLatency(data) {
  * Broadcast every 60 seconds while /api/loadtest endpoint is receiving traffic.
  */
 function handleLoadTestStats(data) {
-    console.log('📊 Load test stats:', data);
-    
     const completed = data.requestsCompleted;
     const exceptions = data.exceptionCount;
     
@@ -1315,7 +1306,7 @@ async function fetchBuildInfo() {
  * Fetches app configuration and updates the UI.
  * The AppTitle can be set via Azure App Service environment variable:
  * ProblemSimulator__AppTitle
- * The PageFooter can be set via: ProblemSimulator__PageFooter
+ * The PageFooter can be set via: PAGE_FOOTER
  */
 async function fetchAppConfig() {
     try {

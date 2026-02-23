@@ -68,7 +68,7 @@ public class CpuStressService : ICpuStressService
     /// <summary>
     /// Default duration in seconds when not specified or invalid.
     /// </summary>
-    private const int DefaultDurationSeconds = 30;
+    private const int _defaultDurationSeconds = 30;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CpuStressService"/> class.
@@ -90,11 +90,11 @@ public class CpuStressService : ICpuStressService
         // STEP 1: Validate the duration (no upper limits - app is meant to break)
         // ==========================================================================
         var actualDuration = durationSeconds <= 0
-            ? DefaultDurationSeconds
+            ? _defaultDurationSeconds
             : durationSeconds;
 
         // Normalize level to lowercase and default to "high" if invalid
-        var normalizedLevel = (level?.ToLowerInvariant()) switch
+        var normalizedLevel = level.ToLowerInvariant() switch
         {
             "moderate" => "moderate",
             _ => "high"
@@ -198,7 +198,7 @@ public class CpuStressService : ICpuStressService
             
             var threads = new Thread[processorCount];
             
-            for (int i = 0; i < processorCount; i++)
+            for (var i = 0; i < processorCount; i++)
             {
                 var threadIndex = i;
                 threads[i] = new Thread(() =>
@@ -218,22 +218,22 @@ public class CpuStressService : ICpuStressService
                         // Using a small window (e.g., 200ms) keeps usage relatively smooth
                         // while being large enough to reduce the impact of Thread.Sleep inaccuracy.
                         const int windowMs = 200;
-                        int workMs = (windowMs * targetPercentage) / 100;
-                        int sleepMs = windowMs - workMs;
+                        var workMs = windowMs * targetPercentage / 100;
+                        var sleepMs = windowMs - workMs;
 
                         // Stagger start times to desynchronize the duty cycles across cores.
                         // This prevents "spiky" aggregate CPU usage where all cores sleep simultaneously.
                         // We distribute the start times evenly across the window.
                         if (processorCount > 1)
                         {
-                            int startDelay = (windowMs * threadIndex) / processorCount;
+                            var startDelay = windowMs * threadIndex / processorCount;
                             Thread.Sleep(startDelay);
                         }
 
                         while (Stopwatch.GetTimestamp() < endTime && !cancellationToken.IsCancellationRequested)
                         {
                             var cycleStart = Stopwatch.GetTimestamp();
-                            var workTicks = (workMs * Stopwatch.Frequency) / 1000;
+                            var workTicks = workMs * Stopwatch.Frequency / 1000;
                             
                             // Spin for work portion
                             while (Stopwatch.GetTimestamp() - cycleStart < workTicks)

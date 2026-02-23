@@ -248,10 +248,8 @@ public class SimulationTracker : ISimulationTracker
     public int ActiveCount => _simulations.Count;
 
     /// <inheritdoc />
-    public int GetActiveCountByType(SimulationType type)
-    {
-        return _simulations.Values.Count(t => t.Info.Type == type);
-    }
+    public int GetActiveCountByType(SimulationType type) =>
+        _simulations.Values.Count(t => t.Info.Type == type);
 
     /// <inheritdoc />
     public int CancelAll()

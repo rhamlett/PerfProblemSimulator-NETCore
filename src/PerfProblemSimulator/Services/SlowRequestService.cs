@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.SignalR;
 using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace PerfProblemSimulator.Services;
 
@@ -210,7 +209,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         _logger.LogInformation("⏳ Waiting 3 seconds for existing health probes to drain...");
         Thread.Sleep(3000);
 
-        int requestNumber = 0;
+        var requestNumber = 0;
 
         while (!ct.IsCancellationRequested && (maxRequests == 0 || requestNumber < maxRequests))
         {
@@ -250,7 +249,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 // we sleep in small chunks and log "heartbeats". 
                 // This ensures the ETW buffers fill up and flush to the .diagsession file,
                 // allowing the CLR Profiler to see the "Request Finished" events even if the app is otherwise idle.
-                for (int i = 0; i < _intervalSeconds * 2; i++) // 500ms chunks
+                for (var i = 0; i < _intervalSeconds * 2; i++) // 500ms chunks
                 {
                     if (ct.IsCancellationRequested) break;
                     Thread.Sleep(500);
@@ -334,7 +333,7 @@ public class SlowRequestService : ISlowRequestService, IDisposable
         finally
         {
             Interlocked.Increment(ref _requestsCompleted);
-            var remaining = Interlocked.Decrement(ref _requestsInProgress);
+            Interlocked.Decrement(ref _requestsInProgress);
             
             // Check if simulation is naturally complete (all requests done)
             CheckAndCompleteSimulation();
@@ -370,12 +369,12 @@ public class SlowRequestService : ISlowRequestService, IDisposable
     /// <summary>
     /// Gets the base URL for making HTTP calls to ourselves.
     /// </summary>
-    private string? GetBaseUrl()
+    private string GetBaseUrl()
     {
         try
         {
             var addresses = _server.Features.Get<IServerAddressesFeature>();
-            if (addresses != null && addresses.Addresses.Count > 0)
+            if (addresses is { Addresses.Count: > 0 })
             {
                 var address = addresses.Addresses.First();
                 // Replace wildcard addresses
@@ -416,164 +415,6 @@ public class SlowRequestService : ISlowRequestService, IDisposable
                 }
             }
         }
-    }
-
-    // ==========================================================================
-    // SCENARIO 1: Simple Blocking
-    // ==========================================================================
-    // CLR Profiler will show time spent in Thread.Sleep
-    // This simulates slow I/O operations like database queries or HTTP calls
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ExecuteSimpleSyncOverAsyncRequest(int totalDurationSeconds, CancellationToken ct)
-    {
-        var partDuration = totalDurationSeconds * 1000 / 3;
-
-        // BAD: Blocking the thread - shows up in CLR Profiler
-        FetchDataSync_BLOCKING_HERE(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        // BAD: More blocking
-        ProcessDataSync_BLOCKING_HERE(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        // BAD: Final blocking call
-        SaveDataSync_BLOCKING_HERE(partDuration);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void FetchDataSync_BLOCKING_HERE(int delayMs)
-    {
-        // Intentional blocking - will show in profiler as Thread.Sleep
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ProcessDataSync_BLOCKING_HERE(int delayMs)
-    {
-        // Intentional blocking
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void SaveDataSync_BLOCKING_HERE(int delayMs)
-    {
-        // Intentional blocking
-        Thread.Sleep(delayMs);
-    }
-
-    // ==========================================================================
-    // SCENARIO 2: Nested Blocking Methods
-    // ==========================================================================
-    // CLR Profiler will show a chain of blocking calls through multiple methods
-    // Each method internally uses Thread.Sleep to simulate work
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ExecuteNestedSyncOverAsyncRequest(int totalDurationSeconds, CancellationToken ct)
-    {
-        var partDuration = totalDurationSeconds * 1000 / 4;
-
-        // Each method internally blocks - creates nested blocking pattern
-        ValidateOrderSync_BLOCKS_INTERNALLY(partDuration);
-        ct.ThrowIfCancellationRequested();
-        
-        CheckInventorySync_BLOCKS_INTERNALLY(partDuration);
-        ct.ThrowIfCancellationRequested();
-        
-        ProcessPaymentSync_BLOCKS_INTERNALLY(partDuration);
-        ct.ThrowIfCancellationRequested();
-        
-        SendConfirmationSync_BLOCKS_INTERNALLY(partDuration);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ValidateOrderSync_BLOCKS_INTERNALLY(int delayMs)
-    {
-        // BAD: Blocking internally
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void CheckInventorySync_BLOCKS_INTERNALLY(int delayMs)
-    {
-        // BAD: Blocking internally
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ProcessPaymentSync_BLOCKS_INTERNALLY(int delayMs)
-    {
-        // BAD: Blocking internally
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void SendConfirmationSync_BLOCKS_INTERNALLY(int delayMs)
-    {
-        // BAD: Blocking internally
-        Thread.Sleep(delayMs);
-    }
-
-    // ==========================================================================
-    // SCENARIO 3: Realistic Database/HTTP Pattern
-    // ==========================================================================
-    // CLR Profiler will show time spent in simulated database and HTTP calls
-    // This simulates what blocking I/O looks like in production code
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void ExecuteDatabasePatternRequest(int totalDurationSeconds, CancellationToken ct)
-    {
-        var partDuration = totalDurationSeconds * 1000 / 5;
-
-        // This pattern is very common in legacy code - method names show what it simulates
-        GetCustomerFromDatabaseSync_SYNC_BLOCK(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        CheckInventoryServiceSync_SYNC_BLOCK(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        GetRecommendationsFromMLServiceSync_SYNC_BLOCK(partDuration);
-        ct.ThrowIfCancellationRequested();
-
-        BuildResponseSync_SYNC_BLOCK(partDuration);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void GetCustomerFromDatabaseSync_SYNC_BLOCK(int delayMs)
-    {
-        // Simulates blocking database query
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void GetOrderHistoryFromDatabaseSync_SYNC_BLOCK(int delayMs)
-    {
-        // Simulates blocking database query
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void CheckInventoryServiceSync_SYNC_BLOCK(int delayMs)
-    {
-        // Simulates blocking HTTP call
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void GetRecommendationsFromMLServiceSync_SYNC_BLOCK(int delayMs)
-    {
-        // Simulates blocking ML service call
-        Thread.Sleep(delayMs);
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    private void BuildResponseSync_SYNC_BLOCK(int delayMs)
-    {
-        // Simulates response building delay
-        Thread.Sleep(delayMs);
     }
 
     public void Dispose()
