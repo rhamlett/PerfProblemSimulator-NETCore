@@ -1291,8 +1291,8 @@ az webapp log config \
 
         <!-- Footer -->
         <footer class="footer">
-            <p>Performance Problem Simulator - Educational Tool for Azure App Service Diagnostics</p>
-            <p>Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> in collaboration with <a href="mailto:rhamlett@microsoft.com">Richard Hamlett</a></p>
+            <p>Performance Problem Simulator — Educational Tool for Azure App Service Diagnostics</p>
+            <p id="pageFooterContent"></p>
         </footer>
         </div><!-- /.doc-container -->
         </div><!-- /.doc-main -->
@@ -1347,6 +1347,28 @@ az webapp log config \
             </div>
         </aside>
     </div><!-- /.doc-layout -->
+
+    <script>
+        // Fetch and display custom page footer
+        (async function() {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+        })();
+    </script>
 
     <script>
         // Sidebar drawer toggle

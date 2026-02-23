@@ -33,7 +33,8 @@ public class ConfigController : ControllerBase
     {
         return Ok(new ClientConfig
         {
-            AppTitle = _options.AppTitle
+            AppTitle = _options.AppTitle,
+            PageFooter = _options.PageFooter
         });
     }
 }
@@ -47,4 +48,9 @@ public class ClientConfig
     /// The title displayed in the dashboard header.
     /// </summary>
     public required string AppTitle { get; init; }
+
+    /// <summary>
+    /// Custom HTML content for the page footer. Empty string if not configured.
+    /// </summary>
+    public string PageFooter { get; init; } = "";
 }

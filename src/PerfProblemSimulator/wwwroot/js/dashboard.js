@@ -842,6 +842,30 @@ async function triggerCpuStress() {
     }
 }
 
+/**
+ * Stops all active CPU stress simulations.
+ */
+async function stopCpuStress() {
+    try {
+        logEvent('info', 'Stopping CPU stress simulations...');
+        const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/stop`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('success', result.message || 'CPU stress stopped');
+            // Remove CPU simulations from active list
+            removeSimulationsByType('cpu');
+        } else {
+            const error = await response.json();
+            logEvent('warning', `Stop request: ${error.detail || 'May have already stopped'}`);
+        }
+    } catch (err) {
+        logEvent('warning', `Stop request: ${err.message || 'May have already stopped'}`);
+    }
+}
+
 async function allocateMemory() {
     const sizeMb = parseInt(document.getElementById('memorySize').value) || 100;
     
@@ -1191,6 +1215,15 @@ function removeActiveSimulation(id) {
     updateActiveSimulationsUI();
 }
 
+function removeSimulationsByType(type) {
+    state.activeSimulations.forEach((value, key) => {
+        if (value.type === type) {
+            state.activeSimulations.delete(key);
+        }
+    });
+    updateActiveSimulationsUI();
+}
+
 function updateActiveSimulationsUI() {
     const container = document.getElementById('simulationsList');
     
@@ -1259,12 +1292,18 @@ async function fetchBuildInfo() {
         const response = await fetch(`${CONFIG.apiBaseUrl}/health/build`);
         if (response.ok) {
             const data = await response.json();
-            const buildTimeElement = document.getElementById('buildTime');
-            if (buildTimeElement && data.buildTimestamp) {
+            if (data.buildTimestamp) {
                 // Parse ISO 8601 timestamp and format as date + time
                 const buildDate = new Date(data.buildTimestamp);
                 const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-                buildTimeElement.textContent = formatted;
+                
+                // Update footer build time
+                const buildTimeElement = document.getElementById('buildTime');
+                if (buildTimeElement) buildTimeElement.textContent = formatted;
+                
+                // Update sidebar build time
+                const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
             }
         }
     } catch (error) {
@@ -1276,6 +1315,7 @@ async function fetchBuildInfo() {
  * Fetches app configuration and updates the UI.
  * The AppTitle can be set via Azure App Service environment variable:
  * ProblemSimulator__AppTitle
+ * The PageFooter can be set via: ProblemSimulator__PageFooter
  */
 async function fetchAppConfig() {
     try {
@@ -1286,6 +1326,17 @@ async function fetchAppConfig() {
             if (titleElement && config.appTitle) {
                 titleElement.textContent = `🔥 ${config.appTitle}`;
                 document.title = `${config.appTitle} - Dashboard`;
+            }
+            
+            // Update page footer if configured
+            const footerElement = document.getElementById('pageFooterContent');
+            if (footerElement) {
+                if (config.pageFooter && config.pageFooter.trim()) {
+                    footerElement.innerHTML = config.pageFooter;
+                } else {
+                    // Hide the empty paragraph if no footer is configured
+                    footerElement.style.display = 'none';
+                }
             }
         }
     } catch (error) {
@@ -1312,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Wire up button handlers
     document.getElementById('btnTriggerCpu').addEventListener('click', triggerCpuStress);
+    document.getElementById('btnStopCpu').addEventListener('click', stopCpuStress);
     document.getElementById('btnAllocateMemory').addEventListener('click', allocateMemory);
     document.getElementById('btnReleaseMemory').addEventListener('click', releaseMemory);
     document.getElementById('btnTriggerThreadBlock').addEventListener('click', triggerThreadBlock);

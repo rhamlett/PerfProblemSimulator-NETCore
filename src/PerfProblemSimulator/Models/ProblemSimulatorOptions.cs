@@ -28,4 +28,15 @@ public class ProblemSimulatorOptions
     /// the environment variable: ProblemSimulator__AppTitle
     /// </remarks>
     public string AppTitle { get; set; } = "Performance Problem Simulator";
+
+    /// <summary>
+    /// Custom HTML content for the page footer's second line.
+    /// </summary>
+    /// <remarks>
+    /// Can be overridden via Azure App Service configuration using
+    /// the environment variable: ProblemSimulator__PageFooter
+    /// Supports HTML content including links.
+    /// If not set, the footer will only show the app description and build info.
+    /// </remarks>
+    public string PageFooter { get; set; } = "";
 }

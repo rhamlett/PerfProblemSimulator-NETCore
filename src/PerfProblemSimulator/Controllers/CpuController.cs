@@ -37,18 +37,22 @@ namespace PerfProblemSimulator.Controllers;
 public class CpuController : ControllerBase
 {
     private readonly ICpuStressService _cpuStressService;
+    private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<CpuController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CpuController"/> class.
     /// </summary>
     /// <param name="cpuStressService">Service for triggering CPU stress.</param>
+    /// <param name="simulationTracker">Service for tracking and cancelling simulations.</param>
     /// <param name="logger">Logger for request tracking.</param>
     public CpuController(
         ICpuStressService cpuStressService,
+        ISimulationTracker simulationTracker,
         ILogger<CpuController> logger)
     {
         _cpuStressService = cpuStressService ?? throw new ArgumentNullException(nameof(cpuStressService));
+        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -136,5 +140,27 @@ public class CpuController : ControllerBase
                 StatusCodes.Status500InternalServerError,
                 ErrorResponse.SimulationError("Failed to start CPU stress simulation. See server logs for details."));
         }
+    }
+
+    /// <summary>
+    /// Stops all active CPU stress simulations.
+    /// </summary>
+    /// <returns>Number of simulations that were stopped.</returns>
+    /// <response code="200">CPU stress simulations stopped.</response>
+    [HttpPost("stop")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public IActionResult Stop()
+    {
+        _logger.LogInformation("Stopping all CPU stress simulations");
+        
+        var cancelled = _simulationTracker.CancelByType(SimulationType.Cpu);
+        
+        _logger.LogInformation("Stopped {Count} CPU stress simulations", cancelled);
+        
+        return Ok(new 
+        { 
+            message = $"Stopped {cancelled} CPU stress simulation(s)",
+            cancelledCount = cancelled
+        });
     }
 }

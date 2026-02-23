@@ -63,6 +63,13 @@ public interface ISimulationTracker
     int CancelAll();
 
     /// <summary>
+    /// Cancels all active simulations of a specific type.
+    /// </summary>
+    /// <param name="type">The simulation type to cancel.</param>
+    /// <returns>Number of simulations that were cancelled.</returns>
+    int CancelByType(SimulationType type);
+
+    /// <summary>
     /// Tries to get information about a specific simulation.
     /// </summary>
     /// <param name="simulationId">The simulation ID to look up.</param>
@@ -268,6 +275,41 @@ public class SimulationTracker : ISimulationTracker
 
         // Clear all simulations after cancellation
         _simulations.Clear();
+
+        return cancelled;
+    }
+
+    /// <inheritdoc />
+    public int CancelByType(SimulationType type)
+    {
+        var cancelled = 0;
+        var toRemove = new List<Guid>();
+
+        foreach (var kvp in _simulations)
+        {
+            if (kvp.Value.Info.Type == type)
+            {
+                try
+                {
+                    kvp.Value.CancellationSource.Cancel();
+                    cancelled++;
+                    toRemove.Add(kvp.Key);
+                }
+                catch (ObjectDisposedException)
+                {
+                    // Cancellation source was already disposed, still remove
+                    toRemove.Add(kvp.Key);
+                }
+            }
+        }
+
+        // Remove cancelled simulations
+        foreach (var id in toRemove)
+        {
+            _simulations.TryRemove(id, out _);
+        }
+
+        _logger.LogInformation("Cancelled {Count} {Type} simulations", cancelled, type);
 
         return cancelled;
     }
