@@ -1,8 +1,37 @@
 namespace PerfProblemSimulator.Models;
 
 /// <summary>
-/// Request model for starting slow request simulation.
+/// Configuration for slow request simulation that causes thread pool starvation.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>PURPOSE:</strong>
+/// Request body for POST /api/slowrequest/start. Controls how quickly thread pool
+/// starvation occurs and how long it takes for CLR Profiler to capture useful data.
+/// </para>
+/// <para>
+/// <strong>OPTIMAL VALUES FOR CLR PROFILER TRAINING:</strong>
+/// <list type="bullet">
+/// <item>RequestDurationSeconds = 25: Long enough to block thread, short enough to complete in 60s capture</item>
+/// <item>IntervalSeconds = 10: Creates 6 concurrent requests in 60 seconds (enough to starve)</item>
+/// <item>MaxRequests = 6: Stops after capture window (prevents indefinite resource consumption)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>THREAD STARVATION MATH:</strong>
+/// With default settings (25s duration, 10s interval), after 60 seconds you'll have:
+/// - Request 1: Started at 0s, blocking until 25s
+/// - Request 2: Started at 10s, blocking until 35s
+/// - Request 3: Started at 20s, blocking until 45s
+/// - etc.
+/// By ~50 seconds, 5-6 threads are blocked simultaneously, causing visible starvation.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// Same parameters apply regardless of language. Adjust duration based on thread pool size:
+/// larger pools need more concurrent requests or longer durations to exhaust.
+/// </para>
+/// </remarks>
 public class SlowRequestRequest
 {
     /// <summary>

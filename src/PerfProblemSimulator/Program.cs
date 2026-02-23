@@ -22,6 +22,42 @@ using OpenApiInfo = Microsoft.OpenApi.OpenApiInfo;
 // for learning and demonstration purposes. Do not deploy to production
 // without setting DISABLE_PROBLEM_ENDPOINTS=true.
 // =============================================================================
+//
+// PORTING TO OTHER LANGUAGES:
+// This file configures the application using three key patterns:
+//
+// 1. DEPENDENCY INJECTION (Service Registration):
+//    - AddSingleton = one instance for app lifetime
+//    - AddTransient = new instance per request
+//    - AddScoped = one instance per HTTP request scope
+//    PHP: Container libraries (PHP-DI, Pimple)
+//    Node/Express: Typically manual factory functions or awilix
+//    Java/Spring: @Component, @Service, @Scope annotations
+//    Python/Flask: Flask extensions or dependency-injector library
+//    Ruby/Rails: Built-in container or dry-container gem
+//
+// 2. MIDDLEWARE PIPELINE (Request Processing):
+//    Order matters! Each middleware can short-circuit or pass to next.
+//    PHP: PSR-15 middleware (Slim, Laravel)
+//    Node/Express: app.use() - same concept, same critical ordering
+//    Java/Spring: Filter chain, @Order annotation
+//    Python/Flask: @app.before_request, Flask middleware
+//    Ruby/Rails: Rack middleware stack, before_action callbacks
+//
+// 3. SIGNALR (Real-time WebSockets):
+//    PHP: Ratchet/ReactPHP for WebSockets
+//    Node/Express: Socket.IO (closest equivalent, very similar API)
+//    Java/Spring: Spring WebSocket + STOMP
+//    Python/Flask: Flask-SocketIO
+//    Ruby/Rails: ActionCable (built-in Rails WebSocket support)
+//
+// RELATED FILES:
+// - Services/*Service.cs: Business logic implementations
+// - Controllers/*Controller.cs: HTTP endpoint handlers
+// - Hubs/MetricsHub.cs: WebSocket real-time communication
+// - Middleware/ProblemEndpointGuard.cs: Kill switch middleware
+// - Models/ProblemSimulatorOptions.cs: Configuration binding
+// =============================================================================
 
 var builder = WebApplication.CreateBuilder(args);
 

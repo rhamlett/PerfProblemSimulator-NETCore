@@ -9,15 +9,33 @@ namespace PerfProblemSimulator.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong> This service demonstrates various ways an application
-/// can crash, which is useful for learning:
+/// <strong>PURPOSE:</strong> Demonstrates various crash scenarios for learning Azure crash
+/// monitoring, dump collection, and diagnostics. Each crash type produces different
+/// symptoms and artifacts for analysis.
 /// </para>
+/// <para>
+/// <strong>CRASH TYPES TO IMPLEMENT:</strong>
 /// <list type="bullet">
-/// <item>How to configure Azure App Service crash monitoring</item>
-/// <item>How to collect and analyze crash dumps</item>
-/// <item>How to use Azure Diagnostics to investigate crashes</item>
-/// <item>Understanding different types of fatal errors in .NET</item>
+/// <item>FailFast - Immediate process termination with dump (Environment.FailFast)</item>
+/// <item>OutOfMemory - Allocate until OOM exception</item>
+/// <item>StackOverflow - Infinite recursion until stack exhaustion</item>
+/// <item>AccessViolation - Invalid memory access (native crash)</item>
+/// <item>UnhandledException - Throw exception on background thread</item>
 /// </list>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// Different languages have different crash mechanisms:
+/// <list type="bullet">
+/// <item>PHP: exit(1), trigger_error(E_USER_ERROR), memory exhaustion via str_repeat</item>
+/// <item>Node.js: process.exit(1), throw Error (unhandled), process.abort(), infinite recursion</item>
+/// <item>Java: System.exit(1), Runtime.halt(1), throw Error, infinite recursion for StackOverflow</item>
+/// <item>Python: os._exit(1), sys.exit(1), raise MemoryError(), infinite recursion</item>
+/// <item>Ruby: Process.exit!, exit!, raise NoMemoryError, infinite recursion</item>
+/// </list>
+/// Key: Some crash types (AccessViolation) require native/FFI code in managed languages.
+/// StackOverflow is universally achievable via infinite recursion.
+/// </para>
 /// <para>
 /// <strong>Azure Configuration:</strong> To collect crash dumps in Azure App Service:
 /// </para>
@@ -28,6 +46,10 @@ namespace PerfProblemSimulator.Services;
 /// <item>Trigger a crash using this service</item>
 /// <item>Download and analyze the crash dump</item>
 /// </list>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// ICrashService.cs (interface), CrashController.cs (API endpoint), Models/CrashRequest.cs
+/// </para>
 /// </remarks>
 public class CrashService : ICrashService
 {

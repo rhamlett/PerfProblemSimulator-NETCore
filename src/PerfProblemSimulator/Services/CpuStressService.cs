@@ -15,6 +15,13 @@ namespace PerfProblemSimulator.Services;
 /// looks like and how to diagnose it. In production code, you would NEVER do this.
 /// </para>
 /// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Create N parallel tasks where N = number of CPU cores
+/// 2. Each task runs a spin loop (while true) for the specified duration
+/// 3. Spin loop just increments a counter - pure busy-waiting, no sleep
+/// 4. Result: 100% CPU usage across all cores
+/// </para>
+/// <para>
 /// <strong>Why This Is Bad:</strong>
 /// <list type="bullet">
 /// <item>
@@ -41,6 +48,18 @@ namespace PerfProblemSimulator.Services;
 /// </list>
 /// </para>
 /// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// The goal is to saturate all CPU cores with busy-waiting:
+/// <list type="bullet">
+/// <item>PHP: Multiple pcntl_fork() processes each running while(true) loops</item>
+/// <item>Node.js: Use worker_threads to spawn CPU-count workers, each with busy loop</item>
+/// <item>Java: ExecutorService with CPU-count threads, each running while(!cancelled)</item>
+/// <item>Python: multiprocessing.Pool (threads won't work due to GIL) with busy loops</item>
+/// <item>Ruby: Process.fork for each CPU core (threads limited by GIL)</item>
+/// </list>
+/// Key: Use process-level parallelism for languages with GIL (Python/Ruby).
+/// </para>
+/// <para>
 /// <strong>Real-World Causes of High CPU:</strong>
 /// <list type="bullet">
 /// <item>Inefficient algorithms (O(n²) when O(n) is possible)</item>
@@ -58,6 +77,10 @@ namespace PerfProblemSimulator.Services;
 /// <item>Application Insights: CPU metrics and profiler</item>
 /// <item>Azure App Service Diagnostics: CPU usage blade</item>
 /// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// ICpuStressService.cs (interface), CpuController.cs (API endpoint), SimulationTracker.cs
 /// </para>
 /// </remarks>
 public class CpuStressService : ICpuStressService

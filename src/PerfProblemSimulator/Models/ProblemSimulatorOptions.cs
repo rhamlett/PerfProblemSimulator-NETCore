@@ -1,9 +1,40 @@
 namespace PerfProblemSimulator.Models;
 
 /// <summary>
-/// Configuration options for the Performance Problem Simulator.
-/// Loaded from the "ProblemSimulator" section of appsettings.json.
+/// Application-wide configuration options loaded from appsettings.json or environment variables.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>PURPOSE:</strong>
+/// Centralized configuration that can be customized per deployment environment.
+/// Follows the Options pattern for dependency injection.
+/// </para>
+/// <para>
+/// <strong>CONFIGURATION SOURCES (in priority order):</strong>
+/// <list type="number">
+/// <item>Environment variables (highest priority, e.g., ProblemSimulator__AppTitle)</item>
+/// <item>appsettings.{Environment}.json (Development, Production)</item>
+/// <item>appsettings.json (base settings)</item>
+/// <item>Default values in this class (lowest priority)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>AZURE APP SERVICE CONFIGURATION:</strong>
+/// In Azure Portal > App Service > Configuration > Application settings:
+/// - Name: ProblemSimulator__AppTitle
+/// - Value: "My Custom Title"
+/// The double underscore (__) translates to colon (:) for nested JSON properties.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Use $_ENV or .env files with vlucas/phpdotenv</item>
+/// <item>Node.js: Use dotenv package and process.env</item>
+/// <item>Java/Spring: Use @ConfigurationProperties or application.properties</item>
+/// <item>Python: Use python-dotenv and os.environ</item>
+/// </list>
+/// </para>
+/// </remarks>
 public class ProblemSimulatorOptions
 {
     /// <summary>

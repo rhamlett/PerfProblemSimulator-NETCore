@@ -4,21 +4,42 @@ using PerfProblemSimulator.Services;
 namespace PerfProblemSimulator.Hubs;
 
 /// <summary>
-/// Interface for SignalR metrics client methods.
+/// Contract defining real-time messages that can be pushed from server to connected dashboard clients.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong>
+/// <strong>PURPOSE:</strong>
+/// This interface defines the "server-to-client" message contract for the real-time communication
+/// channel. Each method represents a distinct message type that the server can push to browsers.
+/// The dashboard JavaScript registers handlers for each message type.
 /// </para>
 /// <para>
-/// This interface defines the methods that can be called on connected clients.
-/// SignalR uses this for strongly-typed hub methods, providing compile-time
-/// safety instead of magic strings.
+/// <strong>MESSAGE TYPES:</strong>
+/// <list type="bullet">
+/// <item><term>ReceiveMetrics</term><description>Periodic metrics snapshot (CPU, memory, threads) - every 1 second</description></item>
+/// <item><term>ReceiveLatency</term><description>Health probe latency measurement - every 1 second</description></item>
+/// <item><term>SimulationStarted/Completed</term><description>Simulation lifecycle events (fire-and-forget)</description></item>
+/// <item><term>ReceiveSlowRequestLatency</term><description>Slow request completion with queue time breakdown</description></item>
+/// <item><term>ReceiveLoadTestStats</term><description>Load test statistics summary - every 60 seconds during load</description></item>
+/// </list>
 /// </para>
 /// <para>
-/// When the server calls <c>Clients.All.ReceiveMetrics(snapshot)</c>, SignalR
-/// automatically serializes the snapshot and sends it to all connected browsers
-/// via WebSockets (or fallback transports).
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Not applicable - use REST polling or external WebSocket library</item>
+/// <item>Node.js/Socket.io: socket.emit('receiveMetrics', snapshot)</item>
+/// <item>Java/Spring: SimpMessagingTemplate.convertAndSend("/topic/metrics", snapshot)</item>
+/// <item>Python/Flask-SocketIO: socketio.emit('receive_metrics', snapshot)</item>
+/// <item>Ruby/ActionCable: MetricsChannel.broadcast_to(user, snapshot)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// <list type="bullet">
+/// <item>Hubs/MetricsHub.cs - The hub that sends these messages</item>
+/// <item>Services/MetricsBroadcastService.cs - Background service that triggers broadcasts</item>
+/// <item>wwwroot/js/dashboard.js - JavaScript handlers for each message type</item>
+/// </list>
 /// </para>
 /// </remarks>
 public interface IMetricsClient

@@ -11,6 +11,13 @@ namespace PerfProblemSimulator.Services;
 /// <strong>⚠️ EDUCATIONAL PURPOSE ONLY ⚠️</strong>
 /// </para>
 /// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Allocate pinned byte array of requested size (minimum 10MB, default 100MB)
+/// 2. Store allocation ID and reference in tracked list (prevents GC)
+/// 3. Return allocation details including ID for later deallocation
+/// 4. To release: Remove reference from list, optionally force GC.Collect()
+/// </para>
+/// <para>
 /// This service intentionally implements memory allocation patterns that would be
 /// problematic in production code. It's designed to demonstrate:
 /// <list type="bullet">
@@ -38,6 +45,24 @@ namespace PerfProblemSimulator.Services;
 /// </list>
 /// </para>
 /// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// The goal is to allocate memory that won't be garbage collected:
+/// <list type="bullet">
+/// <item>PHP: str_repeat() or array_fill() held in global variable (PHP has no GC pinning)</item>
+/// <item>Node.js: Buffer.alloc() stored in global Set or array (V8 GC won't free while referenced)</item>
+/// <item>Java: byte[] stored in static ArrayList, or use direct ByteBuffer for off-heap</item>
+/// <item>Python: bytearray() or list stored in global dict (reference prevents GC)</item>
+/// <item>Ruby: String.new(bytes) or Array stored in global hash</item>
+/// </list>
+/// Memory release triggers by language:
+/// <list type="bullet">
+/// <item>Node.js: global.gc() if --expose-gc flag is set</item>
+/// <item>Java: System.gc() (hint only, not guaranteed)</item>
+/// <item>Python: gc.collect()</item>
+/// <item>Ruby: GC.start</item>
+/// </list>
+/// </para>
+/// <para>
 /// <strong>Real-World Memory Leak Causes:</strong>
 /// <list type="bullet">
 /// <item>Static collections that accumulate data</item>
@@ -56,6 +81,10 @@ namespace PerfProblemSimulator.Services;
 /// <item>Application Insights: Memory metrics and profiler</item>
 /// <item>Azure App Service: Memory Working Set blade</item>
 /// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// IMemoryPressureService.cs (interface), MemoryController.cs (API endpoint), Models/AllocatedMemoryBlock.cs
 /// </para>
 /// </remarks>
 public class MemoryPressureService : IMemoryPressureService

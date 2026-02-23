@@ -10,19 +10,40 @@ namespace PerfProblemSimulator.Middleware;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong> This middleware implements a safety mechanism that allows
-/// the application to be deployed in production-like environments without the risk of
-/// accidentally triggering performance problems. This is a common pattern for feature flags
-/// and kill switches in production systems.
+/// <strong>PURPOSE:</strong> Implements a "kill switch" pattern that allows deploying the app
+/// to production-like environments without risk of accidentally triggering performance problems.
+/// This is a common pattern for feature flags and kill switches in production systems.
+/// </para>
+/// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Check if request path matches guarded prefixes (/api/trigger-*, /api/allocate-*, /api/release-*)
+/// 2. If guarded AND DISABLE_PROBLEM_ENDPOINTS=true, return 403 Forbidden with JSON error body
+/// 3. Otherwise, pass request to next middleware in pipeline
 /// </para>
 /// <para>
 /// The middleware checks the environment variable at request time, not at startup, which
-/// allows for dynamic enabling/disabling without restarting the application. However,
-/// for most deployment scenarios, the value would be set at deployment time.
+/// allows for dynamic enabling/disabling without restarting the application.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// This middleware pattern exists in all major web frameworks:
+/// <list type="bullet">
+/// <item>PHP/Laravel: Create a middleware class, register in Kernel.php</item>
+/// <item>Node/Express: app.use((req, res, next) => { if (blocked) res.status(403).json(...); else next(); })</item>
+/// <item>Java/Spring: @Component implementing Filter, check path in doFilter()</item>
+/// <item>Python/Flask: @app.before_request decorator, return Response if blocked</item>
+/// <item>Ruby/Rails: Rack middleware or before_action in ApplicationController</item>
+/// </list>
+/// Key concepts to port: RequestDelegate (_next) = next middleware function,
+/// InvokeAsync = the filter method, short-circuit by not calling _next.
 /// </para>
 /// <para>
 /// <strong>Azure App Service Note:</strong> In Azure App Service, you can set this
 /// environment variable in the Configuration blade under Application Settings.
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// Program.cs (middleware registration), Models/ErrorResponse.cs (JSON response format)
 /// </para>
 /// </remarks>
 public class ProblemEndpointGuard

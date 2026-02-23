@@ -5,46 +5,52 @@ using PerfProblemSimulator.Services;
 namespace PerfProblemSimulator.Hubs;
 
 /// <summary>
-/// SignalR hub for real-time metrics broadcasting to dashboard clients.
+/// WebSocket/SignalR hub for real-time metrics broadcasting to dashboard clients.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong>
+/// <strong>PURPOSE:</strong>
+/// Provides a persistent bidirectional communication channel between the server and
+/// connected browser clients. This enables real-time dashboard updates without polling.
 /// </para>
 /// <para>
-/// SignalR provides real-time communication between server and browser clients.
-/// This hub pushes metrics to all connected dashboard instances automatically.
-/// </para>
-/// <para>
-/// <strong>How it works:</strong>
-/// </para>
+/// <strong>ALGORITHM:</strong>
 /// <list type="number">
-/// <item>Browser connects to /hubs/metrics via WebSocket (with fallback)</item>
-/// <item>MetricsCollector fires MetricsCollected event every second</item>
-/// <item>This hub broadcasts the snapshot to all connected clients</item>
-/// <item>Browser JavaScript receives the data and updates charts</item>
+/// <item>Browser connects to /hubs/metrics endpoint (WebSocket preferred, with fallbacks)</item>
+/// <item>On connect: immediately send current metrics so client doesn't wait for next tick</item>
+/// <item>Every 1 second: MetricsBroadcastService pushes metrics to all connected clients</item>
+/// <item>On simulation events: push notifications so UI can update status indicators</item>
+/// <item>On disconnect: clean up resources (automatic via framework)</item>
 /// </list>
-/// <para>
-/// <strong>Why SignalR over polling?</strong>
 /// </para>
+/// <para>
+/// <strong>WHY REAL-TIME vs POLLING:</strong>
 /// <list type="bullet">
-/// <item>
-/// <term>Efficiency</term>
-/// <description>Single connection, push-based updates</description>
-/// </item>
-/// <item>
-/// <term>Real-time</term>
-/// <description>Sub-second latency vs polling intervals</description>
-/// </item>
-/// <item>
-/// <term>Scalability</term>
-/// <description>SignalR handles connection management</description>
-/// </item>
-/// <item>
-/// <term>Transport flexibility</term>
-/// <description>WebSocket → Server-Sent Events → Long Polling fallback</description>
-/// </item>
+/// <item>Sub-second updates are essential for visualizing performance problems as they happen</item>
+/// <item>Push-based is more efficient than clients polling every second</item>
+/// <item>Connection state enables cleanup when browsers close</item>
+/// <item>Transport fallback (WebSocket → SSE → Long Polling) ensures broad compatibility</item>
 /// </list>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Use Ratchet or ReactPHP for WebSocket server, or external service like Pusher</item>
+/// <item>Node.js: Use Socket.IO - nearly identical concept with io.on('connection', socket => ...)</item>
+/// <item>Java/Spring: Use @MessageMapping with SimpMessagingTemplate for WebSocket STOMP</item>
+/// <item>Python: Use Flask-SocketIO with @socketio.on('connect') handlers</item>
+/// <item>Ruby: Use ActionCable with channel subscriptions</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// <list type="bullet">
+/// <item>Hubs/IMetricsClient.cs - Message contract (what can be sent to clients)</item>
+/// <item>Services/MetricsBroadcastService.cs - Background service that triggers broadcasts</item>
+/// <item>wwwroot/js/dashboard.js - JavaScript SignalR client connection</item>
+/// <item>Program.cs - Hub endpoint mapping (/hubs/metrics)</item>
+/// </list>
+/// </para>
 /// </remarks>
 public class MetricsHub : Hub<IMetricsClient>
 {

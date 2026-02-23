@@ -3,6 +3,22 @@ namespace PerfProblemSimulator.Models;
 /// <summary>
 /// Detailed CPU metrics for the health status endpoint.
 /// </summary>
+/// <remarks>
+/// <para>
+/// <strong>PURPOSE:</strong>
+/// Provides CPU-specific metrics for the /api/metrics/health endpoint.
+/// These values help diagnose whether the application is CPU-bound or I/O-bound.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Use sys_getloadavg() on Linux or exec('wmic cpu') on Windows</item>
+/// <item>Node.js: Use os.cpus() and calculate usage from idle/total times</item>
+/// <item>Java: Use OperatingSystemMXBean.getProcessCpuLoad()</item>
+/// <item>Python: Use psutil.cpu_percent() and psutil.cpu_count()</item>
+/// </list>
+/// </para>
+/// </remarks>
 public class CpuMetrics
 {
     /// <summary>

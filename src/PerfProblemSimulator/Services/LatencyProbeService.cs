@@ -12,9 +12,17 @@ namespace PerfProblemSimulator.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong> This service demonstrates how thread pool starvation
-/// affects request processing latency. It runs on a dedicated thread (not the thread pool)
-/// to ensure it can always measure latency, even during severe starvation conditions.
+/// <strong>PURPOSE:</strong> Demonstrates how thread pool starvation affects request
+/// processing latency. Runs on a DEDICATED THREAD to ensure it can measure latency
+/// even during severe starvation - the probe must not be affected by the problem it detects.
+/// </para>
+/// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Start dedicated OS thread (not from thread pool)
+/// 2. Every 100ms, make HTTP GET request to /api/health (fast, minimal endpoint)
+/// 3. Measure round-trip time with Stopwatch
+/// 4. Broadcast latency via SignalR to dashboard
+/// 5. If latency > threshold, it indicates thread pool starvation is occurring
 /// </para>
 /// <para>
 /// <strong>Why a Dedicated Thread?</strong>
@@ -38,6 +46,23 @@ namespace PerfProblemSimulator.Services;
 /// <item>Actual request processing time</item>
 /// <item>Network overhead (minimal for localhost)</item>
 /// </list>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// This is a "canary" or "synthetic monitoring" pattern - make requests to yourself to detect problems:
+/// <list type="bullet">
+/// <item>PHP: Separate cron job or ReactPHP timer that curls internal endpoint</item>
+/// <item>Node.js: setInterval with http.get() - BUT this uses event loop, so it WILL be affected by blocking</item>
+/// <item>Java: ScheduledExecutorService with HttpClient, use separate single-thread executor</item>
+/// <item>Python: threading.Thread with requests.get() in loop with time.sleep()</item>
+/// <item>Ruby: Thread.new with Net::HTTP.get in loop with sleep()</item>
+/// </list>
+/// Note: Node.js cannot easily escape its event loop - consider using Worker thread for the probe.
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// HealthController.cs (probed endpoint), MetricsHub.cs (latency broadcast),
+/// Models/MetricsSnapshot.cs (includes latency field)
 /// </para>
 /// </remarks>
 public class LatencyProbeService : IHostedService, IDisposable

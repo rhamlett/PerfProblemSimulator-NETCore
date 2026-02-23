@@ -6,23 +6,44 @@ using PerfProblemSimulator.Services;
 namespace PerfProblemSimulator.Controllers;
 
 /// <summary>
-/// Controller for retrieving current metrics and health status.
+/// REST API endpoints for retrieving current metrics and health status.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong>
-/// </para>
-/// <para>
-/// This controller provides REST endpoints for polling metrics.
-/// While the dashboard uses SignalR for real-time updates, these endpoints
-/// are useful for:
+/// <strong>PURPOSE:</strong>
+/// Provides HTTP polling endpoints as an alternative to the real-time SignalR/WebSocket
+/// channel. While the dashboard uses SignalR for live updates, these REST endpoints serve:
 /// </para>
 /// <list type="bullet">
-/// <item>External monitoring systems that can't use WebSockets</item>
-/// <item>Scripted health checks (curl, PowerShell, etc.)</item>
-/// <item>Debugging and manual testing</item>
+/// <item>External monitoring systems that can't use WebSockets (Azure Monitor, Prometheus scrapers)</item>
+/// <item>Scripted health checks (curl, PowerShell, automation pipelines)</item>
+/// <item>Manual debugging and testing via browser or API tools</item>
 /// <item>Integration with Azure App Service health probes</item>
 /// </list>
+/// <para>
+/// <strong>DESIGN DECISION - REST vs SignalR:</strong>
+/// The dashboard UI uses SignalR because it needs sub-second updates for visualizing
+/// performance problems in real-time. These REST endpoints return cached data (not live
+/// calculations) and are suitable for 5-30 second polling intervals.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Standard REST controller returning JSON</item>
+/// <item>Node.js/Express: app.get('/api/metrics/current', ...)</item>
+/// <item>Java/Spring: @RestController with @GetMapping</item>
+/// <item>Python/Flask: @app.route('/api/metrics/current')</item>
+/// <item>Ruby/Rails: Standard controller action rendering JSON</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// <list type="bullet">
+/// <item>Services/MetricsCollector.cs - Provides the cached metrics data</item>
+/// <item>Models/MetricsSnapshot.cs - Data structure returned</item>
+/// <item>Hubs/MetricsHub.cs - Real-time alternative (SignalR)</item>
+/// </list>
+/// </para>
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]

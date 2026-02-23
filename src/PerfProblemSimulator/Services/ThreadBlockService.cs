@@ -15,6 +15,14 @@ namespace PerfProblemSimulator.Services;
 /// in this service is INTENTIONALLY BAD to show what NOT to do.
 /// </para>
 /// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Spawn N parallel tasks (configurable, default = 2x CPU cores)
+/// 2. Each task calls Task.Delay().Wait() - BLOCKING the thread pool thread
+/// 3. Thread pool tries to compensate by adding threads (slow, ~1/second)
+/// 4. New requests queue up waiting for threads
+/// 5. Result: Request latency spikes, app appears hung
+/// </para>
+/// <para>
 /// <strong>What is Sync-Over-Async?</strong>
 /// </para>
 /// <para>
@@ -29,6 +37,19 @@ namespace PerfProblemSimulator.Services;
 /// // ✅ GOOD - Properly awaits the Task
 /// var result = await SomeAsyncMethod();
 /// </code>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// The concept of thread pool starvation applies to languages with thread pools:
+/// <list type="bullet">
+/// <item>PHP: Not applicable (process-per-request model, no shared thread pool)</item>
+/// <item>Node.js: Block event loop with busy-wait loop - single thread blocks ALL requests</item>
+/// <item>Java: Submit Runnable to ExecutorService that calls Thread.sleep() with .get() blocking</item>
+/// <item>Python: With ThreadPoolExecutor, submit tasks that block with time.sleep()</item>
+/// <item>Ruby: Similar to Python, block threads in Thread pool with sleep()</item>
+/// </list>
+/// Note: Node.js is WORSE because it's single-threaded - one blocked call blocks everything.
+/// .NET's thread pool at least tries to grow (slowly) to compensate.
 /// </para>
 /// <para>
 /// <strong>Why is this Bad?</strong>

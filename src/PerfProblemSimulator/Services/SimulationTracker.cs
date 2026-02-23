@@ -135,18 +135,50 @@ public class ActiveSimulationInfo
 }
 
 /// <summary>
-/// Thread-safe service for tracking active performance simulations.
+/// Thread-safe registry for tracking all active performance simulations.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong> This service uses a <see cref="ConcurrentDictionary{TKey, TValue}"/>
-/// for thread-safe access to simulation state. In a high-concurrency scenario, this ensures that
-/// multiple threads can safely register, unregister, and query simulations without locking.
+/// <strong>PURPOSE:</strong>
+/// Central registry that tracks all running simulations (CPU stress, memory pressure, slow
+/// requests, etc.). This enables the dashboard to show active simulations, the admin panel
+/// to cancel them, and the system to prevent conflicting simulations.
 /// </para>
 /// <para>
-/// The service maintains both the public simulation info and the internal cancellation
-/// token sources. This separation of concerns allows callers to see simulation status
-/// without being able to directly manipulate the cancellation mechanism.
+/// <strong>KEY FEATURES:</strong>
+/// <list type="bullet">
+/// <item>Thread-safe concurrent access (multiple simulations can start/stop simultaneously)</item>
+/// <item>Cancellation support (each simulation can be stopped individually or all at once)</item>
+/// <item>Event notifications (subscribers notified when simulations start/complete)</item>
+/// <item>Query capabilities (get active count, filter by type, get details)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>ALGORITHM:</strong>
+/// <list type="number">
+/// <item>When simulation starts: RegisterSimulation() stores ID, type, parameters, and cancellation token</item>
+/// <item>When simulation ends: UnregisterSimulation() removes entry and fires completion event</item>
+/// <item>When admin cancels: CancelByType() or CancelAll() triggers cancellation tokens</item>
+/// <item>Dashboard periodically queries GetActiveSimulations() for status display</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>PHP: Use APCu or Redis for cross-request state (PHP processes don't share memory)</item>
+/// <item>Node.js: Use Map or object with event emitter pattern</item>
+/// <item>Java: Use ConcurrentHashMap with AtomicReference for thread safety</item>
+/// <item>Python: Use threading.Lock with dict, or asyncio task tracking</item>
+/// <item>All: Key concept is thread-safe dictionary + cancellation mechanism</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// <list type="bullet">
+/// <item>All *Service.cs files - Register/unregister when simulations start/end</item>
+/// <item>Controllers/AdminController.cs - Queries active simulations and cancels them</item>
+/// <item>Services/MetricsBroadcastService.cs - Listens for start/complete events</item>
+/// </list>
 /// </para>
 /// </remarks>
 public class SimulationTracker : ISimulationTracker

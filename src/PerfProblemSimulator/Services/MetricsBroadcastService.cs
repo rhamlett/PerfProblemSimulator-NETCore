@@ -11,11 +11,19 @@ namespace PerfProblemSimulator.Services;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>Educational Note:</strong>
+/// <strong>PURPOSE:</strong>
 /// </para>
 /// <para>
 /// This hosted service acts as a bridge between the MetricsCollector and SignalR.
 /// It subscribes to metrics events and broadcasts them to all connected clients.
+/// </para>
+/// <para>
+/// <strong>ALGORITHM:</strong>
+/// 1. Start dedicated broadcast thread (not from thread pool)
+/// 2. Subscribe to MetricsCollector.MetricsCollected event
+/// 3. When metrics received, queue to BlockingCollection
+/// 4. Broadcast thread reads from queue and pushes to all SignalR clients
+/// 5. Fire-and-forget: Don't await SignalR send to avoid thread pool dependency
 /// </para>
 /// <para>
 /// <strong>Thread Pool Independence (Critical for Load Testing):</strong>
@@ -31,6 +39,29 @@ namespace PerfProblemSimulator.Services;
 /// </list>
 /// <para>
 /// This ensures the dashboard continues updating even during severe thread pool starvation.
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// The pattern of dedicated background worker for real-time updates:
+/// <list type="bullet">
+/// <item>PHP: Separate process with ReactPHP or Swoole for WebSocket server</item>
+/// <item>Node.js: Not needed - Socket.IO runs on main event loop (but watch for blocking!)</item>
+/// <item>Java: ScheduledExecutorService or dedicated Thread with LinkedBlockingQueue</item>
+/// <item>Python: threading.Thread with queue.Queue, or asyncio task with asyncio.Queue</item>
+/// <item>Ruby: Thread.new with Thread::Queue for producer-consumer pattern</item>
+/// </list>
+/// The BlockingCollection pattern maps to:
+/// <list type="bullet">
+/// <item>Node.js: async queue pattern or RxJS Subject</item>
+/// <item>Java: BlockingQueue (LinkedBlockingQueue, ArrayBlockingQueue)</item>
+/// <item>Python: queue.Queue (blocking) or asyncio.Queue</item>
+/// <item>Ruby: Thread::Queue</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// IMetricsCollector.cs (event source), MetricsHub.cs (SignalR endpoint),
+/// SimulationTracker.cs (simulation events), Models/MetricsSnapshot.cs
 /// </para>
 /// </remarks>
 public class MetricsBroadcastService : IHostedService

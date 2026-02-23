@@ -8,32 +8,51 @@ using System.Diagnostics;
 namespace PerfProblemSimulator.Services;
 
 /// <summary>
-/// Service that simulates slow requests with intentional blocking patterns.
+/// Service that generates slow HTTP requests to demonstrate thread pool starvation.
 /// </summary>
 /// <remarks>
 /// <para>
-/// <strong>⚠️ EDUCATIONAL PURPOSE ONLY ⚠️</strong>
+/// <strong>PURPOSE:</strong>
+/// Creates reproducible thread pool starvation by spawning slow HTTP requests at controlled
+/// intervals. Designed to work with CLR Profiler and App Service Diagnostics for training
+/// developers to diagnose blocking call patterns in production.
 /// </para>
 /// <para>
-/// This service intentionally implements blocking patterns using Thread.Sleep to demonstrate
-/// what slow requests look like in a CLR Profiler trace. The method names are deliberately
-/// descriptive so they're easy to find in profiler output.
-/// </para>
-/// <para>
-/// <strong>What CLR Profiler Will Show:</strong>
-/// <list type="bullet">
-/// <item>Time spent in <c>Thread.Sleep</c> calls - clearly visible as method self-time</item>
-/// <item>Low CPU usage despite slow responses (threads are sleeping, not working)</item>
-/// <item>Blocking calls that consume thread pool threads</item>
+/// <strong>ALGORITHM:</strong>
+/// <list type="number">
+/// <item>Start() creates a dedicated spawner thread (not thread pool) to avoid self-interference</item>
+/// <item>Spawner thread waits 3 seconds for existing health probes to complete (clean baseline)</item>
+/// <item>Every N seconds (configurable), spawner makes an HTTP call to /api/slowrequest/execute-slow</item>
+/// <item>The execute-slow endpoint intentionally sleeps for 20-25 seconds, blocking the thread</item>
+/// <item>After ~15 concurrent requests, all thread pool threads are blocked</item>
+/// <item>Health probes start timing out (30+ seconds) - this is the symptom we're demonstrating</item>
+/// <item>Stop() cancels the spawner thread; existing slow requests complete naturally</item>
 /// </list>
 /// </para>
 /// <para>
-/// <strong>Real-World Equivalent Causes:</strong>
+/// <strong>WHY HTTP CALLS TO SELF (not direct Thread.Sleep)?</strong>
 /// <list type="bullet">
-/// <item>Database queries with long timeouts</item>
-/// <item>External HTTP calls to slow services</item>
-/// <item>File I/O operations on slow storage</item>
-/// <item>Sync-over-async anti-patterns (Task.Wait(), .Result, GetAwaiter().GetResult())</item>
+/// <item>HTTP requests go through the full ASP.NET pipeline and use thread pool threads</item>
+/// <item>This shows up correctly in Azure App Service request metrics and logs</item>
+/// <item>CLR Profiler can correlate the blocking with actual HTTP request handling</item>
+/// <item>Demonstrates realistic behavior (most starvation comes from external HTTP calls)</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>PORTING TO OTHER LANGUAGES:</strong>
+/// <list type="bullet">
+/// <item>Node.js: Use sync file I/O or crypto operations to block the event loop</item>
+/// <item>Java/Spring: Use Thread.sleep() in @RequestMapping handlers with limited thread pool</item>
+/// <item>Python/Flask: Use time.sleep() with gunicorn limited to 4-8 workers</item>
+/// <item>Key: The blocking must happen in request handler context, not background threads</item>
+/// </list>
+/// </para>
+/// <para>
+/// <strong>RELATED FILES:</strong>
+/// <list type="bullet">
+/// <item>Controllers/SlowRequestController.cs - The /execute-slow endpoint that blocks</item>
+/// <item>Services/LatencyProbeService.cs - Health probe that shows starvation symptoms</item>
+/// <item>Hubs/IMetricsClient.cs - ReceiveSlowRequestLatency for dashboard updates</item>
 /// </list>
 /// </para>
 /// </remarks>
