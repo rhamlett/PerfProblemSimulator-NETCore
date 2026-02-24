@@ -316,12 +316,15 @@
 </head>
 <body>
     <header class="header">
-        <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-        <h1>🚀 Azure Deployment Guide</h1>
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1>🔥 Performance Problem Simulator - .NET 10 on Windows</h1>
+        </div>
+        <div id="skuDisplay" style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9em; display: none;">SKU: Loading...</div>
         <div style="display: flex; align-items: center; gap: 1.5rem;">
             <a href="/" class="btn-panel-toggle">🏠 Dashboard</a>
         </div>
@@ -896,6 +899,22 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
 
         window.addEventListener('scroll', updateActiveTocLink);
         updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
     </script>
 </body>
 </html>
