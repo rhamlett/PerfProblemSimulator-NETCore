@@ -13,7 +13,7 @@
 </head>
 <body>
     <header class="header">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="header-left">
             <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
                 <span></span>
                 <span></span>
@@ -21,8 +21,8 @@
             </button>
             <h1>🔥 Performance Problem Simulator - .NET 10 on Windows</h1>
         </div>
-        <div id="skuDisplay" style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9em; display: none;">SKU: Loading...</div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div id="skuDisplay" class="sku-display">SKU: Loading...</div>
+        <div class="header-right">
             <button class="btn-panel-toggle" id="btnTogglePanel" title="Toggle Simulation Controls">
                 🎮 Simulation Controls
             </button>
@@ -62,7 +62,7 @@
             </a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-label">External</div>
-            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" class="sidebar-nav-item">
+            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" rel="noopener" class="sidebar-nav-item">
                 <span class="nav-icon">🐙</span>
                 <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
             </a>
@@ -136,7 +136,7 @@
                 <p>Generates requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
                 <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) are flagged as critical</p>
                 <div class="control-inputs">
-                    <label>Request Execution Time (s) <span style="cursor: help; color: var(--color-primary);" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
+                    <label>Request Execution Time (s) <span class="help-icon" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
                         <input type="number" id="slowRequestDuration" value="25" min="5" max="60">
                     </label>
                     <label>Interval (s):
@@ -187,7 +187,7 @@
                     <div class="metric-unit">%</div>
                 </div>
                 <div class="metric-bar">
-                    <div class="metric-bar-fill" id="cpuBar" style="width: 0%"></div>
+                    <div class="metric-bar-fill" id="cpuBar"></div>
                 </div>
             </div>
 
@@ -202,7 +202,7 @@
                     <div class="metric-total" id="memoryTotal"></div>
                 </div>
                 <div class="metric-bar">
-                    <div class="metric-bar-fill" id="memoryBar" style="width: 0%"></div>
+                    <div class="metric-bar-fill" id="memoryBar"></div>
                 </div>
             </div>
 
@@ -216,7 +216,7 @@
                     <div class="metric-unit">threads</div>
                 </div>
                 <div class="metric-bar">
-                    <div class="metric-bar-fill" id="threadsBar" style="width: 0%"></div>
+                    <div class="metric-bar-fill" id="threadsBar"></div>
                 </div>
             </div>
 
@@ -230,7 +230,7 @@
                     <div class="metric-unit">pending</div>
                 </div>
                 <div class="metric-bar">
-                    <div class="metric-bar-fill" id="queueBar" style="width: 0%"></div>
+                    <div class="metric-bar-fill" id="queueBar"></div>
                 </div>
             </div>
         </section>
@@ -279,9 +279,9 @@
                 <span class="threshold-item timeout">● Critical (&gt;30s)</span>
             </div>
 
-            <div class="chart-container latency-chart-container" style="position: relative;">
+            <div class="chart-container latency-chart-container position-relative">
                 <h3>📊 Response Latency Over Time</h3>
-                <div id="latencySuspendedMsg" style="display:none; color: #8b3a3a; font-weight: bold; text-align: center; margin-bottom: 5px;">
+                <div id="latencySuspendedMsg" class="latency-suspended-msg">
                     Latency probes reduced during Slow Request testing to ensure clean CLR Profile diagnostics.
                 </div>
                 <canvas id="latencyChart"></canvas>

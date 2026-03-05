@@ -416,7 +416,7 @@
 </head>
 <body>
     <header class="header">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div class="header-left">
             <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
                 <span></span>
                 <span></span>
@@ -424,8 +424,8 @@
             </button>
             <h1>🔥 Performance Problem Simulator - .NET 10 on Windows</h1>
         </div>
-        <div id="skuDisplay" style="position: absolute; left: 50%; transform: translateX(-50%); font-weight: bold; background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 12px; font-size: 0.9em; display: none;">SKU: Loading...</div>
-        <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <div id="skuDisplay" class="sku-display">SKU: Loading...</div>
+        <div class="header-right">
             <a href="/" class="btn-panel-toggle">🏠 Dashboard</a>
         </div>
     </header>
@@ -459,7 +459,7 @@
             </a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-label">External</div>
-            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" class="sidebar-nav-item">
+            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" rel="noopener" class="sidebar-nav-item">
                 <span class="nav-icon">🐙</span>
                 <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
             </a>
@@ -833,7 +833,7 @@ Simulated database and HTTP blocking calls:
             </div>
 
             <h3>Using ProcDump for Manual Dump Collection</h3>
-            <p><a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump" target="_blank">ProcDump</a> is a Sysinternals command-line utility that can monitor applications and generate crash dumps. It's available on Azure App Service through the Kudu console.</p>
+            <p><a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump" target="_blank" rel="noopener">ProcDump</a> is a Sysinternals command-line utility that can monitor applications and generate crash dumps. It's available on Azure App Service through the Kudu console.</p>
 
             <h4>Accessing the Kudu Console</h4>
             <ol>
@@ -1051,7 +1051,7 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=0&amp;bufferSizeK
             <div class="code-block">
 additionalDelay = max(0, concurrent - softLimit) × degradationFactor
             </div>
-            <div class="info-box" style="background: rgba(0, 120, 212, 0.1); border-left: 4px solid var(--color-primary); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+            <div class="info-box">
                 <strong>Note:</strong> Actual response times will vary based on your Azure App Service tier, current load, and other factors. Use Azure Load Testing to establish baseline performance for your specific environment. These example scenarios, and the defaults, are for a Premium0V3 worker. Any other SKU or worker size will need individual tuning.
             </div>
 
@@ -1132,7 +1132,7 @@ GET /api/loadtest/stats
 
             <h3>Tuning Parameters for Different Scenarios</h3>
             <p>Complete request body examples for various test scenarios:</p>
-            <div class="info-box" style="background: rgba(0, 120, 212, 0.1); border-left: 4px solid var(--color-primary); padding: 1rem; margin: 1rem 0; border-radius: 4px;">
+            <div class="info-box">
                 <strong>Note:</strong> Actual response times will vary based on your Azure App Service tier, current load, and other factors. Use Azure Load Testing to establish baseline performance for your specific environment. These example scenarios, and the defaults, are for a Premium0V3 worker. Any other SKU or worker size will need individual tuning.
             </div>
             <table class="api-table compact">
@@ -1297,16 +1297,16 @@ az webapp log config \
             <p>For more information, see these official Microsoft resources:</p>
             
             <div class="resource-links">
-                <a href="https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-performance-issues" target="_blank">
+                <a href="https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-performance-issues" target="_blank" rel="noopener">
                     📘 Troubleshoot performance issues - Azure App Service
                 </a>
-                <a href="https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/" target="_blank">
+                <a href="https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/" target="_blank" rel="noopener">
                     📘 .NET memory management
                 </a>
-                <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming" target="_blank">
+                <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming" target="_blank" rel="noopener">
                     📘 Async/Await Best Practices
                 </a>
-                <a href="https://docs.microsoft.com/en-us/archive/blogs/vancem/diagnosing-net-core-threadpool-starvation-with-perfview-why-my-service-is-not-saturating-all-cores-or-seems-to-stall" target="_blank">
+                <a href="https://docs.microsoft.com/en-us/archive/blogs/vancem/diagnosing-net-core-threadpool-starvation-with-perfview-why-my-service-is-not-saturating-all-cores-or-seems-to-stall" target="_blank" rel="noopener">
                     📘 Thread pool starvation diagnostics
                 </a>
             </div>
@@ -1330,8 +1330,8 @@ az webapp log config \
                         <li class="doc-toc-item">
                             <a href="#overview"><span class="toc-icon">📊</span>Overview</a>
                         </li>
-                        <div class="doc-toc-divider"></div>
-                        <div class="doc-toc-section-label">Diagnostics</div>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Diagnostics</li>
                         <li class="doc-toc-item">
                             <a href="#cpu"><span class="toc-icon">🔥</span>High CPU</a>
                         </li>
@@ -1347,16 +1347,16 @@ az webapp log config \
                         <li class="doc-toc-item">
                             <a href="#crash"><span class="toc-icon">💥</span>Crashes</a>
                         </li>
-                        <div class="doc-toc-divider"></div>
-                        <div class="doc-toc-section-label">Tools</div>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Tools</li>
                         <li class="doc-toc-item">
                             <a href="#latency"><span class="toc-icon">⏱️</span>Latency Monitor</a>
                         </li>
                         <li class="doc-toc-item">
                             <a href="#load-testing"><span class="toc-icon">📈</span>Load Testing</a>
                         </li>
-                        <div class="doc-toc-divider"></div>
-                        <div class="doc-toc-section-label">Reference</div>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Reference</li>
                         <li class="doc-toc-item">
                             <a href="#setup"><span class="toc-icon">⚙️</span>Setup</a>
                         </li>

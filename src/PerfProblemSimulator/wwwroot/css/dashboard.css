@@ -1239,3 +1239,133 @@ body {
         height: 200px;
     }
 }
+
+/* --------------------------------------------------------------------------
+   Utility Classes - Header Layout
+   -------------------------------------------------------------------------- */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.sku-display {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.9em;
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes - Text Colors & Emphasis
+   -------------------------------------------------------------------------- */
+.text-warning {
+    color: #ffb900;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #d13438;
+    font-weight: bold;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes - Margins
+   -------------------------------------------------------------------------- */
+.mt-1 {
+    margin-top: 1rem;
+}
+
+.mb-0 {
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Environment Variable Table
+   -------------------------------------------------------------------------- */
+.env-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.env-table th,
+.env-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.env-table thead tr {
+    background: #f5f5f5;
+}
+
+/* --------------------------------------------------------------------------
+   TOC - List Structure Fix (use li-based dividers/labels)
+   -------------------------------------------------------------------------- */
+.doc-toc-divider-item {
+    list-style: none;
+    height: 1px;
+    background: var(--color-bg);
+    margin: 0.75rem 0;
+    padding: 0;
+}
+
+.doc-toc-section-item {
+    list-style: none;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    padding: 0.5rem 0.75rem 0.25rem;
+    opacity: 0.7;
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes - Help Icon Tooltip
+   -------------------------------------------------------------------------- */
+.help-icon {
+    cursor: help;
+    color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Utility Classes - Position
+   -------------------------------------------------------------------------- */
+.position-relative {
+    position: relative;
+}
+
+/* --------------------------------------------------------------------------
+   Latency Suspended Message
+   -------------------------------------------------------------------------- */
+.latency-suspended-msg {
+    display: none;
+    color: #8b3a3a;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+/* --------------------------------------------------------------------------
+   Progress Bar Initial State
+   -------------------------------------------------------------------------- */
+.metric-bar-fill {
+    width: 0%;
+}
