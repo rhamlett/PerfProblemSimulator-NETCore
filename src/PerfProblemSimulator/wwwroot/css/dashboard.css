@@ -663,7 +663,7 @@ body {
 }
 
 .crash-group {
-    border: 2px dashed var(--color-danger);
+    border: 2px solid var(--color-danger);
     background: rgba(209, 52, 56, 0.05);
 }
 
@@ -694,7 +694,7 @@ body {
 }
 
 .slowrequest-group {
-    border: 2px dashed #ff8c00;
+    border: 2px solid #ff8c00;
     background: rgba(255, 140, 0, 0.05);
 }
 
