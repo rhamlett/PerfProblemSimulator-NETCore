@@ -868,10 +868,29 @@ body {
     margin-right: 0.75rem;
 }
 
+/* Log entry severity levels (fallback) */
 .log-entry.info { color: var(--color-primary); }
 .log-entry.success { color: var(--color-success); }
 .log-entry.warning { color: var(--color-warning); }
 .log-entry.error { color: var(--color-danger); }
+
+/* Log entry simulation-themed colors */
+.log-entry.cpu { color: var(--color-cpu); }
+.log-entry.memory { color: var(--color-memory); }
+.log-entry.threads { color: var(--color-threads); }
+.log-entry.slowrequest { color: #b8860b; } /* Dark goldenrod for slow requests */
+.log-entry.crash { color: var(--color-danger); }
+.log-entry.loadtest { color: var(--color-primary); } /* .NET theme: blue */
+.log-entry.system { color: var(--color-text-muted); }
+
+.log-icon {
+    margin-right: 0.35rem;
+}
+
+.sim-msg {
+    cursor: help;
+    border-bottom: 1px dotted currentColor;
+}
 
 /* --------------------------------------------------------------------------
    Footer
@@ -1387,6 +1406,142 @@ body {
 .help-icon {
     cursor: help;
     color: var(--color-primary);
+}
+
+/* Metric card tooltip styling */
+.metric-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    cursor: help;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+}
+
+.metric-tooltip:hover {
+    opacity: 1;
+}
+
+.metric-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--color-text);
+    color: var(--color-card);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.metric-tooltip::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 2px);
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--color-text);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+}
+
+.metric-tooltip:hover::after,
+.metric-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Control panel tooltip styling */
+.control-tooltip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    cursor: help;
+    opacity: 0.7;
+    transition: opacity var(--transition-fast);
+    font-weight: normal;
+    vertical-align: middle;
+}
+
+.control-tooltip:hover {
+    opacity: 1;
+}
+
+.control-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--color-text);
+    color: var(--color-card);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: normal;
+    width: max-content;
+    max-width: 250px;
+    text-align: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.control-tooltip::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 2px);
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--color-text);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+}
+
+.control-tooltip:hover::after,
+.control-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Info Note Box */
+.info-note {
+    background: rgba(255, 243, 205, 0.9);
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-left: 3px solid #ffc107;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #664d03;
+}
+
+.info-note strong {
+    color: #664d03;
 }
 
 /* --------------------------------------------------------------------------

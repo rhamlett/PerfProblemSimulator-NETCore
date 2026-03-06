@@ -492,6 +492,47 @@
             <p>Each issue can be diagnosed using specific Azure tools and techniques.</p>
         </section>
 
+        <!-- Simulation ID Correlation Section -->
+        <section id="simulation-ids" class="doc-section">
+            <h2>🔗 Simulation ID Correlation</h2>
+            <p>Every simulation instance is assigned a unique <strong>Simulation ID</strong> (GUID) that enables end-to-end correlation between the dashboard UI and Azure diagnostics.</p>
+            
+            <h3>Finding Simulation IDs</h3>
+            <p><strong>In the Dashboard:</strong> Hover over any simulation-related message in the Event Log (marked with a <span style="border-bottom: 1px dotted currentColor; cursor: help;">dotted underline</span>) to see the full Simulation ID in a tooltip.</p>
+            <p><strong>In Azure:</strong> The same Simulation ID is emitted in server-side logs and can be found in:</p>
+            <ul>
+                <li><strong>Application Insights</strong> - Search traces and custom events by Simulation ID</li>
+                <li><strong>Log Analytics</strong> - Query logs using the ID as a filter</li>
+                <li><strong>Container/App Service Logs</strong> - Filter stdout/stderr by the GUID</li>
+            </ul>
+
+            <h3>Correlation Queries</h3>
+            <p>Use these KQL queries in Log Analytics to correlate dashboard events with server telemetry:</p>
+            <div class="code-block">
+<span class="comment">// Find all traces for a specific simulation</span>
+traces
+| <span class="keyword">where</span> message <span class="keyword">contains</span> <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+| <span class="keyword">order by</span> timestamp <span class="keyword">asc</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">// Find custom events for a simulation</span>
+customEvents
+| <span class="keyword">where</span> customDimensions[<span class="string">"SimulationId"</span>] == <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+| <span class="keyword">order by</span> timestamp <span class="keyword">asc</span>
+            </div>
+
+            <h3>Troubleshooting Workflow</h3>
+            <ol>
+                <li>Start a simulation from the dashboard</li>
+                <li>Hover over the start message in the Event Log to copy the Simulation ID</li>
+                <li>Open Azure Portal → Application Insights → Logs (or Log Analytics)</li>
+                <li>Query logs using the Simulation ID to see all related server-side activity</li>
+                <li>Correlate timestamps between dashboard events and server metrics</li>
+            </ol>
+            <p><strong>Tip:</strong> The Simulation ID helps isolate telemetry when running multiple concurrent simulations or when the dashboard is used by multiple users.</p>
+        </section>
+
         <!-- Diagnosing High CPU Section -->
         <section id="cpu" class="doc-section">
             <h2>🔥 Diagnosing High CPU</h2>
@@ -1329,6 +1370,9 @@ az webapp log config \
                     <ul>
                         <li class="doc-toc-item">
                             <a href="#overview"><span class="toc-icon">📊</span>Overview</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#simulation-ids"><span class="toc-icon">🔗</span>Simulation IDs</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Diagnostics</li>

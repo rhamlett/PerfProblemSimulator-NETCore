@@ -108,17 +108,17 @@ async function initializeSignalR() {
     // Handle connection state changes
     state.connection.onreconnecting(error => {
         updateConnectionStatus('connecting', 'Reconnecting...');
-        logEvent('warning', 'Connection lost. Attempting to reconnect...');
+        logEvent('system', 'Connection lost. Attempting to reconnect...');
     });
 
     state.connection.onreconnected(connectionId => {
         updateConnectionStatus('connected', 'Connected');
-        logEvent('success', 'Reconnected to server');
+        logEvent('system', 'Reconnected to server');
     });
 
     state.connection.onclose(error => {
         updateConnectionStatus('disconnected', 'Disconnected');
-        logEvent('warning', 'Connection closed. Attempting to reconnect...');
+        logEvent('system', 'Connection closed. Attempting to reconnect...');
         // Auto-reconnect after close (handles cases where withAutomaticReconnect gives up)
         setTimeout(initializeSignalR, CONFIG.reconnectDelayMs);
     });
@@ -143,13 +143,13 @@ async function initializeSignalR() {
         updateConnectionStatus('connecting', 'Connecting...');
         await state.connection.start();
         updateConnectionStatus('connected', 'Connected');
-        logEvent('success', 'Connected to metrics hub');
+        logEvent('system', 'Connected to metrics hub');
         
         // Start client-side probe as backup/additional measurement
         startClientProbe();
     } catch (err) {
         updateConnectionStatus('disconnected', 'Failed to connect');
-        logEvent('error', `Connection failed: ${err.message}`);
+        logEvent('system', `Connection failed: ${err.message}`);
         // Try again after delay
         setTimeout(initializeSignalR, CONFIG.reconnectDelayMs);
     }
@@ -175,7 +175,7 @@ function handleMetricsUpdate(snapshot) {
     // Check for application restart (process ID change)
     if (snapshot.processId) {
         if (state.lastProcessId !== null && state.lastProcessId !== snapshot.processId) {
-            logEvent('danger', `🔄 APPLICATION RESTARTED! Process ID changed from ${state.lastProcessId} to ${snapshot.processId}. This may indicate an unexpected crash (OOM, StackOverflow, etc.)`);
+            logEvent('crash', `APPLICATION RESTARTED! Process ID changed from ${state.lastProcessId} to ${snapshot.processId}. This may indicate an unexpected crash (OOM, StackOverflow, etc.)`, { icon: '🔄' });
             // Clear all active simulations since the app restarted
             clearAllActiveSimulations();
         }
@@ -515,12 +515,12 @@ function updateCharts() {
 function handleLatencyUpdate(measurement) {
     // Log significant latency events to the dashboard log
     if (measurement.isError) {
-        logEvent('error', `⚠️ Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
+        logEvent('system', `Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
     } else if (measurement.isTimeout) {
-        logEvent('warning', `⚠️ Health Probe Critical (>30s): ${formatLatency(measurement.latencyMs)}`);
+        logEvent('system', `Health Probe Critical (>30s): ${formatLatency(measurement.latencyMs)}`);
     } else if (measurement.latencyMs > 10000) {
         // Log extremely high latency (starvation)
-        logEvent('warning', `⚠️ High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
+        logEvent('system', `High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
     }
     
     const timestamp = new Date(measurement.timestamp);
@@ -578,18 +578,18 @@ function handleSlowRequestLatency(data) {
     const queueSec = (queueTimeMs / 1000).toFixed(1);
     
     if (isError) {
-        let msg = `❌ Slow request #${data.requestNumber} FAILED: ${durationSec}s (${scenario}) - ${errorMessage}`;
+        let msg = `Slow request #${data.requestNumber} FAILED: ${durationSec}s (${scenario}) - ${errorMessage}`;
         if (queueTimeMs > 100) {
             msg += ` [Queue Time: ${queueSec}s]`;
         }
-        logEvent('error', msg);
+        logEvent('slowrequest', msg);
     } else if (isTimeout) {
         // Request completed but exceeded the 30s critical threshold
-        let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s] ⚠️ CRITICAL (>30s)`;
-        logEvent('warning', msg);
+        let msg = `Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s] ⚠️ CRITICAL (>30s)`;
+        logEvent('slowrequest', msg);
     } else {
-        let msg = `🐌 Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
-        logEvent('warning', msg);
+        let msg = `Slow request #${data.requestNumber} completed: ${durationSec}s (${scenario}) [Queue Time: ${queueSec}s]`;
+        logEvent('slowrequest', msg);
     }
 }
 
@@ -602,14 +602,14 @@ function handleLoadTestStats(data) {
     const exceptions = data.exceptionCount;
     
     // Build simple status message - just request count
-    let msg = `📊 Load Test Stats (60s): ${completed.toLocaleString()} requests`;
+    let msg = `Load Test Stats (60s): ${completed.toLocaleString()} requests`;
     
     // Add exception count if any
     if (exceptions > 0) {
         msg += ` | ⚠️ ${exceptions} exceptions`;
-        logEvent('warning', msg);
+        logEvent('loadtest', msg);
     } else {
-        logEvent('info', msg);
+        logEvent('loadtest', msg);
     }
 }
 
@@ -837,7 +837,7 @@ async function triggerCpuStress() {
     const level = document.getElementById('cpuLevel').value || 'high';
     
     try {
-        logEvent('info', `Triggering CPU stress for ${duration} seconds (${level})...`);
+        logEvent('cpu', `Triggering CPU stress for ${duration} seconds (${level})...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/trigger-high-cpu`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -851,13 +851,13 @@ async function triggerCpuStress() {
             const result = await response.json();
             const displayLevel = level.charAt(0).toUpperCase() + level.slice(1);
             addActiveSimulation(result.simulationId, 'cpu', `CPU Stress (${displayLevel})`);
-            logEvent('success', `CPU stress started: ${result.simulationId}`);
+            logEvent('cpu', withSimulationId(`CPU stress started (${displayLevel})`, result.simulationId));
         } else {
             const error = await response.json();
-            logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);
+            logEvent('cpu', `Failed: ${error.detail || 'Unknown error'}`);
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('cpu', `Request failed: ${err.message}`);
     }
 }
 
@@ -866,22 +866,22 @@ async function triggerCpuStress() {
  */
 async function stopCpuStress() {
     try {
-        logEvent('info', 'Stopping CPU stress simulations...');
+        logEvent('cpu', 'Stopping CPU stress simulations...');
         const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/stop`, {
             method: 'POST'
         });
         
         if (response.ok) {
             const result = await response.json();
-            logEvent('success', result.message || 'CPU stress stopped');
+            logEvent('cpu', result.message || 'CPU stress stopped');
             // Remove CPU simulations from active list
             removeSimulationsByType('cpu');
         } else {
             const error = await response.json();
-            logEvent('warning', `Stop request: ${error.detail || 'May have already stopped'}`);
+            logEvent('cpu', `Stop request: ${error.detail || 'May have already stopped'}`);
         }
     } catch (err) {
-        logEvent('warning', `Stop request: ${err.message || 'May have already stopped'}`);
+        logEvent('cpu', `Stop request: ${err.message || 'May have already stopped'}`);
     }
 }
 
@@ -889,7 +889,7 @@ async function allocateMemory() {
     const sizeMb = parseInt(document.getElementById('memorySize').value) || 100;
     
     try {
-        logEvent('info', `Allocating ${sizeMb} MB of memory...`);
+        logEvent('memory', `Allocating ${sizeMb} MB of memory...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/memory/allocate-memory`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -900,19 +900,19 @@ async function allocateMemory() {
             const result = await response.json();
             const actualSizeMb = result.actualParameters?.sizeMegabytes ?? sizeMb;
             addActiveSimulation(result.simulationId, 'memory', `Memory ${actualSizeMb}MB`);
-            logEvent('success', `Memory allocated: ${result.simulationId} (${actualSizeMb} MB)`);
+            logEvent('memory', withSimulationId(`Memory allocated (${actualSizeMb} MB)`, result.simulationId));
         } else {
             const error = await response.json();
-            logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);
+            logEvent('memory', `Failed: ${error.detail || 'Unknown error'}`);
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('memory', `Request failed: ${err.message}`);
     }
 }
 
 async function releaseMemory() {
     try {
-        logEvent('info', 'Releasing all allocated memory...');
+        logEvent('memory', 'Releasing all allocated memory...');
         const response = await fetch(`${CONFIG.apiBaseUrl}/memory/release-memory`, {
             method: 'POST'
         });
@@ -927,13 +927,13 @@ async function releaseMemory() {
             });
             updateActiveSimulationsUI();
             const releasedMb = result.releasedMegabytes ?? (result.releasedBytes / 1024 / 1024);
-            logEvent('success', `Released ${result.releasedBlockCount ?? 0} blocks (${releasedMb.toFixed(1)} MB)`);
+            logEvent('memory', `Released ${result.releasedBlockCount ?? 0} blocks (${releasedMb.toFixed(1)} MB)`);
         } else {
             const error = await response.json();
-            logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);
+            logEvent('memory', `Failed: ${error.detail || 'Unknown error'}`);
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('memory', `Request failed: ${err.message}`);
     }
 }
 
@@ -943,7 +943,7 @@ async function triggerThreadBlock() {
     const concurrent = parseInt(document.getElementById('threadConcurrent').value) || 100;
     
     try {
-        logEvent('info', `Triggering thread blocking: ${concurrent} requests, ${delaySeconds}s delay...`);
+        logEvent('threads', `Triggering thread blocking: ${concurrent} requests, ${delaySeconds}s delay...`);
         const response = await fetch(`${CONFIG.apiBaseUrl}/threadblock/trigger-sync-over-async`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -956,13 +956,13 @@ async function triggerThreadBlock() {
         if (response.ok) {
             const result = await response.json();
             addActiveSimulation(result.simulationId, 'threadblock', 'Thread Block');
-            logEvent('success', `Thread blocking started: ${result.simulationId}`);
+            logEvent('threads', withSimulationId(`Thread blocking started`, result.simulationId));
         } else {
             const error = await response.json();
-            logEvent('error', `Failed: ${error.detail || 'Unknown error'}`);
+            logEvent('threads', `Failed: ${error.detail || 'Unknown error'}`);
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('threads', `Request failed: ${err.message}`);
     }
 }
 
@@ -986,12 +986,12 @@ async function triggerCrash() {
     );
     
     if (!confirmed) {
-        logEvent('info', 'Crash cancelled by user');
+        logEvent('crash', 'Crash cancelled by user');
         return;
     }
     
     try {
-        logEvent('danger', `💥 CRASH: ${crashType}${delaySeconds > 0 ? ` in ${delaySeconds}s` : ''} - Connection will be lost!`);
+        logEvent('crash', `CRASH: ${crashType}${delaySeconds > 0 ? ` in ${delaySeconds}s` : ''} - Connection will be lost!`);
         
         const response = await fetch(`${CONFIG.apiBaseUrl}/crash/trigger`, {
             method: 'POST',
@@ -1007,7 +1007,7 @@ async function triggerCrash() {
         // If synchronous, we shouldn't get here (process crashed)
         if (response.ok) {
             const result = await response.json();
-            logEvent('danger', `💀 ${result.message}`);
+            logEvent('crash', `💀 ${result.message}`);
             
             // Show countdown for async crashes
             if (!synchronous && delaySeconds > 0) {
@@ -1015,23 +1015,23 @@ async function triggerCrash() {
                 const countdownInterval = setInterval(() => {
                     countdown--;
                     if (countdown > 0) {
-                        logEvent('warning', `💥 Crash in ${countdown}...`);
+                        logEvent('crash', `Crash in ${countdown}...`);
                     } else {
-                        logEvent('danger', '💥 CRASHING NOW!');
+                        logEvent('crash', 'CRASHING NOW!');
                         clearInterval(countdownInterval);
                     }
                 }, 1000);
             }
         } else {
             const error = await response.json();
-            logEvent('error', `Failed: ${error.message || 'Unknown error'}`);
+            logEvent('crash', `Failed: ${error.message || 'Unknown error'}`);
         }
     } catch (err) {
         // For synchronous crashes, a network error is expected (connection lost)
         if (synchronous) {
-            logEvent('danger', '💥 Application crashed! Connection lost. Waiting for restart...');
+            logEvent('crash', 'Application crashed! Connection lost. Waiting for restart...');
         } else {
-            logEvent('error', `Request failed: ${err.message}`);
+            logEvent('crash', `Request failed: ${err.message}`);
         }
     }
 }
@@ -1054,7 +1054,7 @@ async function startSlowRequests() {
     const stopBtn = document.getElementById('btnStopSlowRequests');
     
     try {
-        logEvent('info', `🐌 Starting slow request simulator: ${durationSeconds}s requests, ${intervalSeconds}s interval, max ${maxRequests}`);
+        logEvent('slowrequest', `Starting slow request simulator: ${durationSeconds}s requests, ${intervalSeconds}s interval, max ${maxRequests}`);
         
         startBtn.disabled = true;
         stopBtn.disabled = false;
@@ -1071,7 +1071,7 @@ async function startSlowRequests() {
         
         if (response.ok) {
             const result = await response.json();
-            logEvent('success', `🐌 ${result.message}`);
+            logEvent('slowrequest', `${result.message}`);
             statusDiv.textContent = `Running: ${durationSeconds}s requests every ${intervalSeconds}s (max ${maxRequests})`;
             statusDiv.classList.add('active');
             
@@ -1079,13 +1079,13 @@ async function startSlowRequests() {
             pollSlowRequestStatus();
         } else {
             const error = await response.json();
-            logEvent('error', `Failed to start: ${error.message || error.title || 'Unknown error'}`);
+            logEvent('slowrequest', `Failed to start: ${error.message || error.title || 'Unknown error'}`);
             startBtn.disabled = false;
             stopBtn.disabled = true;
             statusDiv.classList.remove('active');
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('slowrequest', `Request failed: ${err.message}`);
         startBtn.disabled = false;
         stopBtn.disabled = true;
         statusDiv.classList.remove('active');
@@ -1101,7 +1101,7 @@ async function stopSlowRequests() {
     const stopBtn = document.getElementById('btnStopSlowRequests');
     
     try {
-        logEvent('info', '🐌 Stopping slow request simulator...');
+        logEvent('slowrequest', 'Stopping slow request simulator...');
         
         const response = await fetch(`${CONFIG.apiBaseUrl}/slowrequest/stop`, {
             method: 'POST'
@@ -1109,13 +1109,13 @@ async function stopSlowRequests() {
         
         if (response.ok) {
             const result = await response.json();
-            logEvent('success', `🐌 ${result.message}`);
+            logEvent('slowrequest', `${result.message}`);
         } else {
             const error = await response.json();
-            logEvent('warning', `Stop request: ${error.message || 'May have already stopped'}`);
+            logEvent('slowrequest', `Stop request: ${error.message || 'May have already stopped'}`);
         }
     } catch (err) {
-        logEvent('error', `Request failed: ${err.message}`);
+        logEvent('slowrequest', `Request failed: ${err.message}`);
     } finally {
         startBtn.disabled = false;
         stopBtn.disabled = true;
@@ -1171,7 +1171,7 @@ async function pollSlowRequestStatus() {
                 if (msg) msg.style.display = 'none';
 
                 if (status.requestsCompleted > 0) {
-                    logEvent('success', `🐌 Slow request simulation completed: ${status.requestsCompleted} requests`);
+                    logEvent('slowrequest', `Slow request simulation completed: ${status.requestsCompleted} requests`);
                 }
             }
         }
@@ -1187,9 +1187,21 @@ async function pollSlowRequestStatus() {
 // Active Simulations UI
 // ==========================================================================
 
+/**
+ * Maps simulation types to their log categories
+ */
+const SIMULATION_CATEGORY_MAP = {
+    'cpu': 'cpu',
+    'memory': 'memory',
+    'threadblock': 'threads',
+    'slowrequest': 'slowrequest',
+    'crash': 'crash'
+};
+
 function handleSimulationStarted(simulationType, simulationId) {
-    addActiveSimulation(simulationId, simulationType.toLowerCase(), simulationType);
-    logEvent('info', `Simulation started: ${simulationType} (${simulationId})`);
+    const simTypeLower = simulationType.toLowerCase();
+    addActiveSimulation(simulationId, simTypeLower, simulationType);
+    // Note: Don't log here - the API response handlers already log the start message
 
     // Handle SlowRequest specific UI
     if (simulationType === 'SlowRequest') {
@@ -1208,7 +1220,9 @@ function handleSimulationStarted(simulationType, simulationId) {
 
 function handleSimulationCompleted(simulationType, simulationId) {
     removeActiveSimulation(simulationId);
-    logEvent('success', `Simulation completed: ${simulationType} (${simulationId})`);
+    const simTypeLower = simulationType.toLowerCase();
+    const category = SIMULATION_CATEGORY_MAP[simTypeLower] || 'system';
+    logEvent(category, withSimulationId(`${simulationType} simulation completed`, simulationId));
 
     // Handle SlowRequest specific UI
     if (simulationType === 'SlowRequest') {
@@ -1264,13 +1278,49 @@ function updateActiveSimulationsUI() {
 // Event Log
 // ==========================================================================
 
-function logEvent(level, message) {
+/**
+ * Category icons for event log entries
+ */
+const LOG_ICONS = {
+    cpu: '🔥',
+    memory: '📊',
+    threads: '🧵',
+    slowrequest: '🐌',
+    crash: '💥',
+    loadtest: '📈'
+};
+
+/**
+ * Wraps a message with a simulation ID tooltip for correlation.
+ * @param {string} message - The message to display
+ * @param {string} simulationId - The full GUID simulation ID (shown in tooltip)
+ * @returns {string} HTML string with message and tooltip
+ */
+function withSimulationId(message, simulationId) {
+    if (!simulationId) return message;
+    return `<span class="sim-msg" title="Simulation ID: ${simulationId}">${message}</span>`;
+}
+
+/**
+ * Logs an event to the event log panel.
+ * @param {string} levelOrCategory - Log level ('info','success','warning','error') or category ('cpu','memory','threads','slowrequest','crash','loadtest','system')
+ * @param {string} message - The message to log
+ * @param {Object} [options] - Optional settings
+ * @param {string} [options.icon] - Override the default icon for this category
+ */
+function logEvent(levelOrCategory, message, options = {}) {
     const log = document.getElementById('eventLog');
     const time = getCurrentUtcTime();
     
+    // Determine CSS class and icon based on category
+    let cssClass = levelOrCategory;
+    let icon = options.icon || LOG_ICONS[levelOrCategory] || '';
+    
     const entry = document.createElement('div');
-    entry.className = `log-entry ${level}`;
-    entry.innerHTML = `<span class="log-time">${time} UTC</span>${message}`;
+    entry.className = `log-entry ${cssClass}`;
+    
+    const iconHtml = icon ? `<span class="log-icon">${icon}</span>` : '';
+    entry.innerHTML = `<span class="log-time">${time} UTC</span>${iconHtml}${message}`;
     
     log.insertBefore(entry, log.firstChild);
     
@@ -1389,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Wire up side panel toggle
     initializeSidePanel();
     
-    logEvent('info', 'Dashboard initialized');
+    logEvent('system', 'Dashboard initialized');
 });
 
 // ==========================================================================

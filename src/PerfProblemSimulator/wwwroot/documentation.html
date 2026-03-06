@@ -564,6 +564,17 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
                 </tbody>
             </table>
             <p><strong>Note:</strong> Memory thresholds are calculated dynamically based on the actual total available memory reported by the server, not a hardcoded value. This ensures accurate warnings regardless of the machine's RAM configuration.</p>
+
+            <h3>Event Log & Simulation IDs</h3>
+            <p>The Event Log at the bottom of the dashboard records all simulation activity with color-coded entries matching each simulation type. Messages related to a specific simulation instance are marked with a <span style="border-bottom: 1px dotted currentColor; cursor: help;">dotted underline</span>.</p>
+            <p><strong>Viewing Simulation IDs:</strong> Hover over any underlined message to reveal the full <strong>Simulation ID</strong> (GUID) in a tooltip. This ID uniquely identifies each simulation instance.</p>
+            <p><strong>Using Simulation IDs for Troubleshooting:</strong></p>
+            <ul>
+                <li>The same Simulation ID is logged server-side and appears in Azure Application Insights and Log Analytics</li>
+                <li>Use this ID to correlate dashboard events with server logs when analyzing performance issues</li>
+                <li>Filter Azure logs by Simulation ID to isolate telemetry from a specific simulation run</li>
+                <li>See the <a href="azure-monitoring-guide.html#simulation-ids">Azure Monitoring Guide</a> for detailed correlation techniques</li>
+            </ul>
         </section>
 
         <!-- Request Latency Monitor Section -->

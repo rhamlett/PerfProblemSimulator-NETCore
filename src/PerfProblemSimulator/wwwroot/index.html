@@ -79,11 +79,9 @@
             <button class="btn-close-panel" id="btnClosePanel" title="Close Panel">✕</button>
         </div>
         <div class="side-panel-content">
-            <p class="warning-text">⚠️ These buttons intentionally cause performance problems!</p>
-            
             <div class="control-group cpu-group">
-                <h3>🔥 CPU Stress</h3>
-                <p>Creates parallel spin loops to max out all CPU cores.</p>
+                <h3>🔥 CPU Stress <span class="control-tooltip" data-tooltip="Spawns worker threads running intensive cryptographic operations to stress CPU cores">ⓘ</span></h3>
+                <p>Spawns worker threads running intensive cryptographic operations to stress CPU cores. Higher intensity uses more parallel threads.</p>
                 <div class="control-inputs">
                     <label>Duration (s):
                         <input type="number" id="cpuDuration" value="30" min="1" title="Duration in seconds (minimum 1 second)">
@@ -102,8 +100,8 @@
             </div>
 
             <div class="control-group memory-group">
-                <h3>📊 Memory Pressure</h3>
-                <p>Allocates pinned memory blocks to increase working set.</p>
+                <h3>📊 Memory Pressure <span class="control-tooltip" data-tooltip="Allocates pinned memory blocks filled with random data to increase working set">ⓘ</span></h3>
+                <p>Allocates pinned memory blocks filled with random data. Multiple allocations stack - mimics gradual memory leak.</p>
                 <div class="control-inputs">
                     <label>Size (MB):
                         <input type="number" id="memorySize" value="512" min="1" title="Memory size in megabytes (minimum 1 MB). Allocations are cumulative until released.">
@@ -116,8 +114,9 @@
             </div>
 
             <div class="control-group thread-group">
-                <h3>🧵 Thread Pool Starvation</h3>
-                <p>Blocks threads using sync-over-async anti-pattern.</p>
+                <h3>🧵 Thread Pool Starvation <span class="control-tooltip" data-tooltip="Blocks worker threads to simulate thread pool exhaustion">ⓘ</span></h3>
+                <p>Blocks worker threads using sync-over-async anti-pattern to simulate thread pool exhaustion. Server becomes unresponsive to new requests.</p>
+                <p class="info-note">⏱️ <strong>Duration Note:</strong> .NET thread pool starts with ~CPU cores (e.g., 4-8) and grows at only 1-2 threads/second when starved. Impact is visible almost immediately since the initial pool is small.</p>
                 <div class="control-inputs">
                     <label>Delay (s):
                         <input type="number" id="threadDelay" value="10" min="0.1" step="0.1" title="How long each blocking operation delays in seconds (minimum 0.1s)">
@@ -132,8 +131,8 @@
             </div>
 
             <div class="control-group slowrequest-group">
-                <h3>🐌 Slow Requests</h3>
-                <p>Generates requests using sync-over-async patterns. Ideal for CLR Profiler diagnosis.</p>
+                <h3>🐌 Slow Requests <span class="control-tooltip" data-tooltip="Generates slow requests ideal for CLR Profiler diagnosis">ⓘ</span></h3>
+                <p>Generates requests using sync-over-async patterns that intentionally take a long time. Ideal for CLR Profiler diagnosis in Azure.</p>
                 <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) are flagged as critical</p>
                 <div class="control-inputs">
                     <label>Request Execution Time (s) <span class="help-icon" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
@@ -153,8 +152,8 @@
             </div>
 
             <div class="control-group crash-group">
-                <h3>💥 Application Crash</h3>
-                <p>Triggers a fatal crash for Azure crash monitoring.</p>
+                <h3>💥 Application Crash <span class="control-tooltip" data-tooltip="Triggers various types of fatal crashes for testing crash monitoring">ⓘ</span></h3>
+                <p>Triggers a fatal crash to test Azure crash monitoring and diagnostics. Choose from various crash types including stack overflow and access violations.</p>
                 <div class="control-inputs">
                     <label>Type:
                         <select id="crashType" class="wide-input">
@@ -180,7 +179,7 @@
             <div class="metric-card cpu">
                 <div class="metric-header">
                     <div class="metric-icon">⚡</div>
-                    <div class="metric-label">CPU Usage</div>
+                    <div class="metric-label">CPU Usage <span class="metric-tooltip" data-tooltip="System CPU usage percentage across all cores">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="cpuValue">--</div>
@@ -194,7 +193,7 @@
             <div class="metric-card memory">
                 <div class="metric-header">
                     <div class="metric-icon">📊</div>
-                    <div class="metric-label">Memory Working Set</div>
+                    <div class="metric-label">Memory Working Set <span class="metric-tooltip" data-tooltip="Physical memory currently used by the process">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="memoryValue">--</div>
@@ -209,7 +208,7 @@
             <div class="metric-card threads">
                 <div class="metric-header">
                     <div class="metric-icon">🧵</div>
-                    <div class="metric-label">Thread Pool</div>
+                    <div class="metric-label">Thread Pool <span class="metric-tooltip" data-tooltip="Active worker threads in the .NET thread pool">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="threadsValue">--</div>
@@ -223,7 +222,7 @@
             <div class="metric-card queue">
                 <div class="metric-header">
                     <div class="metric-icon">📋</div>
-                    <div class="metric-label">Queue Length</div>
+                    <div class="metric-label">Queue Length <span class="metric-tooltip" data-tooltip="Pending work items waiting for thread pool execution">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="queueValue">--</div>
