@@ -109,22 +109,22 @@ public class LoadTestService : ILoadTestService
     /// <summary>
     /// Current number of requests being processed. Thread-safe via Interlocked.
     /// </summary>
-    private int _concurrentRequests = 0;
+    private int _concurrentRequests;
     
     /// <summary>
     /// Total requests processed since service start. Thread-safe via Interlocked.
     /// </summary>
-    private long _totalRequestsProcessed = 0;
+    private long _totalRequestsProcessed;
     
     /// <summary>
     /// Total exceptions thrown (when requests exceed 120s). Thread-safe via Interlocked.
     /// </summary>
-    private long _totalExceptionsThrown = 0;
+    private long _totalExceptionsThrown;
     
     /// <summary>
     /// Running sum of response times for average calculation. Thread-safe via Interlocked.
     /// </summary>
-    private long _totalResponseTimeMs = 0;
+    private long _totalResponseTimeMs;
     
     /*
      * =========================================================================
@@ -138,37 +138,36 @@ public class LoadTestService : ILoadTestService
     /// <summary>
     /// Requests completed in the current 60-second period.
     /// </summary>
-    private long _periodRequestsCompleted = 0;
+    private long _periodRequestsCompleted;
     
     /// <summary>
     /// Sum of response times in the current period (for average calculation).
     /// </summary>
-    private long _periodResponseTimeSum = 0;
+    private long _periodResponseTimeSum;
     
     /// <summary>
     /// Maximum response time observed in the current period.
     /// </summary>
-    private long _periodMaxResponseTimeMs = 0;
+    private long _periodMaxResponseTimeMs;
     
     /// <summary>
     /// Peak concurrent requests observed in the current period.
     /// </summary>
-    private int _periodPeakConcurrent = 0;
+    private int _periodPeakConcurrent;
     
     /// <summary>
     /// Exceptions thrown in the current period.
     /// </summary>
-    private long _periodExceptions = 0;
+    private long _periodExceptions;
     
     /// <summary>
     /// Timer for broadcasting stats to event log every 60 seconds.
+    /// Stored to prevent garbage collection of the timer.
     /// </summary>
-    private Timer? _broadcastTimer;
-    
-    /// <summary>
-    /// Tracks when load test traffic started for this period.
-    /// </summary>
-    private DateTimeOffset _periodStartTime = DateTimeOffset.UtcNow;
+    // ReSharper disable once NotAccessedField.Local
+#pragma warning disable IDE0052, CS0414 // Remove unread private members
+    private readonly Timer _broadcastTimer;
+#pragma warning restore IDE0052, CS0414
 
     /*
      * =========================================================================
@@ -195,12 +194,12 @@ public class LoadTestService : ILoadTestService
     /// Pool of exception types to randomly throw after timeout threshold.
     /// Simulates diverse real-world application failures.
     /// </summary>
-    private static readonly Func<Exception>[] ExceptionFactories = new Func<Exception>[]
-    {
+    private static readonly Func<Exception>[] _exceptionFactories =
+    [
         // Common application logic exceptions
         () => new InvalidOperationException("Operation is not valid due to current state"),
         () => new ArgumentException("Value does not fall within the expected range"),
-        () => new ArgumentNullException("value", "Value cannot be null"),
+        () => new ArgumentNullException(null, "Value cannot be null"),
         
         // Classic .NET exceptions (the ones everyone loves to hate)
         () => new NullReferenceException("Object reference not set to an instance of an object"),
@@ -224,52 +223,23 @@ public class LoadTestService : ILoadTestService
         // Scary ones (use sparingly in real scenarios)
         () => new OutOfMemoryException("Insufficient memory to continue execution"),
         () => new StackOverflowException() // Note: This one is usually uncatchable!
-    };
+    ];
     
     /*
      * =========================================================================
      * CONFIGURATION CONSTANTS
      * =========================================================================
      * 
-     * These could be moved to appsettings.json for configurability.
-     * Keeping as constants for simplicity and AI portability.
+     * Default values for error throwing behavior. These are now configurable
+     * via request parameters (errorAfter, errorPercent) but documented here.
+     * Default errorAfter: 120 seconds
+     * Default errorPercent: 20%
      */
-    
-    /// <summary>
-    /// Time threshold in seconds after which exceptions may be thrown.
-    /// </summary>
-    /// <remarks>
-    /// DESIGN RATIONALE:
-    /// 120 seconds is chosen because:
-    /// - Azure App Service default timeout is 230 seconds
-    /// - 120s gives enough time for meaningful load testing data
-    /// - Leaves 110s buffer before Azure timeout kicks in
-    /// </remarks>
-    private const int ExceptionThresholdSeconds = 120;
-    
-    /// <summary>
-    /// Probability (0.0 to 1.0) of throwing exception after threshold.
-    /// </summary>
-    /// <remarks>
-    /// 20% (0.20) means roughly 1 in 5 requests that exceed 120s will fail.
-    /// This creates realistic sporadic failures under extreme load.
-    /// </remarks>
-    private const double ExceptionProbability = 0.20;
-    
-    /// <summary>
-    /// Interval in milliseconds between exception probability checks.
-    /// </summary>
-    /// <remarks>
-    /// During degradation delays, we check every 1000ms (1 second) whether
-    /// to throw an exception. This prevents constant checking overhead
-    /// while still being responsive to the timeout threshold.
-    /// </remarks>
-    private const int ExceptionCheckIntervalMs = 1000;
     
     /// <summary>
     /// Interval in seconds between event log broadcasts.
     /// </summary>
-    private const int BroadcastIntervalSeconds = 60;
+    private const int _broadcastIntervalSeconds = 60;
 
     private readonly ILogger<LoadTestService> _logger;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
@@ -291,8 +261,8 @@ public class LoadTestService : ILoadTestService
         _broadcastTimer = new Timer(
             callback: BroadcastStats,
             state: null,
-            dueTime: TimeSpan.FromSeconds(BroadcastIntervalSeconds),
-            period: TimeSpan.FromSeconds(BroadcastIntervalSeconds));
+            dueTime: TimeSpan.FromSeconds(_broadcastIntervalSeconds),
+            period: TimeSpan.FromSeconds(_broadcastIntervalSeconds));
     }
     
     /// <summary>
@@ -338,7 +308,7 @@ public class LoadTestService : ILoadTestService
             var avgResponseTime = requestsCompleted > 0 
                 ? (double)responseTimeSum / requestsCompleted 
                 : 0;
-            var requestsPerSecond = (double)requestsCompleted / BroadcastIntervalSeconds;
+            var requestsPerSecond = (double)requestsCompleted / _broadcastIntervalSeconds;
             
             var statsData = new LoadTestStatsData
             {
@@ -363,9 +333,6 @@ public class LoadTestService : ILoadTestService
         {
             _logger.LogError(ex, "Error in BroadcastStats timer callback");
         }
-        
-        // Reset period start time
-        _periodStartTime = DateTimeOffset.UtcNow;
     }
 
     /*
@@ -459,8 +426,6 @@ public class LoadTestService : ILoadTestService
         
         var stopwatch = Stopwatch.StartNew();
         var totalCpuWorkDone = 0;
-        var workCompleted = false;
-        byte[]? buffer = null;
 
         try
         {
@@ -471,7 +436,7 @@ public class LoadTestService : ILoadTestService
              * This ensures memory scales with concurrent requests.
              */
             var bufferSize = request.BufferSizeKb * 1024;
-            buffer = new byte[bufferSize];
+            var buffer = new byte[bufferSize];
             
             // Touch memory immediately to ensure actual allocation
             TouchMemoryBuffer(buffer);
@@ -512,7 +477,7 @@ public class LoadTestService : ILoadTestService
              * - Higher workIterations = more CPU per cycle
              * - 0 workIterations = pure thread blocking (0% CPU)
              */
-            const int SleepPerCycleMs = 50;
+            const int sleepPerCycleMs = 50;
             
             // Calculate CPU work time: workIterations / 100 = ms per cycle
             // Examples: 1000 → 10ms, 5000 → 50ms, 10000 → 100ms
@@ -532,31 +497,30 @@ public class LoadTestService : ILoadTestService
                 // Keep memory active (prevents GC from collecting early)
                 TouchMemoryBuffer(buffer);
                 
-                // Check for timeout exception
-                CheckAndThrowTimeoutException(stopwatch);
+                // Check for timeout exception (using request parameters)
+                CheckAndThrowTimeoutException(stopwatch, request.ErrorAfterSeconds, request.ErrorPercent);
                 
                 // Sleep phase (allows other threads to run, prevents 100% CPU)
                 var remainingMs = totalDurationMs - (int)stopwatch.ElapsedMilliseconds;
-                var sleepMs = Math.Min(SleepPerCycleMs, Math.Max(0, remainingMs));
+                var sleepMs = Math.Min(sleepPerCycleMs, Math.Max(0, remainingMs));
                 if (sleepMs > 0)
                 {
-                    Thread.Sleep(sleepMs);
+                    await Task.Delay(sleepMs, cancellationToken);
                 }
             }
             
             // Final memory touch before returning
             TouchMemoryBuffer(buffer);
             
-            workCompleted = true;
             stopwatch.Stop();
             
             return BuildResult(
                 stopwatch.ElapsedMilliseconds,
                 currentConcurrent,
-                (int)(stopwatch.ElapsedMilliseconds),  // Total time blocked
+                (int)stopwatch.ElapsedMilliseconds,  // Total time blocked
                 totalCpuWorkDone,
                 buffer.Length,
-                workCompleted,
+                workCompleted: true,
                 exceptionThrown: false,
                 exceptionType: null);
         }
@@ -619,45 +583,56 @@ public class LoadTestService : ILoadTestService
      * =========================================================================
      * 
      * ALGORITHM:
-     *   if elapsed_seconds > 120:
-     *       if random() < 0.20:
+     *   if errorAfterSeconds > 0 and elapsed_seconds > errorAfterSeconds:
+     *       if random() < (errorPercent / 100):
      *           throw random_exception_from_pool()
      * 
-     * The 20% probability creates realistic sporadic failures.
+     * The probability creates realistic sporadic failures for chaotic load testing.
      */
     
     /// <summary>
     /// Checks if elapsed time exceeds threshold and randomly throws an exception.
     /// </summary>
     /// <param name="stopwatch">Stopwatch tracking request duration.</param>
-    private void CheckAndThrowTimeoutException(Stopwatch stopwatch)
+    /// <param name="errorAfterSeconds">Seconds threshold before errors may be thrown. 0 disables errors.</param>
+    /// <param name="errorPercent">Percentage chance (0-100) of throwing an error per check.</param>
+    private void CheckAndThrowTimeoutException(Stopwatch stopwatch, int errorAfterSeconds, int errorPercent)
     {
+        // Skip if error throwing is disabled (errorAfterSeconds = 0 or errorPercent = 0)
+        if (errorAfterSeconds <= 0 || errorPercent <= 0)
+        {
+            return;
+        }
+        
         var elapsedSeconds = stopwatch.Elapsed.TotalSeconds;
         
-        if (elapsedSeconds > ExceptionThresholdSeconds)
+        if (elapsedSeconds > errorAfterSeconds)
         {
             /*
              * RANDOM NUMBER GENERATION
              * =================================================================
              * 
              * _random.NextDouble() returns value between 0.0 and 1.0
-             * If value < 0.20, we throw (20% chance)
+             * If value < (errorPercent / 100), we throw
              * 
              * PORTING:
-             * - PHP: if (mt_rand() / mt_getrandmax() < 0.20)
-             * - Node.js: if (Math.random() < 0.20)
-             * - Java: if (random.nextDouble() < 0.20)
-             * - Python: if random.random() < 0.20
+             * - PHP: if (mt_rand() / mt_getrandmax() < $errorPercent / 100)
+             * - Node.js: if (Math.random() < errorPercent / 100)
+             * - Java: if (random.nextDouble() < errorPercent / 100.0)
+             * - Python: if random.random() < error_percent / 100
              */
-            if (_random.NextDouble() < ExceptionProbability)
+            var probability = errorPercent / 100.0;
+            if (_random.NextDouble() < probability)
             {
                 // Pick random exception from pool
-                var exceptionIndex = _random.Next(ExceptionFactories.Length);
-                var exception = ExceptionFactories[exceptionIndex]();
+                var exceptionIndex = _random.Next(_exceptionFactories.Length);
+                var exception = _exceptionFactories[exceptionIndex]();
                 
                 _logger.LogInformation(
-                    "Load test throwing random exception after {Elapsed}s: {ExceptionType}",
+                    "Load test throwing random exception after {Elapsed}s (threshold: {Threshold}s, probability: {Percent}%): {ExceptionType}",
                     elapsedSeconds,
+                    errorAfterSeconds,
+                    errorPercent,
                     exception.GetType().Name);
                 
                 throw exception;

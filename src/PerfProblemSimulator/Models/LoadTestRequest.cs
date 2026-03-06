@@ -217,4 +217,60 @@ public class LoadTestRequest
     /// </para>
     /// </remarks>
     public int BaselineDelayMs { get; set; } = 500;
+
+    /// <summary>
+    /// Number of seconds after which random errors may be thrown.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>DEFAULT: 120 seconds</strong>
+    /// </para>
+    /// <para>
+    /// After a request has been processing for this many seconds, there is a
+    /// chance (controlled by <see cref="ErrorPercent"/>) that a random exception
+    /// will be thrown. This simulates real-world application failures under
+    /// extreme load.
+    /// </para>
+    /// <para>
+    /// <strong>DESIGN RATIONALE:</strong>
+    /// 120 seconds is chosen because:
+    /// <list type="bullet">
+    /// <item>Azure App Service default timeout is 230 seconds</item>
+    /// <item>120s gives enough time for meaningful load testing data</item>
+    /// <item>Leaves 110s buffer before Azure timeout kicks in</item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// Set to 0 to disable random error throwing entirely.
+    /// </para>
+    /// </remarks>
+    public int ErrorAfterSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// Probability (0-100) of throwing a random exception after the error threshold.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>DEFAULT: 20 (20%)</strong>
+    /// </para>
+    /// <para>
+    /// This percentage is checked each interval (typically every 1 second) after
+    /// the request has exceeded <see cref="ErrorAfterSeconds"/>. A value of 20
+    /// means roughly 1 in 5 checks will trigger an exception.
+    /// </para>
+    /// <para>
+    /// This creates realistic sporadic failures under extreme load, simulating
+    /// the unpredictable nature of real production failures.
+    /// </para>
+    /// <para>
+    /// <strong>EXAMPLES:</strong>
+    /// <list type="bullet">
+    /// <item>0 = No random errors (disabled)</item>
+    /// <item>20 = 20% chance per check (default)</item>
+    /// <item>50 = 50% chance per check (more chaotic)</item>
+    /// <item>100 = Always throw after threshold (guaranteed failure)</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public int ErrorPercent { get; set; } = 20;
 }

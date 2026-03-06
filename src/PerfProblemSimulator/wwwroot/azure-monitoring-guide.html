@@ -498,7 +498,7 @@
             <p>Every simulation instance is assigned a unique <strong>Simulation ID</strong> (GUID) that enables end-to-end correlation between the dashboard UI and Azure diagnostics.</p>
             
             <h3>Finding Simulation IDs</h3>
-            <p><strong>In the Dashboard:</strong> Hover over any simulation-related message in the Event Log (marked with a <span style="border-bottom: 1px dotted currentColor; cursor: help;">dotted underline</span>) to see the full Simulation ID in a tooltip.</p>
+            <p><strong>In the Dashboard:</strong> Hover over any simulation-related message in the Event Log (marked with a <span class="sim-msg">dotted underline</span>) to see the full Simulation ID in a tooltip.</p>
             <p><strong>In Azure:</strong> The same Simulation ID is emitted in server-side logs and can be found in:</p>
             <ul>
                 <li><strong>Application Insights</strong> - Search traces and custom events by Simulation ID</li>
@@ -1051,7 +1051,7 @@ procdump -ma -h w3wp.exe
                 <li>Perform sustained CPU work (interleaved SHA256 cycles at ~50% CPU per thread)</li>
                 <li>Hold memory buffers for entire request duration (creates visible memory pressure)</li>
                 <li>Degrade gracefully as concurrent requests increase (soft limit pattern)</li>
-                <li>Throw random exceptions after 120 seconds (20% probability)</li>
+                <li>Throw random exceptions after configurable threshold (default: 120 seconds at 20% probability)</li>
                 <li>Eventually trigger Azure's 230-second timeout under extreme load</li>
             </ul>
 
@@ -1080,6 +1080,8 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=0&amp;bufferSizeK
                 <li><code>baselineDelayMs</code> - Minimum request duration in ms (default: 500)</li>
                 <li><code>softLimit</code> - Concurrent requests before degradation (default: 25)</li>
                 <li><code>degradationFactor</code> - Delay ms per request over limit (default: 500)</li>
+                <li><code>errorAfter</code> - Seconds before random errors may be thrown (default: 120, set to 0 to disable)</li>
+                <li><code>errorPercent</code> - Percentage chance (0-100) of random error after threshold (default: 20)</li>
             </ul>
 
             <ol start="3">
@@ -1102,7 +1104,7 @@ additionalDelay = max(0, concurrent - softLimit) × degradationFactor
                 <li>Go to <strong>Application Insights</strong> &gt; <strong>Performance</strong></li>
                 <li>Filter by operation name <code>GET /api/loadtest</code></li>
                 <li>Observe response time percentiles (p50, p95, p99)</li>
-                <li>Check failure rates for the 120s+ exception threshold</li>
+                <li>Check failure rates for the configurable random error threshold (default: 120s)</li>
             </ul>
 
             <h4>2. Azure Monitor Metrics</h4>
@@ -1167,6 +1169,18 @@ GET /api/loadtest/stats
                         <td>500</td>
                         <td><strong>Thread Pool</strong></td>
                         <td>Additional delay (ms) per request over softLimit.</td>
+                    </tr>
+                    <tr>
+                        <td><code>errorAfter</code></td>
+                        <td>120</td>
+                        <td><strong>Chaos</strong></td>
+                        <td>Seconds before random errors may be thrown. Set to 0 to disable.</td>
+                    </tr>
+                    <tr>
+                        <td><code>errorPercent</code></td>
+                        <td>20</td>
+                        <td><strong>Chaos</strong></td>
+                        <td>Percentage chance (0-100) of throwing a random error per check interval after threshold.</td>
                     </tr>
                 </tbody>
             </table>

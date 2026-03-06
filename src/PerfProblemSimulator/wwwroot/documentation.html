@@ -566,7 +566,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p><strong>Note:</strong> Memory thresholds are calculated dynamically based on the actual total available memory reported by the server, not a hardcoded value. This ensures accurate warnings regardless of the machine's RAM configuration.</p>
 
             <h3>Event Log & Simulation IDs</h3>
-            <p>The Event Log at the bottom of the dashboard records all simulation activity with color-coded entries matching each simulation type. Messages related to a specific simulation instance are marked with a <span style="border-bottom: 1px dotted currentColor; cursor: help;">dotted underline</span>.</p>
+            <p>The Event Log at the bottom of the dashboard records all simulation activity with color-coded entries matching each simulation type. Messages related to a specific simulation instance are marked with a <span class="sim-msg">dotted underline</span>.</p>
             <p><strong>Viewing Simulation IDs:</strong> Hover over any underlined message to reveal the full <strong>Simulation ID</strong> (GUID) in a tooltip. This ID uniquely identifies each simulation instance.</p>
             <p><strong>Using Simulation IDs for Troubleshooting:</strong></p>
             <ul>
@@ -1033,13 +1033,15 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
                 <li><code>baselineDelayMs</code>: Minimum request duration in milliseconds (default: 500). Combined with degradation delay.</li>
                 <li><code>softLimit</code>: Concurrent requests before degradation begins (default: 25)</li>
                 <li><code>degradationFactor</code>: Additional delay (ms) per request over soft limit (default: 500)</li>
+                <li><code>errorAfter</code>: Seconds before random errors may be thrown (default: 120). Set to 0 to disable.</li>
+                <li><code>errorPercent</code>: Percentage chance (0-100) of throwing a random error after errorAfter threshold (default: 20)</li>
             </ul>
             <p><strong>Behavior (Sustained Resource Consumption):</strong></p>
             <ul>
                 <li><strong>Memory:</strong> Allocated up front and held for entire request duration (visible in Azure Memory metrics)</li>
                 <li><strong>CPU:</strong> Interleaved work cycles (~50ms CPU work + ~50ms sleep) creating ~50% CPU per active thread</li>
                 <li><strong>Thread Pool:</strong> Blocking delay = baselineDelayMs + (concurrent - softLimit) × degradationFactor</li>
-                <li><strong>After 120 seconds:</strong> 20% chance of throwing a random exception per check interval</li>
+                <li><strong>Random Errors:</strong> After <code>errorAfter</code> seconds, <code>errorPercent</code>% chance of throwing a random exception per check interval (configurable for chaotic testing)</li>
                 <li><strong>Extreme load:</strong> Can reach Azure's 230-second timeout threshold</li>
             </ul>
         </section>
@@ -1250,6 +1252,16 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
                         <td>500</td>
                         <td>Delay ms added per request over limit</td>
                     </tr>
+                    <tr>
+                        <td><code>errorAfter</code></td>
+                        <td>120</td>
+                        <td>Seconds before random errors may be thrown (0 to disable)</td>
+                    </tr>
+                    <tr>
+                        <td><code>errorPercent</code></td>
+                        <td>20</td>
+                        <td>Percentage chance (0-100) of random error after threshold</td>
+                    </tr>
                 </tbody>
             </table>
 
@@ -1258,7 +1270,7 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
                 <li><strong>CPU</strong> - Sustained SHA256 cycles (~50% CPU per thread)</li>
                 <li><strong>Memory</strong> - Buffers held for entire request duration</li>
                 <li><strong>Thread Pool</strong> - Graceful degradation under concurrent load</li>
-                <li><strong>Timeouts</strong> - Random exceptions after 120s (20% probability)</li>
+                <li><strong>Chaos/Errors</strong> - Configurable random exceptions after threshold (default: 120s at 20% probability)</li>
             </ul>
 
             <div class="info-box">

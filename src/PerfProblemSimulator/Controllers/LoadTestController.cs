@@ -152,6 +152,8 @@ public class LoadTestController : ControllerBase
     /// <param name="baselineDelayMs">Minimum request duration in ms. Default: 500.</param>
     /// <param name="softLimit">Concurrent requests before degradation begins. Default: 25.</param>
     /// <param name="degradationFactor">Additional delay (ms) per request over soft limit. Default: 500.</param>
+    /// <param name="errorAfter">Seconds before random errors may be thrown. Default: 120. Set to 0 to disable.</param>
+    /// <param name="errorPercent">Percentage chance (0-100) of throwing a random error after errorAfter threshold. Default: 20.</param>
     /// <param name="cancellationToken">Cancellation token from the HTTP request pipeline.</param>
     /// <returns>Load test result with timing and diagnostic information.</returns>
     /// <remarks>
@@ -165,7 +167,7 @@ public class LoadTestController : ControllerBase
     /// 4. If over soft limit, calculate and apply degradation delay
     /// 5. Perform lightweight CPU work (hash iterations)
     /// 6. Allocate memory buffer (released when request ends)
-    /// 7. Periodically check if elapsed time > 120s; if so, 20% chance of exception
+    /// 7. Periodically check if elapsed time > errorAfter seconds; if so, errorPercent% chance of exception
     /// 8. Return response with timing details
     /// </para>
     /// <para>
@@ -192,6 +194,14 @@ public class LoadTestController : ControllerBase
     /// <term>degradationFactor (default: 200)</term>
     /// <description>Milliseconds of delay added per concurrent request over the soft limit.</description>
     /// </item>
+    /// <item>
+    /// <term>errorAfter (default: 120)</term>
+    /// <description>Seconds before random errors may be thrown. Set to 0 to disable.</description>
+    /// </item>
+    /// <item>
+    /// <term>errorPercent (default: 20)</term>
+    /// <description>Percentage chance (0-100) of throwing a random error per check interval after threshold.</description>
+    /// </item>
     /// </list>
     /// <para>
     /// <strong>TOTAL DELAY FORMULA:</strong>
@@ -210,7 +220,7 @@ public class LoadTestController : ControllerBase
     /// </list>
     /// </remarks>
     /// <response code="200">Load test completed successfully with timing details.</response>
-    /// <response code="500">Request exceeded 120s and random exception was triggered.</response>
+    /// <response code="500">Request exceeded errorAfter threshold and random exception was triggered.</response>
     [HttpGet]
     [ProducesResponseType(typeof(LoadTestResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status500InternalServerError)]
@@ -220,6 +230,8 @@ public class LoadTestController : ControllerBase
         [FromQuery] int baselineDelayMs = 500,
         [FromQuery] int softLimit = 25,
         [FromQuery] int degradationFactor = 500,
+        [FromQuery] int errorAfter = 120,
+        [FromQuery] int errorPercent = 20,
         CancellationToken cancellationToken = default)
     {
         /*
@@ -242,16 +254,20 @@ public class LoadTestController : ControllerBase
             BufferSizeKb = bufferSizeKb,
             BaselineDelayMs = baselineDelayMs,
             SoftLimit = softLimit,
-            DegradationFactor = degradationFactor
+            DegradationFactor = degradationFactor,
+            ErrorAfterSeconds = errorAfter,
+            ErrorPercent = errorPercent
         };
         
         _logger.LogDebug(
-            "Load test: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, BaselineDelayMs={BaselineDelayMs}, SoftLimit={SoftLimit}, DegradationFactor={DegradationFactor}",
+            "Load test: WorkIterations={WorkIterations}, BufferSizeKb={BufferSizeKb}, BaselineDelayMs={BaselineDelayMs}, SoftLimit={SoftLimit}, DegradationFactor={DegradationFactor}, ErrorAfter={ErrorAfter}s, ErrorPercent={ErrorPercent}%",
             request.WorkIterations,
             request.BufferSizeKb,
             request.BaselineDelayMs,
             request.SoftLimit,
-            request.DegradationFactor);
+            request.DegradationFactor,
+            request.ErrorAfterSeconds,
+            request.ErrorPercent);
 
         var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
         return Ok(result);
