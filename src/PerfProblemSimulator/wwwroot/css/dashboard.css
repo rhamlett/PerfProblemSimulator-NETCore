@@ -1065,6 +1065,9 @@ body {
     font-weight: 700;
     color: var(--color-text);
     transition: color var(--transition-fast);
+    min-width: 5.5em;
+    text-align: right;
+    display: inline-block;
 }
 
 .latency-value.good {
