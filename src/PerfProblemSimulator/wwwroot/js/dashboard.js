@@ -1073,7 +1073,7 @@ async function startSlowRequests() {
         
         if (response.ok) {
             const result = await response.json();
-            logEvent('slowrequest', `${result.message}`);
+            // Note: Don't log result.message - "Starting slow request simulator" already logged above
             statusDiv.textContent = `Running: ${durationSeconds}s requests every ${intervalSeconds}s (max ${maxRequests})`;
             statusDiv.classList.add('active');
             
@@ -1224,7 +1224,11 @@ function handleSimulationCompleted(simulationType, simulationId) {
     removeActiveSimulation(simulationId);
     const simTypeLower = simulationType.toLowerCase();
     const category = SIMULATION_CATEGORY_MAP[simTypeLower] || 'system';
-    logEvent(category, withSimulationId(`${simulationType} simulation completed`, simulationId));
+    
+    // Don't log SlowRequest completion here - the polling handler logs with request count
+    if (simulationType !== 'SlowRequest') {
+        logEvent(category, withSimulationId(`${simulationType} simulation completed`, simulationId));
+    }
 
     // Handle SlowRequest specific UI
     if (simulationType === 'SlowRequest') {
