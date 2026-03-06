@@ -695,8 +695,6 @@ function formatLatency(ms) {
         return (ms / 1000).toFixed(1) + 's';
     } else if (ms >= 1000) {
         return (ms / 1000).toFixed(2) + 's';
-    } else if (ms >= 100) {
-        return Math.round(ms) + 'ms';
     } else {
         return ms.toFixed(1) + 'ms';
     }

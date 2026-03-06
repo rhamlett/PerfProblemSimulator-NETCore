@@ -1065,9 +1065,13 @@ body {
     font-weight: 700;
     color: var(--color-text);
     transition: color var(--transition-fast);
-    min-width: 5.5em;
+    min-width: 4.5em;
     text-align: right;
     display: inline-block;
+}
+
+#latencyTimeouts {
+    min-width: 1.5em;
 }
 
 .latency-value.good {
