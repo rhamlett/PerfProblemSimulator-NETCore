@@ -20,6 +20,10 @@ const CONFIG = {
     apiBaseUrl: '/api'
 };
 
+// Probe visualization history (24-dot indicator)
+const probeHistory = [];
+const MAX_PROBE_DOTS = 24;
+
 const state = {
     connection: null,
     charts: {},
@@ -527,6 +531,9 @@ function handleLatencyUpdate(measurement) {
     addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
     updateLatencyDisplay(latencyMs, isTimeout, isError);
     updateLatencyChart();
+    
+    // Update probe visualization dots
+    updateProbeVisualization(latencyMs);
 }
 
 /**
@@ -703,6 +710,29 @@ function getLatencyClass(ms, isTimeout) {
     if (ms > 1000) return 'danger';
     if (ms > 150) return 'warning';
     return 'good';
+}
+
+/**
+ * Updates probe visualization dots (24-dot history indicator)
+ * Shows visual history of recent latency measurements next to the title
+ */
+function updateProbeVisualization(latency) {
+    let status = 'good';
+    if (latency >= 30000) status = 'failed';
+    else if (latency >= 1000) status = 'slow';
+    else if (latency >= 150) status = 'degraded';
+
+    probeHistory.push(status);
+    if (probeHistory.length > MAX_PROBE_DOTS) {
+        probeHistory.shift();
+    }
+
+    const vizEl = document.getElementById('probe-visualization');
+    if (vizEl) {
+        vizEl.innerHTML = probeHistory.map(s =>
+            `<span class="probe-dot-inline ${s === 'good' ? '' : s}"></span>`
+        ).join('');
+    }
 }
 
 /**
