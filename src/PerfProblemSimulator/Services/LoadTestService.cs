@@ -508,9 +508,6 @@ public class LoadTestService : ILoadTestService
                 // Keep memory active (prevents GC from collecting early)
                 TouchMemoryBuffer(buffer);
                 
-                // Check for timeout exception (using request parameters)
-                CheckAndThrowTimeoutException(stopwatch, request.ErrorAfterSeconds, request.ErrorPercent);
-                
                 // Sleep phase (allows other threads to run, prevents 100% CPU)
                 var remainingMs = totalDurationMs - (int)stopwatch.ElapsedMilliseconds;
                 var sleepMs = Math.Min(sleepPerCycleMs, Math.Max(0, remainingMs));
@@ -519,6 +516,10 @@ public class LoadTestService : ILoadTestService
                     await Task.Delay(sleepMs, cancellationToken);
                 }
             }
+            
+            // Single error check AFTER all work is done - if total elapsed time
+            // exceeds the threshold, roll the dice once for an error
+            CheckAndThrowTimeoutException(stopwatch, request.ErrorAfterSeconds, request.ErrorPercent);
             
             // Final memory touch before returning
             TouchMemoryBuffer(buffer);
