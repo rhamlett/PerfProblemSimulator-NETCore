@@ -599,18 +599,20 @@ function handleSlowRequestLatency(data) {
  */
 function handleLoadTestStats(data) {
     const completed = data.requestsCompleted;
+    const avgMs = data.avgResponseTimeMs;
+    const maxMs = data.maxResponseTimeMs;
+    const rps = data.requestsPerSecond;
     const exceptions = data.exceptionCount;
     
-    // Build simple status message - just request count
-    let msg = `Load Test Stats (60s): ${completed.toLocaleString()} requests`;
+    // Calculate error rate percentage
+    const errorRate = completed > 0 ? (exceptions / completed) * 100 : 0;
     
-    // Add exception count if any
-    if (exceptions > 0) {
-        msg += ` | ⚠️ ${exceptions} exceptions`;
-        logEvent('loadtest', msg);
-    } else {
-        logEvent('loadtest', msg);
-    }
+    // Build detailed stats message matching screenshot format
+    let msg = `Load test period stats: ${completed.toLocaleString()} requests, ` +
+              `${avgMs.toFixed(1)} avg ms, ${maxMs.toFixed(0)} max ms, ` +
+              `${rps.toFixed(2)} RPS, ${errorRate.toFixed(1)}% errors`;
+    
+    logEvent('loadtest', msg);
 }
 
 /**

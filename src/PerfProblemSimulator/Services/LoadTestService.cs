@@ -240,6 +240,17 @@ public class LoadTestService : ILoadTestService
     /// Interval in seconds between event log broadcasts.
     /// </summary>
     private const int _broadcastIntervalSeconds = 60;
+    
+    /// <summary>
+    /// Sample rate for latency monitor: broadcast 1 in N requests.
+    /// Lower = more samples (more chart data points during load tests).
+    /// </summary>
+    private const int _latencySampleRate = 10;
+    
+    /// <summary>
+    /// Counter for sampling - broadcast latency every Nth request.
+    /// </summary>
+    private long _sampleCounter;
 
     private readonly ILogger<LoadTestService> _logger;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
@@ -555,6 +566,21 @@ public class LoadTestService : ILoadTestService
             Interlocked.Increment(ref _periodRequestsCompleted);
             Interlocked.Add(ref _periodResponseTimeSum, elapsedMs);
             UpdateMaxResponseTime(elapsedMs);
+            
+            // Sample latency for the latency monitor chart (1 in N requests)
+            var sampleCount = Interlocked.Increment(ref _sampleCounter);
+            if (sampleCount % _latencySampleRate == 0)
+            {
+                var measurement = new LatencyMeasurement
+                {
+                    Timestamp = DateTimeOffset.UtcNow,
+                    LatencyMs = elapsedMs,
+                    IsTimeout = false,
+                    IsError = false
+                };
+                // Fire-and-forget: don't block on SignalR during load
+                _ = _hubContext.Clients.All.ReceiveLatency(measurement);
+            }
         }
     }
     
