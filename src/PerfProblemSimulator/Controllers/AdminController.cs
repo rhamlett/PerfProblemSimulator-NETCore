@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
-using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
 
 namespace PerfProblemSimulator.Controllers;
@@ -31,19 +30,16 @@ public class AdminController : ControllerBase
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly IMemoryPressureService _memoryPressureService;
-    private readonly ILogger<AdminController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AdminController"/> class.
     /// </summary>
     public AdminController(
         ISimulationTracker simulationTracker,
-        IMemoryPressureService memoryPressureService,
-        ILogger<AdminController> logger)
+        IMemoryPressureService memoryPressureService)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _memoryPressureService = memoryPressureService ?? throw new ArgumentNullException(nameof(memoryPressureService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
