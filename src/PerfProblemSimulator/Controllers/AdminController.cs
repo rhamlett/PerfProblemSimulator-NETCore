@@ -88,7 +88,8 @@ public class AdminController : ControllerBase
                 WorkingSetBytes = Environment.WorkingSet,
                 ManagedHeapBytes = GC.GetTotalMemory(forceFullCollection: false),
                 AzureSku = Environment.GetEnvironmentVariable("WEBSITE_SKU") ?? "Local",
-                ComputeMode = Environment.GetEnvironmentVariable("WEBSITE_COMPUTE_MODE")
+                ComputeMode = Environment.GetEnvironmentVariable("WEBSITE_COMPUTE_MODE"),
+                ComputerName = Environment.GetEnvironmentVariable("COMPUTERNAME")
             }
         });
     }
@@ -211,4 +212,9 @@ public class ThreadPoolStats
         /// The compute mode (e.g., Dedicated, Shared).
         /// </summary>
         public string? ComputeMode { get; init; }
+
+        /// <summary>
+        /// The computer/worker name (from COMPUTERNAME environment variable).
+        /// </summary>
+        public string? ComputerName { get; init; }
     }

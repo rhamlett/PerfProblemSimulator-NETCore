@@ -1353,6 +1353,18 @@ async function fetchAzureSku() {
                 skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
                 skuElement.style.display = 'block';
             }
+            
+            // Log SKU/worker info on page load
+            if (data.processInfo) {
+                const sku = data.processInfo.azureSku;
+                const computerName = data.processInfo.computerName;
+                
+                if (sku === 'Local' || !computerName) {
+                    logEvent('system', 'Application is currently running on Local');
+                } else {
+                    logEvent('system', `Application is currently running on ${sku} SKU on worker ${computerName}`);
+                }
+            }
         }
     } catch (error) {
         console.error('Failed to fetch Azure SKU', error);
