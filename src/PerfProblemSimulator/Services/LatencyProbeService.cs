@@ -459,4 +459,10 @@ public class LatencyMeasurement
     /// Error message if IsError is true.
     /// </summary>
     public string? ErrorMessage { get; init; }
+
+    /// <summary>
+    /// Source identifier for the latency measurement (e.g., "HealthProbe", "FailedRequest").
+    /// Used to categorize and display measurements appropriately in the dashboard.
+    /// </summary>
+    public string? Source { get; init; }
 }

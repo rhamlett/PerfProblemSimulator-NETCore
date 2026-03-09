@@ -529,7 +529,13 @@ function updateCharts() {
 function handleLatencyUpdate(measurement) {
     // Log significant latency events to the dashboard log
     if (measurement.isError) {
-        logEvent('system', `Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
+        // Check if this is from the failed request simulation
+        if (measurement.source === 'FailedRequest') {
+            const errorType = measurement.errorMessage || 'HTTP 5xx';
+            logEvent('failedrequests', `Failed Request: ${errorType} (${formatLatency(measurement.latencyMs)})`);
+        } else {
+            logEvent('system', `Health Probe Error: ${measurement.errorMessage || 'Unknown error'} (${formatLatency(measurement.latencyMs)})`);
+        }
     } else if (measurement.isTimeout) {
         logEvent('system', `Health Probe Critical (>30s): ${formatLatency(measurement.latencyMs)}`);
     } else if (measurement.latencyMs > 10000) {
@@ -1025,6 +1031,30 @@ async function triggerThreadBlock() {
 }
 
 /**
+ * Stops all active thread pool starvation simulations.
+ */
+async function stopThreadBlock() {
+    try {
+        logEvent('threads', 'Stopping thread blocking simulations...');
+        const response = await fetch(`${CONFIG.apiBaseUrl}/threadblock/stop`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('threads', result.message || 'Thread blocking stopped');
+            // Remove thread block simulations from active list
+            removeSimulationsByType('threadblock');
+        } else {
+            const error = await response.json();
+            logEvent('threads', `Stop request: ${error.detail || 'May have already stopped'}`);
+        }
+    } catch (err) {
+        logEvent('threads', `Stop request: ${err.message || 'May have already stopped'}`);
+    }
+}
+
+/**
  * Triggers an application crash.
  * WARNING: This will terminate the application!
  */
@@ -1182,6 +1212,117 @@ async function stopSlowRequests() {
     }
 }
 
+// ==========================================================================
+// Failed Request Simulation (HTTP 5xx generation)
+// ==========================================================================
+
+/**
+ * Starts the failed request simulator.
+ * Generates HTTP 500 errors visible in AppLens and Application Insights.
+ */
+async function startFailedRequests() {
+    const requestCount = parseInt(document.getElementById('failedRequestCount').value) || 10;
+    
+    const startBtn = document.getElementById('btnStartFailedRequests');
+    const stopBtn = document.getElementById('btnStopFailedRequests');
+    
+    try {
+        logEvent('failedrequests', `Generating ${requestCount} HTTP 500 errors...`);
+        
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        
+        const response = await fetch(`${CONFIG.apiBaseUrl}/failedrequest/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requestCount: requestCount
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            addActiveSimulation(result.simulationId, 'failedrequest', 'Failed Requests');
+            logEvent('failedrequests', withSimulationId(`Started generating ${requestCount} failures`, result.simulationId));
+            
+            // Start polling for completion
+            pollFailedRequestStatus();
+        } else {
+            const error = await response.json();
+            logEvent('failedrequests', `Failed to start: ${error.message || error.title || 'Unknown error'}`);
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+    } catch (err) {
+        logEvent('failedrequests', `Request failed: ${err.message}`);
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
+/**
+ * Stops the failed request simulator.
+ */
+async function stopFailedRequests() {
+    const startBtn = document.getElementById('btnStartFailedRequests');
+    const stopBtn = document.getElementById('btnStopFailedRequests');
+    
+    try {
+        logEvent('failedrequests', 'Stopping failed request simulator...');
+        
+        const response = await fetch(`${CONFIG.apiBaseUrl}/failedrequest/stop`, {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            logEvent('failedrequests', result.message || 'Stopped');
+            removeSimulationsByType('failedrequest');
+        } else {
+            const error = await response.json();
+            logEvent('failedrequests', `Stop request: ${error.message || 'May have already completed'}`);
+        }
+    } catch (err) {
+        logEvent('failedrequests', `Request failed: ${err.message}`);
+    } finally {
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
+/**
+ * Polls the failed request status and updates UI when complete.
+ */
+async function pollFailedRequestStatus() {
+    const startBtn = document.getElementById('btnStartFailedRequests');
+    const stopBtn = document.getElementById('btnStopFailedRequests');
+    
+    try {
+        const response = await fetch(`${CONFIG.apiBaseUrl}/failedrequest/status`);
+        if (response.ok) {
+            const status = await response.json();
+            
+            if (status.isRunning) {
+                // Continue polling
+                setTimeout(pollFailedRequestStatus, 2000);
+            } else {
+                // Simulation ended
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                removeSimulationsByType('failedrequest');
+                
+                if (status.requestsCompleted > 0) {
+                    logEvent('failedrequests', `Completed: Generated ${status.requestsCompleted} HTTP 500 errors`);
+                }
+            }
+        }
+    } catch (err) {
+        // Connection lost - probably a restart
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+    }
+}
+
 /**
  * Polls the slow request status and updates UI.
  * Poll interval is 5 seconds to minimize noise during CLR profiling.
@@ -1254,6 +1395,7 @@ const SIMULATION_CATEGORY_MAP = {
     'memory': 'memory',
     'threadblock': 'threads',
     'slowrequest': 'slowrequest',
+    'failedrequest': 'failedrequests',
     'crash': 'crash'
 };
 
@@ -1349,6 +1491,7 @@ const LOG_ICONS = {
     memory: '📊',
     threads: '🧵',
     slowrequest: '🐌',
+    failedrequests: '❌',
     crash: '💥',
     loadtest: '📈'
 };
@@ -1511,12 +1654,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnAllocateMemory').addEventListener('click', allocateMemory);
     document.getElementById('btnReleaseMemory').addEventListener('click', releaseMemory);
     document.getElementById('btnTriggerThreadBlock').addEventListener('click', triggerThreadBlock);
+    document.getElementById('btnStopThreadBlock').addEventListener('click', stopThreadBlock);
     document.getElementById('btnTriggerCrash').addEventListener('click', triggerCrash);
     document.getElementById('btnStartSlowRequests').addEventListener('click', startSlowRequests);
     document.getElementById('btnStopSlowRequests').addEventListener('click', stopSlowRequests);
+    document.getElementById('btnStartFailedRequests').addEventListener('click', startFailedRequests);
+    document.getElementById('btnStopFailedRequests').addEventListener('click', stopFailedRequests);
     
     // Initialize slow request Stop button as disabled
     document.getElementById('btnStopSlowRequests').disabled = true;
+    document.getElementById('btnStopFailedRequests').disabled = true;
     
     // Wire up side panel toggle
     initializeSidePanel();

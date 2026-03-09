@@ -202,6 +202,18 @@ builder.Services.AddSingleton<ISlowRequestService, SlowRequestService>();
 // causing immediate problems.
 builder.Services.AddSingleton<ILoadTestService, LoadTestService>();
 
+// FailedRequestService - Singleton service for generating HTTP 5xx errors
+// Educational Note: Singleton lifetime is required because the service maintains
+// state about running simulations. This service generates failed requests by calling
+// the load test endpoint with 100% error probability, producing HTTP 500 errors that
+// appear in AppLens and Application Insights for training on error diagnosis.
+builder.Services.AddHttpClient("FailedRequest")
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        ConnectTimeout = TimeSpan.FromSeconds(60)
+    });
+builder.Services.AddSingleton<IFailedRequestService, FailedRequestService>();
+
 // MetricsCollector - Singleton service for collecting system metrics
 // Educational Note: This service runs on a DEDICATED THREAD (not the thread pool)
 // so it remains responsive even during thread pool starvation scenarios.

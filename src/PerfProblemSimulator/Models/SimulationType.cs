@@ -74,5 +74,13 @@ public enum SimulationType
     /// Designed to eventually trigger 230s Azure App Service timeout under extreme load.
     /// Diagnosis tools: Azure Load Testing, Application Insights, Azure Monitor.
     /// </summary>
-    LoadTest
+    LoadTest,
+
+    /// <summary>
+    /// Failed request simulation that generates HTTP 5xx responses.
+    /// Uses the load test endpoint with 100% error probability to create guaranteed failures.
+    /// Designed to produce HTTP 500 errors visible in AppLens and Application Insights.
+    /// Diagnosis tools: AppLens, Application Insights failures blade, Azure Monitor alerts.
+    /// </summary>
+    FailedRequest
 }

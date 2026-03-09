@@ -718,6 +718,30 @@ body {
     display: none;
 }
 
+/* Failed Request Simulator Styles (HTTP 5xx generation) */
+.btn-failedrequest {
+    background: linear-gradient(135deg, #ff1493 0%, #c71585 100%);
+    color: white;
+    border: 2px solid #ff69b4;
+    animation: pulse-fail 2.5s infinite;
+    flex: 1;
+}
+
+.btn-failedrequest:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+    border-color: #ff85c1;
+}
+
+@keyframes pulse-fail {
+    0%, 100% { box-shadow: 0 0 5px rgba(255, 20, 147, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(255, 20, 147, 0.5); }
+}
+
+.failedrequest-group {
+    border: 2px solid #ff1493;
+    background: rgba(255, 20, 147, 0.05);
+}
+
 .slowrequest-status.active {
     display: block;
     color: #ff8c00;
@@ -879,6 +903,7 @@ body {
 .log-entry.memory { color: var(--color-memory); }
 .log-entry.threads { color: var(--color-threads); }
 .log-entry.slowrequest { color: #b8860b; } /* Dark goldenrod for slow requests */
+.log-entry.failedrequests { color: #ff1493; } /* Hot pink for failed requests */
 .log-entry.crash { color: var(--color-danger); }
 .log-entry.loadtest { color: var(--color-primary); } /* .NET theme: blue */
 .log-entry.system { color: var(--color-text-muted); }

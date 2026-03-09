@@ -127,6 +127,7 @@
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-trigger btn-threadblock" id="btnTriggerThreadBlock">🧵 Block Threads</button>
+                    <button class="btn btn-stop" id="btnStopThreadBlock">⬛ Stop</button>
                 </div>
             </div>
 
@@ -148,6 +149,21 @@
                 <div class="btn-group">
                     <button class="btn btn-trigger btn-slowrequest" id="btnStartSlowRequests">🐌 Start Slow Requests</button>
                     <button class="btn btn-stop" id="btnStopSlowRequests">⬛ Stop</button>
+                </div>
+            </div>
+
+            <div class="control-group failedrequest-group">
+                <h3>❌ Failed Requests <span class="control-tooltip" data-tooltip="Generates HTTP 500 errors visible in AppLens and Application Insights">ⓘ</span></h3>
+                <p>Generates HTTP 5xx errors by calling the load test endpoint with 100% failure rate. Creates authentic server errors for testing error monitoring.</p>
+                <p class="info-note">📊 <strong>Where to see:</strong> Azure Portal → AppLens, Application Insights → Failures blade</p>
+                <div class="control-inputs">
+                    <label>Error Count:
+                        <input type="number" id="failedRequestCount" value="10" min="1" max="100" title="Number of HTTP 500 errors to generate">
+                    </label>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-trigger btn-failedrequest" id="btnStartFailedRequests">❌ Generate Failures</button>
+                    <button class="btn btn-stop" id="btnStopFailedRequests">⬛ Stop</button>
                 </div>
             </div>
 

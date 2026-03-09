@@ -33,6 +33,7 @@ namespace PerfProblemSimulator.Controllers;
 public class ThreadBlockController : ControllerBase
 {
     private readonly IThreadBlockService _threadBlockService;
+    private readonly ISimulationTracker _simulationTracker;
     private readonly ILogger<ThreadBlockController> _logger;
 
     /// <summary>
@@ -40,9 +41,11 @@ public class ThreadBlockController : ControllerBase
     /// </summary>
     public ThreadBlockController(
         IThreadBlockService threadBlockService,
+        ISimulationTracker simulationTracker,
         ILogger<ThreadBlockController> logger)
     {
         _threadBlockService = threadBlockService ?? throw new ArgumentNullException(nameof(threadBlockService));
+        _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -129,5 +132,33 @@ public class ThreadBlockController : ControllerBase
                 StatusCodes.Status500InternalServerError,
                 ErrorResponse.SimulationError("Failed to start thread blocking simulation."));
         }
+    }
+
+    /// <summary>
+    /// Stops all active thread pool starvation simulations.
+    /// </summary>
+    /// <returns>Number of simulations that were stopped.</returns>
+    /// <remarks>
+    /// <para>
+    /// This endpoint cancels all active thread blocking simulations. Already-blocked threads
+    /// will eventually complete their current delay, but no new blocking operations will start.
+    /// </para>
+    /// </remarks>
+    /// <response code="200">Thread blocking simulations stopped.</response>
+    [HttpPost("stop")]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    public IActionResult Stop()
+    {
+        _logger.LogInformation("Stopping all thread blocking simulations");
+        
+        var cancelled = _simulationTracker.CancelByType(SimulationType.ThreadBlock);
+        
+        _logger.LogInformation("Stopped {Count} thread blocking simulations", cancelled);
+        
+        return Ok(new 
+        { 
+            message = $"Stopped {cancelled} thread blocking simulation(s)",
+            cancelledCount = cancelled
+        });
     }
 }
