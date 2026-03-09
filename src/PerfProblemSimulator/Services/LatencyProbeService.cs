@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.Extensions.Options;
 using PerfProblemSimulator.Hubs;
+using PerfProblemSimulator.Models;
 using System.Diagnostics;
 
 namespace PerfProblemSimulator.Services;
@@ -72,17 +74,12 @@ public class LatencyProbeService : IHostedService, IDisposable
     private readonly IServer _server;
     private readonly ISimulationTracker _simulationTracker;
     private readonly IIdleStateService _idleStateService;
+    private readonly int _probeIntervalMs;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
     private bool _disposed;
     private string? _baseUrl;
-
-    /// <summary>
-    /// Probe interval in milliseconds. 100ms provides good granularity for
-    /// observing latency changes during starvation ramp-up.
-    /// </summary>
-    private const int ProbeIntervalMs = 100;
 
     /// <summary>
     /// Request timeout in milliseconds. If the probe takes longer than this,
@@ -100,7 +97,8 @@ public class LatencyProbeService : IHostedService, IDisposable
         IConfiguration configuration,
         IServer server,
         ISimulationTracker simulationTracker,
-        IIdleStateService idleStateService)
+        IIdleStateService idleStateService,
+        IOptions<ProblemSimulatorOptions> options)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -108,6 +106,10 @@ public class LatencyProbeService : IHostedService, IDisposable
         _server = server ?? throw new ArgumentNullException(nameof(server));
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
+        
+        // Apply safety limit: minimum 100ms (10 probes/sec max) to prevent overlap
+        var configuredInterval = options?.Value?.LatencyProbeIntervalMs ?? 200;
+        _probeIntervalMs = Math.Max(100, configuredInterval);
     }
 
     /// <inheritdoc />
@@ -128,7 +130,7 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         _logger.LogInformation(
             "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms, Target: {BaseUrl}",
-            ProbeIntervalMs,
+            _probeIntervalMs,
             RequestTimeoutMs,
             _baseUrl);
 
@@ -223,7 +225,7 @@ public class LatencyProbeService : IHostedService, IDisposable
                 // Normal interval wait
                 if (!isSlowRequestActive)
                 {
-                    Thread.Sleep(ProbeIntervalMs);
+                    Thread.Sleep(_probeIntervalMs);
                 }
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -235,7 +237,7 @@ public class LatencyProbeService : IHostedService, IDisposable
             {
                 _logger.LogError(ex, "Error in latency probe loop");
                 // Continue probing even after errors
-                Thread.Sleep(ProbeIntervalMs);
+                Thread.Sleep(_probeIntervalMs);
             }
         }
     }

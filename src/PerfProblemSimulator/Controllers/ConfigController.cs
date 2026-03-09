@@ -67,7 +67,8 @@ public class ConfigController : ControllerBase
         
         return Ok(new ClientConfig
         {
-            PageFooter = pageFooter
+            PageFooter = pageFooter,
+            LatencyProbeIntervalMs = _options.LatencyProbeIntervalMs
         });
     }
 }
@@ -81,4 +82,10 @@ public class ClientConfig
     /// Custom HTML content for the page footer. Empty string if not configured.
     /// </summary>
     public string PageFooter { get; init; } = "";
+
+    /// <summary>
+    /// How often the server sends latency probes in milliseconds.
+    /// Client uses this to coordinate its own probing for hybrid coverage.
+    /// </summary>
+    public int LatencyProbeIntervalMs { get; init; } = 200;
 }

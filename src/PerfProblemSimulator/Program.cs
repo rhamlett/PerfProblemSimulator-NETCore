@@ -67,6 +67,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<ProblemSimulatorOptions>(
     builder.Configuration.GetSection(ProblemSimulatorOptions.SectionName));
 
+// Support HEALTH_PROBE_RATE environment variable as a friendly override for LatencyProbeIntervalMs
+builder.Services.PostConfigure<ProblemSimulatorOptions>(options =>
+{
+    var healthProbeRate = Environment.GetEnvironmentVariable("HEALTH_PROBE_RATE");
+    if (!string.IsNullOrEmpty(healthProbeRate) && int.TryParse(healthProbeRate, out var rateMs))
+    {
+        options.LatencyProbeIntervalMs = rateMs;
+    }
+});
+
 // -----------------------------------------------------------------------------
 // Core Services
 // -----------------------------------------------------------------------------

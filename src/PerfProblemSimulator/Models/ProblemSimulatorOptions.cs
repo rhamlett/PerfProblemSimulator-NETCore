@@ -43,4 +43,27 @@ public class ProblemSimulatorOptions
     /// dashboard updates but consumes more resources.
     /// </remarks>
     public int MetricsCollectionIntervalMs { get; set; } = 1000;
+
+    /// <summary>
+    /// How often the latency probe service should send HTTP probes in milliseconds.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default: 200ms (5 probes/sec). Combined with client-side probing at the same
+    /// interval but offset by half, this achieves ~100ms effective sample rate.
+    /// </para>
+    /// <para>
+    /// <strong>Safety limit:</strong> Minimum 100ms (10 probes/sec). Values below 100ms
+    /// will be clamped to 100ms to prevent probe overlap and excessive CPU overhead.
+    /// </para>
+    /// <para>
+    /// Lower values provide finer granularity for detecting latency spikes but increase
+    /// CPU overhead and can cause probe overlap under heavy profiling. Adjust based on
+    /// profiler feedback.
+    /// </para>
+    /// <para>
+    /// Can be configured via environment variable: <c>HEALTH_PROBE_RATE</c>
+    /// </para>
+    /// </remarks>
+    public int LatencyProbeIntervalMs { get; set; } = 200;
 }

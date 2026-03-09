@@ -13,8 +13,11 @@
 
 const CONFIG = {
     maxDataPoints: 240,  // 1 minute of data at 250ms intervals
-    maxLatencyDataPoints: 600, // 60 seconds at 100ms intervals
-    latencyProbeIntervalMs: 100,
+    maxLatencyDataPoints: 600, // 60 seconds at 100ms effective intervals (hybrid probing)
+    // latencyProbeIntervalMs is loaded from server config (default 200ms).
+    // Hybrid probing: Server probes at this interval, client probes at same interval
+    // but offset by half, achieving ~100ms effective sample rate.
+    latencyProbeIntervalMs: 200,
     latencyTimeoutMs: 30000,
     reconnectDelayMs: 2000,
     apiBaseUrl: '/api'
@@ -817,6 +820,11 @@ function updateLatencyChart() {
 /**
  * Start client-side probe as a backup/additional measurement.
  * This runs independently in the browser and won't be affected by server thread pool issues.
+ * 
+ * Hybrid Probing Strategy:
+ * - Server probes at CONFIG.latencyProbeIntervalMs (e.g., 200ms)
+ * - Client probes at same interval, but offset by half (e.g., start at 100ms, then 200ms intervals)
+ * - Combined effect: ~100ms effective sample rate with half the server-side overhead
  */
 function startClientProbe() {
     // Don't start probes if server is idle
@@ -860,8 +868,11 @@ function startClientProbe() {
         }
     };
 
-    // Start the loop
-    runProbe();
+    // Start with half-interval offset to interleave with server probes
+    // Server probes at: 0ms, 200ms, 400ms, ...
+    // Client probes at: 100ms, 300ms, 500ms, ... (offset by half)
+    const offsetMs = Math.floor(CONFIG.latencyProbeIntervalMs / 2);
+    state.clientProbeTimeout = setTimeout(runProbe, offsetMs);
 }
 
 /**
@@ -1446,12 +1457,19 @@ async function fetchBuildInfo() {
 /**
  * Fetches app configuration and updates the UI.
  * The PageFooter can be set via Azure App Service environment variable: PAGE_FOOTER
+ * LatencyProbeIntervalMs configures hybrid probing rate.
  */
 async function fetchAppConfig() {
     try {
         const response = await fetch(`${CONFIG.apiBaseUrl}/config`);
         if (response.ok) {
             const config = await response.json();
+            
+            // Update probe interval for hybrid probing (server sends its interval)
+            if (config.latencyProbeIntervalMs && config.latencyProbeIntervalMs > 0) {
+                CONFIG.latencyProbeIntervalMs = config.latencyProbeIntervalMs;
+                console.log(`Latency probe interval set to ${CONFIG.latencyProbeIntervalMs}ms (hybrid effective: ~${Math.floor(CONFIG.latencyProbeIntervalMs / 2)}ms)`);
+            }
             
             // Update page footer if configured
             const footerElement = document.getElementById('pageFooterContent');
@@ -1469,20 +1487,20 @@ async function fetchAppConfig() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // Initialize charts first
     initializeCharts();
     
-    // Fetch app configuration (title from environment variable)
-    fetchAppConfig();
+    // Fetch app configuration BEFORE starting probes (sets probe interval for hybrid mode)
+    await fetchAppConfig();
     
-    // Fetch SKU info
+    // Fetch SKU info (non-blocking)
     fetchAzureSku();
     
-    // Fetch build info
+    // Fetch build info (non-blocking)
     fetchBuildInfo();
     
-    // Start SignalR connection
+    // Start SignalR connection (this starts client probes with correct interval)
     initializeSignalR();
 
     

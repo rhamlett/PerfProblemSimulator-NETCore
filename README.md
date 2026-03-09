@@ -252,10 +252,16 @@ Configuration is managed through `appsettings.json`:
 ```json
 {
   "ProblemSimulator": {
-    "MetricsCollectionIntervalMs": 1000
+    "MetricsCollectionIntervalMs": 250,
+    "LatencyProbeIntervalMs": 200
   }
 }
 ```
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `MetricsCollectionIntervalMs` | How often CPU/Memory/Thread metrics are collected | `250` |
+| `LatencyProbeIntervalMs` | Server-side health probe interval (also configurable via `HEALTH_PROBE_RATE` env var) | `200` |
 
 **Note:** This application is designed to be fully breakable for educational purposes. There are no safety limits on resource consumption — simulations can run until the application crashes or resources are exhausted.
 
@@ -265,9 +271,25 @@ The following environment variables can be configured to customize application b
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-
+| `HEALTH_PROBE_RATE` | Health probe interval in milliseconds. Controls how often the server sends latency probes. Combined with client-side probes, effective rate is halved. Minimum 100ms. | `200` |
 | `IDLE_TIMEOUT_MINUTES` | Minutes of inactivity before suspending health probes. Reduces network traffic and Application Insights telemetry when idle. | `20` |
 | `PAGE_FOOTER` | Custom HTML footer text displayed at the bottom of the dashboard. Supports HTML links for attribution. | (empty) |
+
+#### HEALTH_PROBE_RATE
+
+Controls the interval between server-side health probes. The dashboard uses **hybrid probing**: server probes at this rate, client probes at the same rate but offset by half, achieving roughly double the effective sample rate.
+
+- **Default:** 200ms (5 probes/sec server-side, ~100ms effective with hybrid)
+- **Safety limit:** Minimum 100ms to prevent probe overlap
+- **Use case:** Reduce if CLR profiling shows probe requests overlapping; increase for lower overhead
+
+**Setting via Azure CLI:**
+```bash
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings HEALTH_PROBE_RATE=400
+```
 
 #### IDLE_TIMEOUT_MINUTES
 
