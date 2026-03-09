@@ -1060,6 +1060,7 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
             <p><strong>Note:</strong> This application is designed to be fully breakable for educational purposes. There are no safety limits on resource consumption — simulations can run until the application crashes or resources are exhausted.</p>
 
             <h3>Environment Variables</h3>
+            <p>The following environment variables can be configured to customize application behavior. These are optional and primarily useful when deploying to Azure App Service.</p>
             <table class="config-table">
                 <thead>
                     <tr>
@@ -1070,12 +1071,55 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>DISABLE_PROBLEM_ENDPOINTS</code></td>
-                        <td>Set to <code>true</code> to disable all problem-triggering endpoints</td>
-                        <td><code>false</code></td>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>Minutes of inactivity before suspending health probes. Reduces network traffic and Application Insights telemetry when idle.</td>
+                        <td><code>20</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>Custom HTML footer text displayed at the bottom of the dashboard. Supports HTML links for attribution.</td>
+                        <td>(empty)</td>
                     </tr>
                 </tbody>
             </table>
+
+            <h4>IDLE_TIMEOUT_MINUTES</h4>
+            <p>When the application is idle (no dashboard connections or load test requests), health probes are automatically suspended to reduce unnecessary network traffic to Azure's frontend, AppLens, and Application Insights.</p>
+            <ul>
+                <li><strong>Default:</strong> 20 minutes</li>
+                <li><strong>Wake-up:</strong> Simply reload the dashboard or send any request</li>
+                <li><strong>Activity sources:</strong> Dashboard connections, load test requests</li>
+            </ul>
+            <p><strong>Setting via Azure CLI:</strong></p>
+            <div class="code-block">
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings IDLE_TIMEOUT_MINUTES=<span class="string">30</span>
+            </div>
+
+            <h4>PAGE_FOOTER</h4>
+            <p>The <code>PAGE_FOOTER</code> environment variable allows you to customize the footer credits displayed on the dashboard. This is useful for attributing tools, teams, or linking to relevant resources.</p>
+            <p><strong>Example Value:</strong></p>
+            <div class="code-block">
+Created by &lt;a href="https://speckit.org/" target="_blank"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot" target="_blank"&gt;Github Copilot&lt;/a&gt;
+            </div>
+            <p><strong>Setting via Azure CLI:</strong></p>
+            <div class="code-block">
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings PAGE_FOOTER=<span class="string">'Created by &lt;a href="https://speckit.org/" target="_blank"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot" target="_blank"&gt;Github Copilot&lt;/a&gt;'</span>
+            </div>
+            <p><strong>Setting Locally (PowerShell):</strong></p>
+            <div class="code-block">
+$env:PAGE_FOOTER = <span class="string">'Created by &lt;a href="https://speckit.org/" target="_blank"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot" target="_blank"&gt;Github Copilot&lt;/a&gt;'</span>
+            </div>
+            <p><strong>Setting Locally (Bash):</strong></p>
+            <div class="code-block">
+<span class="keyword">export</span> PAGE_FOOTER=<span class="string">'Created by &lt;a href="https://speckit.org/" target="_blank"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot" target="_blank"&gt;Github Copilot&lt;/a&gt;'</span>
+            </div>
+            <p>The footer is retrieved via the <code>/api/config/footer</code> endpoint and rendered in the dashboard's footer section. If <code>PAGE_FOOTER</code> is not set, the footer credits section is hidden.</p>
         </section>
 
         <!-- Azure Deployment Section -->
@@ -1111,15 +1155,6 @@ az webapp deploy \
   --resource-group rg-perf-simulator \
   --name your-unique-app-name \
   --src-path bin/Release/net10.0/publish
-            </div>
-
-            <h3>Safety Recommendation</h3>
-            <p>After deployment, consider disabling problem endpoints:</p>
-            <div class="code-block">
-az webapp config appsettings set \
-  --resource-group rg-perf-simulator \
-  --name your-unique-app-name \
-  --settings DISABLE_PROBLEM_ENDPOINTS=<span class="keyword">true</span>
             </div>
 
             <h3>Recommended Diagnostic Tools</h3>

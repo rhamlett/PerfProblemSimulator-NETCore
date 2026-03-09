@@ -1,5 +1,4 @@
 using PerfProblemSimulator.Hubs;
-using PerfProblemSimulator.Middleware;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
 
@@ -55,7 +54,6 @@ using OpenApiInfo = Microsoft.OpenApi.OpenApiInfo;
 // - Services/*Service.cs: Business logic implementations
 // - Controllers/*Controller.cs: HTTP endpoint handlers
 // - Hubs/MetricsHub.cs: WebSocket real-time communication
-// - Middleware/ProblemEndpointGuard.cs: Kill switch middleware
 // - Models/ProblemSimulatorOptions.cs: Configuration binding
 // =============================================================================
 
@@ -300,11 +298,6 @@ app.UseRequestTimeouts();
 // Serve static files from wwwroot (for the SPA dashboard)
 app.UseDefaultFiles(); // Enables default document (index.html)
 app.UseStaticFiles();
-
-// Problem endpoint guard - blocks trigger/allocate/release endpoints when disabled
-// Educational Note: This middleware demonstrates the "kill switch" pattern for
-// safely deploying code that has potentially dangerous functionality.
-app.UseProblemEndpointGuard();
 
 // HTTPS redirection (commented out for local development convenience)
 // app.UseHttpsRedirection();

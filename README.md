@@ -261,9 +261,58 @@ Configuration is managed through `appsettings.json`:
 
 ### Environment Variables
 
+The following environment variables can be configured to customize application behavior. These are optional and primarily useful when deploying to Azure App Service.
+
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DISABLE_PROBLEM_ENDPOINTS` | Set to `true` to disable all problem-triggering endpoints | `false` |
+
+| `IDLE_TIMEOUT_MINUTES` | Minutes of inactivity before suspending health probes. Reduces network traffic and Application Insights telemetry when idle. | `20` |
+| `PAGE_FOOTER` | Custom HTML footer text displayed at the bottom of the dashboard. Supports HTML links for attribution. | (empty) |
+
+#### IDLE_TIMEOUT_MINUTES
+
+When the application is idle (no dashboard connections or load test requests), health probes are automatically suspended to reduce unnecessary network traffic to Azure's frontend, AppLens, and Application Insights.
+
+- **Default:** 20 minutes
+- **Wake-up:** Simply reload the dashboard or send any request
+- **Activity sources:** Dashboard connections, load test requests
+
+**Setting via Azure CLI:**
+```bash
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings IDLE_TIMEOUT_MINUTES=30
+```
+
+#### PAGE_FOOTER
+
+The `PAGE_FOOTER` environment variable allows you to customize the footer credits displayed on the dashboard. This is useful for attributing tools, teams, or linking to relevant resources.
+
+**Example Value:**
+```
+Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> and <a href="https://github.com/copilot" target="_blank">Github Copilot</a>
+```
+
+**Setting via Azure CLI:**
+```bash
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings PAGE_FOOTER='Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> and <a href="https://github.com/copilot" target="_blank">Github Copilot</a>'
+```
+
+**Setting Locally (PowerShell):**
+```powershell
+$env:PAGE_FOOTER = 'Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> and <a href="https://github.com/copilot" target="_blank">Github Copilot</a>'
+```
+
+**Setting Locally (Bash):**
+```bash
+export PAGE_FOOTER='Created by <a href="https://speckit.org/" target="_blank">SpecKit</a> and <a href="https://github.com/copilot" target="_blank">Github Copilot</a>'
+```
+
+The footer is retrieved via the `/api/config/footer` endpoint and rendered in the dashboard's footer section. If `PAGE_FOOTER` is not set, the footer credits section is hidden.
 
 ## ☁️ Azure Deployment
 
@@ -297,17 +346,6 @@ az webapp deploy \
   --resource-group rg-perf-simulator \
   --name your-unique-app-name \
   --src-path bin/Release/net10.0/publish
-```
-
-### Safety Recommendation
-
-After deployment, consider disabling problem endpoints:
-
-```bash
-az webapp config appsettings set \
-  --resource-group rg-perf-simulator \
-  --name your-unique-app-name \
-  --settings DISABLE_PROBLEM_ENDPOINTS=true
 ```
 
 ## 🔍 Using Azure Diagnostics
@@ -353,8 +391,6 @@ src/PerfProblemSimulator/
 │   ├── MetricsHub.cs
 │   └── IMetricsClient.cs
 ├── Models/               # Data transfer objects
-├── Middleware/           # Request pipeline
-│   └── ProblemEndpointGuard.cs
 └── wwwroot/              # SPA dashboard
     ├── index.html
     ├── documentation.html
