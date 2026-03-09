@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using PerfProblemSimulator.Hubs;
 using System.Diagnostics;
-using System.Net.Http;
 
 namespace PerfProblemSimulator.Services;
 
@@ -68,11 +67,11 @@ namespace PerfProblemSimulator.Services;
 public class LatencyProbeService : IHostedService, IDisposable
 {
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
-    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<LatencyProbeService> _logger;
     private readonly IConfiguration _configuration;
     private readonly IServer _server;
     private readonly ISimulationTracker _simulationTracker;
+    private readonly IIdleStateService _idleStateService;
 
     private Thread? _probeThread;
     private CancellationTokenSource? _cts;
@@ -97,18 +96,18 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// </summary>
     public LatencyProbeService(
         IHubContext<MetricsHub, IMetricsClient> hubContext,
-        IHttpClientFactory httpClientFactory,
         ILogger<LatencyProbeService> logger,
         IConfiguration configuration,
         IServer server,
-        ISimulationTracker simulationTracker)
+        ISimulationTracker simulationTracker,
+        IIdleStateService idleStateService)
     {
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
-        _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _server = server ?? throw new ArgumentNullException(nameof(server));
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
     }
 
     /// <inheritdoc />
@@ -175,11 +174,9 @@ public class LatencyProbeService : IHostedService, IDisposable
             AutomaticDecompression = System.Net.DecompressionMethods.All
         };
 
-        using var httpClient = new HttpClient(handler)
-        {
-            BaseAddress = new Uri(baseUrl),
-            Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs)
-        };
+        using var httpClient = new HttpClient(handler);
+        httpClient.BaseAddress = new Uri(baseUrl);
+        httpClient.Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs);
 
         // Add a user agent for Azure (some proxies require it)
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LatencyProbe/1.0");
@@ -188,8 +185,17 @@ public class LatencyProbeService : IHostedService, IDisposable
         {
             try
             {
+                // Check if application is idle - don't send probes when idle
+                // This reduces unnecessary traffic to the network, AppLens, and Application Insights
+                if (_idleStateService.IsIdle)
+                {
+                    // Check again after 1 second when idle
+                    Thread.Sleep(1000);
+                    continue;
+                }
+
                 // Check if Slow Request simulation is running
-                bool isSlowRequestActive = _simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0;
+                var isSlowRequestActive = _simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0;
                 
                 // If Slow Request simulation is running, we slow down the probe frequency DRAMATICALLY
                 // but we DO NOT stop it completely.
@@ -240,8 +246,8 @@ public class LatencyProbeService : IHostedService, IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var timestamp = DateTimeOffset.UtcNow;
-        bool isTimeout = false;
-        bool isError = false;
+        var isTimeout = false;
+        var isError = false;
         string? errorMessage = null;
 
         try

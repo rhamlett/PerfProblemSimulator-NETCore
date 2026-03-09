@@ -100,6 +100,33 @@ public interface IMetricsClient
     /// </para>
     /// </remarks>
     Task ReceiveLoadTestStats(LoadTestStatsData data);
+
+    /// <summary>
+    /// Notifies client that the application is going idle.
+    /// Health probes will be paused until the app wakes up.
+    /// </summary>
+    Task ReceiveIdleState(IdleStateData data);
+}
+
+/// <summary>
+/// Data about the application's idle state change.
+/// </summary>
+public class IdleStateData
+{
+    /// <summary>
+    /// Whether the application is now idle.
+    /// </summary>
+    public bool IsIdle { get; set; }
+    
+    /// <summary>
+    /// Message to display in the event log.
+    /// </summary>
+    public string Message { get; set; } = "";
+    
+    /// <summary>
+    /// When this state change occurred.
+    /// </summary>
+    public DateTimeOffset Timestamp { get; set; }
 }
 
 /// <summary>

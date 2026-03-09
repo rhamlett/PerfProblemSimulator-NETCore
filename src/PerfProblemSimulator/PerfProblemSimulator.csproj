@@ -28,6 +28,9 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+  </ItemGroup>
 
   <!-- Generate build timestamp as assembly metadata -->
   <Target Name="SetBuildTimestamp" BeforeTargets="GetAssemblyAttributes">

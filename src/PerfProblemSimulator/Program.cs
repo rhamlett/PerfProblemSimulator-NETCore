@@ -139,6 +139,13 @@ builder.Services.AddSwaggerGen(options =>
 // -----------------------------------------------------------------------------
 // Application Services
 // -----------------------------------------------------------------------------
+// IdleStateService - Singleton service for managing application idle state
+// Educational Note: When no dashboard clients are connected and no load tests
+// are running for the configured timeout (default 20 minutes), the app goes idle
+// and stops sending health probes. This reduces unnecessary traffic to AppLens
+// and Application Insights. Override timeout via IDLE_TIMEOUT_MINUTES env var.
+builder.Services.AddSingleton<IIdleStateService, IdleStateService>();
+
 // SimulationTracker - Singleton service that tracks all active simulations
 // Educational Note: Singleton lifetime ensures all parts of the application
 // see the same simulation state. The ConcurrentDictionary inside provides
@@ -328,4 +335,4 @@ app.Run();
 // Program class. Since top-level statements generate an implicit Program class
 // that is internal, we need to make it public for the test project to access.
 // =============================================================================
-public partial class Program { }
+public partial class Program;

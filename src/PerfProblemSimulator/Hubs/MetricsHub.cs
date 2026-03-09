@@ -1,5 +1,5 @@
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.SignalR;
-using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
 
 namespace PerfProblemSimulator.Hubs;
@@ -55,14 +55,19 @@ namespace PerfProblemSimulator.Hubs;
 public class MetricsHub : Hub<IMetricsClient>
 {
     private readonly IMetricsCollector _metricsCollector;
+    private readonly IIdleStateService _idleStateService;
     private readonly ILogger<MetricsHub> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MetricsHub"/> class.
     /// </summary>
-    public MetricsHub(IMetricsCollector metricsCollector, ILogger<MetricsHub> logger)
+    public MetricsHub(
+        IMetricsCollector metricsCollector,
+        IIdleStateService idleStateService,
+        ILogger<MetricsHub> logger)
     {
         _metricsCollector = metricsCollector ?? throw new ArgumentNullException(nameof(metricsCollector));
+        _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -73,9 +78,24 @@ public class MetricsHub : Hub<IMetricsClient>
     {
         _logger.LogInformation("Dashboard client connected: {ConnectionId}", Context.ConnectionId);
 
+        // Wake up from idle state when a dashboard connects
+        // This is the primary mechanism for waking the app when a user opens the dashboard
+        _idleStateService.WakeUp();
+
         // Send current metrics immediately so client doesn't have to wait
         var currentSnapshot = _metricsCollector.LatestSnapshot;
         await Clients.Caller.ReceiveMetrics(currentSnapshot);
+
+        // Send current idle state to the connecting client
+        var idleData = new IdleStateData
+        {
+            IsIdle = _idleStateService.IsIdle,
+            Message = _idleStateService.IsIdle 
+                ? "Application is idle, no health probes being sent. There will be gaps in diagnostics and logs."
+                : "Application is active",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Caller.ReceiveIdleState(idleData);
 
         await base.OnConnectedAsync();
     }
@@ -100,9 +120,39 @@ public class MetricsHub : Hub<IMetricsClient>
     /// <summary>
     /// Client can request the latest metrics snapshot on demand.
     /// </summary>
+    [UsedImplicitly]
     public async Task RequestMetrics()
     {
+        // Record activity to prevent idle timeout
+        _idleStateService.RecordActivity();
+        
         var snapshot = _metricsCollector.LatestSnapshot;
         await Clients.Caller.ReceiveMetrics(snapshot);
+    }
+
+    /// <summary>
+    /// Client calls this to wake up the server from idle state.
+    /// Used when the dashboard page loads or user interacts with it.
+    /// </summary>
+    [UsedImplicitly]
+    public async Task WakeUp()
+    {
+        var wasIdle = _idleStateService.WakeUp();
+        
+        if (wasIdle)
+        {
+            _logger.LogInformation("Server woken up by client request from: {ConnectionId}", Context.ConnectionId);
+        }
+
+        // Send current idle state back to caller
+        var idleData = new IdleStateData
+        {
+            IsIdle = _idleStateService.IsIdle,
+            Message = wasIdle 
+                ? "App waking up from idle state. There may be gaps in diagnostics and logs."
+                : "Application is active",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        await Clients.Caller.ReceiveIdleState(idleData);
     }
 }

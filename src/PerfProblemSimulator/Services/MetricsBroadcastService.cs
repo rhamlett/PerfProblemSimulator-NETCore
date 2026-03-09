@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
-using PerfProblemSimulator.Services;
 using System.Collections.Concurrent;
 
 namespace PerfProblemSimulator.Services;
@@ -68,6 +67,7 @@ public class MetricsBroadcastService : IHostedService
 {
     private readonly IMetricsCollector _metricsCollector;
     private readonly ISimulationTracker _simulationTracker;
+    private readonly IIdleStateService _idleStateService;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
     private readonly ILogger<MetricsBroadcastService> _logger;
     
@@ -82,11 +82,13 @@ public class MetricsBroadcastService : IHostedService
     public MetricsBroadcastService(
         IMetricsCollector metricsCollector,
         ISimulationTracker simulationTracker,
+        IIdleStateService idleStateService,
         IHubContext<MetricsHub, IMetricsClient> hubContext,
         ILogger<MetricsBroadcastService> logger)
     {
         _metricsCollector = metricsCollector ?? throw new ArgumentNullException(nameof(metricsCollector));
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -108,6 +110,8 @@ public class MetricsBroadcastService : IHostedService
         _metricsCollector.MetricsCollected += OnMetricsCollected;
         _simulationTracker.SimulationStarted += OnSimulationStarted;
         _simulationTracker.SimulationCompleted += OnSimulationCompleted;
+        _idleStateService.GoingIdle += OnGoingIdle;
+        _idleStateService.WakingUp += OnWakingUp;
         _metricsCollector.Start();
 
         _logger.LogInformation("Metrics broadcast service started with dedicated broadcast thread");
@@ -123,6 +127,8 @@ public class MetricsBroadcastService : IHostedService
         _metricsCollector.MetricsCollected -= OnMetricsCollected;
         _simulationTracker.SimulationStarted -= OnSimulationStarted;
         _simulationTracker.SimulationCompleted -= OnSimulationCompleted;
+        _idleStateService.GoingIdle -= OnGoingIdle;
+        _idleStateService.WakingUp -= OnWakingUp;
         _metricsCollector.Stop();
         
         // Wait for broadcast thread to finish (with timeout)
@@ -185,7 +191,7 @@ public class MetricsBroadcastService : IHostedService
         {
             // Fire-and-forget: kick off the send, don't wait for completion
             // The underscore discards the Task to suppress compiler warnings
-            Task sendTask = message.Type switch
+            var sendTask = message.Type switch
             {
                 BroadcastType.Metrics => 
                     _hubContext.Clients.All.ReceiveMetrics((MetricsSnapshot)message.Data!),
@@ -204,6 +210,9 @@ public class MetricsBroadcastService : IHostedService
                     
                 BroadcastType.LoadTestStats => 
                     _hubContext.Clients.All.ReceiveLoadTestStats((LoadTestStatsData)message.Data!),
+                    
+                BroadcastType.IdleState => 
+                    _hubContext.Clients.All.ReceiveIdleState((IdleStateData)message.Data!),
                     
                 _ => Task.CompletedTask
             };
@@ -244,14 +253,32 @@ public class MetricsBroadcastService : IHostedService
         }
     }
 
-    private void OnSimulationStarted(object? sender, SimulationEventArgs e)
-    {
+    private void OnSimulationStarted(object? sender, SimulationEventArgs e) =>
         _messageQueue.TryAdd(new BroadcastMessage(BroadcastType.SimulationStarted, e));
+
+    private void OnSimulationCompleted(object? sender, SimulationEventArgs e) =>
+        _messageQueue.TryAdd(new BroadcastMessage(BroadcastType.SimulationCompleted, e));
+
+    private void OnGoingIdle(object? sender, EventArgs e)
+    {
+        var idleData = new IdleStateData
+        {
+            IsIdle = true,
+            Message = "Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        _messageQueue.TryAdd(new BroadcastMessage(BroadcastType.IdleState, idleData));
     }
 
-    private void OnSimulationCompleted(object? sender, SimulationEventArgs e)
+    private void OnWakingUp(object? sender, EventArgs e)
     {
-        _messageQueue.TryAdd(new BroadcastMessage(BroadcastType.SimulationCompleted, e));
+        var idleData = new IdleStateData
+        {
+            IsIdle = false,
+            Message = "App waking up from idle state. There may be gaps in diagnostics and logs.",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+        _messageQueue.TryAdd(new BroadcastMessage(BroadcastType.IdleState, idleData));
     }
     
     /// <summary>
@@ -264,7 +291,8 @@ public class MetricsBroadcastService : IHostedService
         SimulationCompleted,
         Latency,
         SlowRequestLatency,
-        LoadTestStats
+        LoadTestStats,
+        IdleState
     }
     
     /// <summary>

@@ -50,7 +50,8 @@ const state = {
     },
     clientProbeInterval: null,
     activeSimulations: new Map(),
-    lastProcessId: null
+    lastProcessId: null,
+    isIdle: false  // Tracks whether the server is in idle state
 };
 
 // ==========================================================================
@@ -137,6 +138,8 @@ async function initializeSignalR() {
     state.connection.on('receiveSlowRequestLatency', handleSlowRequestLatency);
     state.connection.on('ReceiveLoadTestStats', handleLoadTestStats);
     state.connection.on('receiveLoadTestStats', handleLoadTestStats);
+    state.connection.on('ReceiveIdleState', handleIdleState);
+    state.connection.on('receiveIdleState', handleIdleState);
 
     // Start connection
     try {
@@ -608,11 +611,31 @@ function handleLoadTestStats(data) {
     const errorRate = completed > 0 ? (exceptions / completed) * 100 : 0;
     
     // Build detailed stats message matching screenshot format
-    let msg = `Load test period stats: ${completed.toLocaleString()} requests, ` +
+    let msg = `Load test period stats (60s): ${completed.toLocaleString()} requests, ` +
               `${avgMs.toFixed(1)} avg ms, ${maxMs.toFixed(0)} max ms, ` +
               `${rps.toFixed(2)} RPS, ${errorRate.toFixed(1)}% errors`;
     
     logEvent('loadtest', msg);
+}
+
+/**
+ * Handle idle state change notification from server.
+ * When the server goes idle, health probes stop. When it wakes up, they resume.
+ */
+function handleIdleState(data) {
+    const wasIdle = state.isIdle;
+    state.isIdle = data.isIdle;
+    
+    // Log the state change
+    if (data.isIdle && !wasIdle) {
+        // Going idle
+        logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
+        stopClientProbe();
+    } else if (!data.isIdle && wasIdle) {
+        // Waking up
+        logEvent('system', data.message || 'App waking up from idle state. There may be gaps in diagnostics and logs.');
+        startClientProbe();
+    }
 }
 
 /**
@@ -783,6 +806,9 @@ function updateLatencyChart() {
  * This runs independently in the browser and won't be affected by server thread pool issues.
  */
 function startClientProbe() {
+    // Don't start probes if server is idle
+    if (state.isIdle) return;
+    
     // Idempotency check: Don't start if already running
     if (state.isClientProbeRunning) return;
 
@@ -791,6 +817,12 @@ function startClientProbe() {
     
     const runProbe = async () => {
         if (!state.isClientProbeRunning) return;
+        
+        // Stop if server went idle
+        if (state.isIdle) {
+            stopClientProbe();
+            return;
+        }
 
         try {
             const controller = new AbortController();

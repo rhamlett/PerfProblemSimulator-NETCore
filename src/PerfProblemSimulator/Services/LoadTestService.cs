@@ -254,6 +254,7 @@ public class LoadTestService : ILoadTestService
 
     private readonly ILogger<LoadTestService> _logger;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
+    private readonly IIdleStateService _idleStateService;
     private readonly Random _random = new();
 
     /// <summary>
@@ -261,12 +262,15 @@ public class LoadTestService : ILoadTestService
     /// </summary>
     /// <param name="logger">Logger for diagnostic output.</param>
     /// <param name="hubContext">SignalR hub context for broadcasting stats.</param>
+    /// <param name="idleStateService">Service for tracking application idle state.</param>
     public LoadTestService(
         ILogger<LoadTestService> logger, 
-        IHubContext<MetricsHub, IMetricsClient> hubContext)
+        IHubContext<MetricsHub, IMetricsClient> hubContext,
+        IIdleStateService idleStateService)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
+        _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
         
         // Start timer for periodic broadcasting (fires every 60 seconds)
         _broadcastTimer = new Timer(
@@ -434,6 +438,10 @@ public class LoadTestService : ILoadTestService
         
         var currentConcurrent = Interlocked.Increment(ref _concurrentRequests);
         UpdatePeakConcurrent(currentConcurrent);
+        
+        // Record activity to prevent/reset idle state
+        // Load test traffic counts as usage that prevents idling
+        _idleStateService.RecordActivity();
         
         var stopwatch = Stopwatch.StartNew();
         var totalCpuWorkDone = 0;
