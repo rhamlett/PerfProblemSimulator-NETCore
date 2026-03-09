@@ -645,6 +645,32 @@ git push origin main</code></pre>
             <h2>Optional Configuration</h2>
             <p>You can customize the application behavior using Azure App Service environment variables.</p>
 
+            <h3>Health Probe Rate</h3>
+            <p>Control how often the server sends health probes to measure request latency. The dashboard uses <strong>hybrid probing</strong>: server and client probes are interleaved for higher effective sample rate with lower server overhead.</p>
+            
+            <h4>Environment Variable</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>Probe interval in milliseconds. Minimum 100ms. Effective rate is ~half this value due to hybrid client probing.</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Setting via Azure CLI</h4>
+            <pre><code># Slow down probes if CLR profiler shows overlapping requests
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings HEALTH_PROBE_RATE=400</code></pre>
+
             <h3>Custom Page Footer</h3>
             <p>Set a custom footer message that appears on all pages. The footer supports HTML, allowing you to include links.</p>
             

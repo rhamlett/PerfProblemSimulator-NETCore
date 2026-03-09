@@ -1184,6 +1184,7 @@ async function stopSlowRequests() {
 
 /**
  * Polls the slow request status and updates UI.
+ * Poll interval is 5 seconds to minimize noise during CLR profiling.
  */
 async function pollSlowRequestStatus() {
     const statusDiv = document.getElementById('slowRequestStatus');
@@ -1209,8 +1210,8 @@ async function pollSlowRequestStatus() {
                     msg.style.display = 'block';
                 }
                 
-                // Continue polling
-                setTimeout(pollSlowRequestStatus, 1000);
+                // Continue polling at 5-second intervals to reduce profiler noise
+                setTimeout(pollSlowRequestStatus, 5000);
             } else {
                 // Simulation ended
                 statusDiv.textContent = `Completed: ${status.requestsCompleted}/${status.requestsSent} requests`;

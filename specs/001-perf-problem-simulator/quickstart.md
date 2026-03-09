@@ -147,7 +147,8 @@ Key settings in `appsettings.json`:
     "MaxMemoryAllocationMb": 1024,
     "MaxThreadBlockDelayMs": 30000,
     "MaxConcurrentThreadBlocks": 200,
-    "MetricsCollectionIntervalMs": 1000
+    "MetricsCollectionIntervalMs": 250,
+    "LatencyProbeIntervalMs": 200
   },
   "DisableProblemEndpoints": false
 }

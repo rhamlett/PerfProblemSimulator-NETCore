@@ -1053,10 +1053,32 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
             <div class="code-block">
 {
   <span class="string">"ProblemSimulator"</span>: {
-    <span class="string">"MetricsCollectionIntervalMs"</span>: 1000
+    <span class="string">"MetricsCollectionIntervalMs"</span>: 250,
+    <span class="string">"LatencyProbeIntervalMs"</span>: 200
   }
 }
             </div>
+            <table class="config-table">
+                <thead>
+                    <tr>
+                        <th>Setting</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>MetricsCollectionIntervalMs</code></td>
+                        <td>How often CPU/Memory/Thread metrics are collected</td>
+                        <td><code>250</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>LatencyProbeIntervalMs</code></td>
+                        <td>Server-side health probe interval (also configurable via <code>HEALTH_PROBE_RATE</code> env var)</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
             <p><strong>Note:</strong> This application is designed to be fully breakable for educational purposes. There are no safety limits on resource consumption — simulations can run until the application crashes or resources are exhausted.</p>
 
             <h3>Environment Variables</h3>
@@ -1071,6 +1093,11 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
                 </thead>
                 <tbody>
                     <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>Health probe interval in milliseconds. Controls how often the server sends latency probes. Combined with client-side probes, effective rate is halved. Minimum 100ms.</td>
+                        <td><code>200</code></td>
+                    </tr>
+                    <tr>
                         <td><code>IDLE_TIMEOUT_MINUTES</code></td>
                         <td>Minutes of inactivity before suspending health probes. Reduces network traffic and Application Insights telemetry when idle.</td>
                         <td><code>20</code></td>
@@ -1082,6 +1109,21 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
                     </tr>
                 </tbody>
             </table>
+
+            <h4>HEALTH_PROBE_RATE</h4>
+            <p>Controls the interval between server-side health probes. The dashboard uses <strong>hybrid probing</strong>: server probes at this rate, client probes at the same rate but offset by half, achieving roughly double the effective sample rate.</p>
+            <ul>
+                <li><strong>Default:</strong> 200ms (5 probes/sec server-side, ~100ms effective with hybrid)</li>
+                <li><strong>Safety limit:</strong> Minimum 100ms to prevent probe overlap</li>
+                <li><strong>Use case:</strong> Increase if CLR profiling shows probe requests overlapping; decrease for finer granularity</li>
+            </ul>
+            <p><strong>Setting via Azure CLI:</strong></p>
+            <div class="code-block">
+az webapp config appsettings set \
+    --resource-group rg-perf-simulator \
+    --name your-app-name \
+    --settings HEALTH_PROBE_RATE=<span class="string">400</span>
+            </div>
 
             <h4>IDLE_TIMEOUT_MINUTES</h4>
             <p>When the application is idle (no dashboard connections or load test requests), health probes are automatically suspended to reduce unnecessary network traffic to Azure's frontend, AppLens, and Application Insights.</p>
