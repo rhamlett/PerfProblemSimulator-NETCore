@@ -112,9 +112,17 @@ async function initializeSignalR() {
         logEvent('system', 'Connection lost. Attempting to reconnect...');
     });
 
-    state.connection.onreconnected(connectionId => {
+    state.connection.onreconnected(async connectionId => {
         updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Reconnected to server');
+        
+        // Wake up server and sync idle state after reconnect
+        // This is important because the server may have gone idle while disconnected
+        try {
+            await state.connection.invoke('WakeUp');
+        } catch (err) {
+            console.warn('Failed to invoke WakeUp on reconnect:', err);
+        }
     });
 
     state.connection.onclose(error => {
@@ -632,8 +640,13 @@ function handleIdleState(data) {
         logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
         stopClientProbe();
     } else if (!data.isIdle && wasIdle) {
-        // Waking up
+        // Waking up (client knew we were idle)
         logEvent('system', data.message || 'App waking up from idle state. There may be gaps in diagnostics and logs.');
+        startClientProbe();
+    } else if (!data.isIdle && !wasIdle && data.message && data.message.toLowerCase().includes('waking up')) {
+        // Server was idle but client didn't know (e.g., after reconnect)
+        // The server's message indicates it just woke up
+        logEvent('system', data.message);
         startClientProbe();
     }
 }
