@@ -404,6 +404,78 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoadTestStats'
 
+  /api/failedrequest/start:
+    post:
+      tags:
+        - FailedRequest
+      summary: Start generating failed requests (HTTP 500 errors)
+      description: |
+        Starts a background process that generates HTTP 5xx errors by calling the load test
+        endpoint with 100% error probability. Each request throws a random exception type
+        (NullReferenceException, TimeoutException, InvalidOperationException, etc.).
+        
+        **Educational Note**: These failures will appear in AppLens and Application Insights,
+        allowing you to practice diagnosing application errors using Azure diagnostic tools.
+        
+        **Where to observe:**
+        - Azure Portal → App Service → Diagnose and Solve Problems → AppLens
+        - Application Insights → Failures blade
+        - Dashboard Event Log (hot pink entries with exception type)
+      operationId: startFailedRequest
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FailedRequestRequest'
+            examples:
+              default:
+                summary: Generate 10 failed requests
+                value:
+                  requestCount: 10
+              stress:
+                summary: Generate 50 failed requests
+                value:
+                  requestCount: 50
+      responses:
+        '200':
+          description: Failed request simulation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+
+  /api/failedrequest/stop:
+    post:
+      tags:
+        - FailedRequest
+      summary: Stop the failed request simulation
+      description: |
+        Stops generating new failed requests. Requests already in progress will complete.
+      operationId: stopFailedRequest
+      responses:
+        '200':
+          description: Simulation stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulationResult'
+
+  /api/failedrequest/status:
+    get:
+      tags:
+        - FailedRequest
+      summary: Get failed request simulation status
+      description: Returns the current status including requests sent, completed, and in progress.
+      operationId: getFailedRequestStatus
+      responses:
+        '200':
+          description: Current simulation status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FailedRequestStatus'
+
 components:
   schemas:
     CpuStressRequest:

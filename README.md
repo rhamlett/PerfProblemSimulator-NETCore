@@ -18,8 +18,9 @@ This application is designed to help developers and DevOps engineers:
 - 🔥 **CPU stress** - Creates dedicated threads running spin loops to consume all CPU cores
 - 📊 **Memory pressure** - Allocates and pins memory blocks to increase working set
 - 🧵 **Thread pool starvation** - Uses sync-over-async anti-patterns to block thread pool threads
-- � **Slow requests** - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis
-- �💥 **Application crashes** - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps
+- 🐢 **Slow requests** - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis
+- 💥 **Application crashes** - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps
+- ❌ **Failed requests** - Generates HTTP 5xx errors visible in AppLens and Application Insights
 
 **Only deploy this application in isolated, non-production environments.**
 
@@ -159,6 +160,25 @@ The slow request simulator generates requests using three different sync-over-as
 - **SimpleSyncOverAsync**: Blocking calls - look for `FetchDataSync_BLOCKING_HERE`, `ProcessDataSync_BLOCKING_HERE`, `SaveDataSync_BLOCKING_HERE` in traces
 - **NestedSyncOverAsync**: Sync methods that block internally - look for `*_BLOCKS_INTERNALLY` methods
 - **DatabasePattern**: Simulated database/HTTP blocking - look for `*Sync_SYNC_BLOCK` methods
+
+### Failed Request Simulation
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/failedrequest/start` | POST | Start generating HTTP 500 errors |
+| `/api/failedrequest/stop` | POST | Stop the simulation |
+| `/api/failedrequest/status` | GET | Get current simulation status |
+
+**Request body (start):**
+```json
+{
+  "requestCount": 10
+}
+```
+
+- `requestCount`: Number of HTTP 500 errors to generate (default: 10)
+
+Each failed request throws a random exception type (NullReferenceException, TimeoutException, InvalidOperationException, etc.) visible in AppLens and Application Insights.
 
 ### Crash Simulation
 

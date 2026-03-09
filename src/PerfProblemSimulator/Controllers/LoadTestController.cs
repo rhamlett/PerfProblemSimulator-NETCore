@@ -269,8 +269,26 @@ public class LoadTestController : ControllerBase
             request.ErrorAfterSeconds,
             request.ErrorPercent);
 
-        var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
-        return Ok(result);
+        try
+        {
+            var result = await _loadTestService.ExecuteWorkAsync(request, cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            // Return structured error response with exception type for diagnostics
+            // This allows callers (like FailedRequestService) to extract the exception type
+            _logger.LogInformation(
+                "Load test threw expected exception: {ExceptionType} - {Message}",
+                ex.GetType().Name, ex.Message);
+            
+            return StatusCode(500, new 
+            { 
+                error = ex.GetType().Name,
+                message = ex.Message,
+                type = ex.GetType().FullName
+            });
+        }
     }
 
     /*

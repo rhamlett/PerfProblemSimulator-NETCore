@@ -968,6 +968,97 @@ procdump -ma -h w3wp.exe
             </ol>
         </section>
 
+        <!-- Diagnosing Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ Diagnosing Failed Requests (HTTP 5xx)</h2>
+            <p>HTTP 500 errors are one of the most common issues that impact application availability. This simulation generates random exceptions to practice diagnosing failed requests in Azure.</p>
+
+            <h3>What to Simulate</h3>
+            <ol>
+                <li>In the dashboard, click <strong>❌ Start Failed Requests</strong></li>
+                <li>Wait for requests to complete (each takes ~1.5 seconds)</li>
+                <li>Observe exception types in the Event Log (hot pink entries)</li>
+            </ol>
+
+            <h3>Diagnosing with AppLens</h3>
+            <ol>
+                <li>In Azure Portal, go to your App Service</li>
+                <li>Navigate to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for <strong>"Application Errors"</strong> or <strong>"HTTP 500"</strong></li>
+                <li>AppLens will show:
+                    <ul>
+                        <li>Error rate over time</li>
+                        <li>Most common exception types</li>
+                        <li>Stack traces for each failure</li>
+                        <li>Correlation with other symptoms</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Diagnosing with Application Insights</h3>
+            <ol>
+                <li>In Azure Portal, go to your Application Insights resource</li>
+                <li>Click <strong>Failures</strong> in the left menu</li>
+                <li>Review the failures timeline and exception breakdown</li>
+                <li>Click on individual exceptions to see:
+                    <ul>
+                        <li>Full exception stack trace</li>
+                        <li>Request details (URL, duration, response code)</li>
+                        <li>Custom properties and telemetry</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Common Exception Types You'll See</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Exception</th>
+                        <th>Real-World Cause</th>
+                        <th>How to Fix</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>Accessing property of null object</td>
+                        <td>Add null checks, use nullable reference types</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>External dependency too slow</td>
+                        <td>Increase timeout, add circuit breaker</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>Object in wrong state for operation</td>
+                        <td>Check preconditions, validate state</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>External API call failed</td>
+                        <td>Add retry logic, check connectivity</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>Missing configuration or cache key</td>
+                        <td>Use TryGetValue, check existence first</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <h4>💡 Pro Tip: Creating Error Rate Alerts</h4>
+                <p>Set up an Azure Monitor alert to notify you when the HTTP 5xx error rate exceeds a threshold:</p>
+                <ol>
+                    <li>Go to your App Service → <strong>Alerts</strong> → <strong>Create alert rule</strong></li>
+                    <li>Signal: <strong>Http Server Errors</strong></li>
+                    <li>Threshold: Dynamic or Static (e.g., > 5 per minute)</li>
+                    <li>Action: Email, SMS, or webhook notification</li>
+                </ol>
+            </div>
+        </section>
+
         <!-- Using the Request Latency Monitor Section -->
         <section id="latency" class="doc-section">
             <h2>⏱️ Using the Request Latency Monitor</h2>
@@ -1404,6 +1495,9 @@ az webapp log config \
                         </li>
                         <li class="doc-toc-item">
                             <a href="#crash"><span class="toc-icon">💥</span>Crashes</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>Failed Requests</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Tools</li>

@@ -484,8 +484,9 @@
                     <li>🔥 <strong>CPU stress</strong> - Creates dedicated threads running spin loops to consume all CPU cores</li>
                     <li>📊 <strong>Memory pressure</strong> - Allocates and pins memory blocks to increase working set</li>
                     <li>🧵 <strong>Thread pool starvation</strong> - Uses sync-over-async anti-patterns to block thread pool threads</li>
-                    <li>� <strong>Slow requests</strong> - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis</li>
-                    <li>�💥 <strong>Application crashes</strong> - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps</li>
+                    <li>🐌 <strong>Slow requests</strong> - Generates long-running requests with sync-over-async patterns for CLR Profiler analysis</li>
+                    <li>💥 <strong>Application crashes</strong> - Triggers fatal crashes for testing Azure Crash Monitoring and memory dumps</li>
+                    <li>❌ <strong>Failed requests</strong> - Generates HTTP 5xx errors for testing AppLens and Application Insights</li>
                 </ul>
                 <p class="mt-1 mb-0"><strong>Only deploy this application in isolated, non-production environments.</strong></p>
             </div>
@@ -748,6 +749,84 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             </ol>
         </section>
 
+        <!-- Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ Failed Requests Simulation</h2>
+            <p>The dashboard includes a <strong>Failed Requests</strong> feature for generating HTTP 5xx errors to test Azure diagnostics tools like AppLens and Application Insights.</p>
+
+            <h3>Purpose</h3>
+            <p>This simulation generates HTTP 500 Internal Server Error responses that are visible in:</p>
+            <ul>
+                <li><strong>AppLens</strong> - Azure Portal → Diagnose and solve problems</li>
+                <li><strong>Application Insights</strong> - Failures blade</li>
+                <li><strong>Azure Monitor</strong> - Error rate alerts</li>
+            </ul>
+
+            <h3>How It Works</h3>
+            <ol>
+                <li>Spawns a background thread to generate requests</li>
+                <li>Each request calls <code>/api/loadtest</code> with 100% error probability</li>
+                <li>The load test endpoint throws a random exception type</li>
+                <li>Each request takes ~1.5 seconds for latency visibility</li>
+            </ol>
+
+            <h3>Exception Types</h3>
+            <p>The simulation randomly throws one of these exception types per request:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Exception Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>Object reference not set to an instance</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>Operation timed out</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>Operation not valid for current state</td>
+                    </tr>
+                    <tr>
+                        <td><code>ArgumentException</code></td>
+                        <td>Value out of expected range</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>Error sending HTTP request</td>
+                    </tr>
+                    <tr>
+                        <td><code>DivideByZeroException</code></td>
+                        <td>Attempted to divide by zero</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>Key not present in dictionary</td>
+                    </tr>
+                    <tr>
+                        <td><code>IndexOutOfRangeException</code></td>
+                        <td>Index outside array bounds</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Dashboard Event Log</h3>
+            <p>Each failed request appears in the Event Log with:</p>
+            <ul>
+                <li><strong>Hot pink color</strong> - Distinctive styling for visibility</li>
+                <li><strong>❌ icon</strong> - Failed request indicator</li>
+                <li><strong>Exception type</strong> - The specific exception that was thrown</li>
+                <li><strong>Latency</strong> - Request duration in milliseconds</li>
+            </ul>
+
+            <p>See the <a href="/azure-monitoring-guide.html#failedrequests">Azure Diagnostics Guide</a> for detailed AppLens analysis instructions.</p>
+        </section>
+
         <!-- API Reference Section -->
         <section id="api" class="doc-section">
             <h2>🔌 API Reference</h2>
@@ -989,6 +1068,41 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 }
             </div>
             <p><strong>Available crash types:</strong> <code>FailFast</code> (recommended), <code>AccessViolation</code>, <code>StackOverflow</code>, <code>UnhandledException</code>, <code>OutOfMemory</code></p>
+
+            <h3>Failed Request Simulation</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Method</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>/api/failedrequest/start</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Start generating HTTP 500 errors</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/failedrequest/stop</code></td>
+                        <td><span class="method-badge method-post">POST</span></td>
+                        <td>Stop the simulation</td>
+                    </tr>
+                    <tr>
+                        <td><code>/api/failedrequest/status</code></td>
+                        <td><span class="method-badge method-get">GET</span></td>
+                        <td>Get current simulation status</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Request body (start):</strong></p>
+            <div class="code-block">
+{
+  <span class="string">"requestCount"</span>: 10
+}
+            </div>
+            <p><strong>Default:</strong> 10 requests. Each request throws a random exception type (NullReferenceException, TimeoutException, etc.) and takes ~1.5 seconds.</p>
 
             <h3>Load Test Endpoint (Azure Load Testing)</h3>
             <p>This endpoint is designed to be targeted by Azure Load Testing or similar load testing tools. Unlike other simulation endpoints, it doesn't have UI controls — it's meant for automated load testing only.</p>
@@ -1389,6 +1503,9 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
                         </li>
                         <li class="doc-toc-item">
                             <a href="#crash"><span class="toc-icon">💥</span>Crash Simulation</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>Failed Requests</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Reference</li>

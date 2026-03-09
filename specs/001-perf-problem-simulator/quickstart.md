@@ -109,6 +109,30 @@ curl -X POST https://localhost:5001/api/trigger-sync-over-async `
 - Response times for ALL endpoints increase
 - CPU and memory appear normal (the key diagnostic clue!)
 
+### Trigger Failed Requests (HTTP 500 Errors)
+
+```powershell
+# Generate 10 failed requests (default)
+curl -X POST https://localhost:5001/api/failedrequest/start
+
+# Generate 50 failed requests
+curl -X POST https://localhost:5001/api/failedrequest/start `
+  -H "Content-Type: application/json" `
+  -d '{"requestCount": 50}'
+
+# Check status
+curl https://localhost:5001/api/failedrequest/status
+
+# Stop the simulation
+curl -X POST https://localhost:5001/api/failedrequest/stop
+```
+
+**What to observe:**
+- HTTP 500 errors appear in AppLens (Azure Portal → Diagnose and Solve Problems)
+- Application Insights → Failures blade shows error spikes
+- Dashboard Event Log shows specific exception types (NullReferenceException, TimeoutException, etc.) in hot pink
+- Each error takes ~1.5 seconds, making them visible in latency monitoring
+
 ---
 
 ## Environment Configuration

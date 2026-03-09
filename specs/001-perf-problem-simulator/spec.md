@@ -89,6 +89,26 @@ As a learner, I want a simple web dashboard showing the current state of the app
 
 ---
 
+### User Story 5 - Generate Failed Requests for AppLens Analysis (Priority: P2)
+
+As a developer or support engineer, I want to generate HTTP 5xx errors so that I can observe how failed requests appear in AppLens and Application Insights, and practice diagnosing application failures.
+
+**Why this priority**: HTTP 500 errors are one of the most common issues investigated through Azure diagnostics. Understanding how failures appear in AppLens and Application Insights is essential for effective production troubleshooting.
+
+**Independent Test**: Can be tested by invoking the failed request endpoint and observing errors appear in AppLens (Azure Portal → Diagnose and Solve Problems) and the Application Insights Failures blade.
+
+**Acceptance Scenarios**:
+
+1. **Given** the application is running normally, **When** I invoke the failed request endpoint with a count of 10, **Then** 10 HTTP 500 errors are generated and logged.
+
+2. **Given** I am monitoring Application Insights, **When** I trigger failed requests, **Then** the errors appear in the Failures blade within 2-3 minutes with detailed exception information.
+
+3. **Given** I am viewing the dashboard, **When** failed requests are generated, **Then** each failure appears in the Event Log with the specific exception type (e.g., NullReferenceException, TimeoutException) displayed in hot pink.
+
+4. **Given** I have deployed to Azure App Service, **When** I generate failed requests, **Then** the errors are visible in AppLens diagnostics for incident analysis practice.
+
+---
+
 ### Edge Cases
 
 - What happens when a user requests more memory than available? The application should cap allocation at a safe maximum and report the limitation rather than crashing.
@@ -107,6 +127,7 @@ As a learner, I want a simple web dashboard showing the current state of the app
 - **FR-003**: System MUST provide an endpoint to release previously allocated memory
 - **FR-004**: System MUST provide an endpoint that demonstrates sync-over-async thread blocking with configurable concurrency and delay parameters
 - **FR-005**: System MUST allow multiple problem types to be active simultaneously
+- **FR-018**: System MUST provide an endpoint to generate HTTP 5xx errors with configurable count, using random exception types visible in AppLens and Application Insights
 
 **Observability & Feedback**
 

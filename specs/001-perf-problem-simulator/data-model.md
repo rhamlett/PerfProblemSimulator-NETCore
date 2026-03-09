@@ -11,7 +11,7 @@
 │                      Request Models (DTOs)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │  CpuStressRequest        MemoryAllocationRequest                │
-│  ThreadBlockRequest      ResetRequest                           │
+│  ThreadBlockRequest      FailedRequestRequest     ResetRequest  │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -76,6 +76,37 @@ Represents a request to trigger sync-over-async thread blocking.
 - Delay must be between 100ms and 30 seconds
 - Concurrent requests capped at 200 to prevent runaway exhaustion
 - Combined with external concurrent calls, this determines starvation severity
+
+---
+
+### FailedRequestRequest
+
+Represents a request to generate HTTP 5xx errors.
+
+| Field | Type | Required | Default | Constraints | Description |
+|-------|------|----------|---------|-------------|-------------|
+| `RequestCount` | `int` | No | 10 | Min: 1 | Number of HTTP 500 errors to generate |
+
+**Behavior:**
+- Each request calls `/api/loadtest` with 100% error probability
+- Requests take ~1.5 seconds each for latency visibility
+- Random exception types are thrown (TimeoutException, NullReferenceException, etc.)
+- Exception type is displayed in dashboard Event Log
+
+---
+
+### FailedRequestStatus
+
+Status information for the failed request simulation.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `IsRunning` | `bool` | Whether the simulation is currently running |
+| `RequestsSent` | `int` | Number of requests initiated |
+| `RequestsCompleted` | `int` | Number of requests completed (with expected 5xx) |
+| `RequestsInProgress` | `int` | Number of requests currently in flight |
+| `TargetCount` | `int` | Total number of failures to generate |
+| `StartedAt` | `DateTimeOffset?` | When the simulation started |
 
 ---
 
@@ -231,6 +262,7 @@ Standard error response format.
 | MemoryAllocationRequest | SizeMegabytes | 10 ≤ value ≤ 1024 |
 | ThreadBlockRequest | DelayMilliseconds | 100 ≤ value ≤ 30000 |
 | ThreadBlockRequest | ConcurrentRequests | 1 ≤ value ≤ 200 |
+| FailedRequestRequest | RequestCount | value ≥ 1 |
 
 All validation failures return HTTP 400 with `ErrorResponse` body.
 
