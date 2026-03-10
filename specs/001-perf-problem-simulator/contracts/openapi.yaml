@@ -420,7 +420,7 @@ paths:
         **Where to observe:**
         - Azure Portal → App Service → Diagnose and Solve Problems → AppLens
         - Application Insights → Failures blade
-        - Dashboard Event Log (hot pink entries with exception type)
+        - Dashboard Event Log (brown entries with exception type)
       operationId: startFailedRequest
       requestBody:
         required: false

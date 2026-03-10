@@ -103,7 +103,7 @@ As a developer or support engineer, I want to generate HTTP 5xx errors so that I
 
 2. **Given** I am monitoring Application Insights, **When** I trigger failed requests, **Then** the errors appear in the Failures blade within 2-3 minutes with detailed exception information.
 
-3. **Given** I am viewing the dashboard, **When** failed requests are generated, **Then** each failure appears in the Event Log with the specific exception type (e.g., NullReferenceException, TimeoutException) displayed in hot pink.
+3. **Given** I am viewing the dashboard, **When** failed requests are generated, **Then** each failure appears in the Event Log with the specific exception type (e.g., NullReferenceException, TimeoutException) displayed in brown.
 
 4. **Given** I have deployed to Azure App Service, **When** I generate failed requests, **Then** the errors are visible in AppLens diagnostics for incident analysis practice.
 

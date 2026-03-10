@@ -130,7 +130,7 @@ curl -X POST https://localhost:5001/api/failedrequest/stop
 **What to observe:**
 - HTTP 500 errors appear in AppLens (Azure Portal → Diagnose and Solve Problems)
 - Application Insights → Failures blade shows error spikes
-- Dashboard Event Log shows specific exception types (NullReferenceException, TimeoutException, etc.) in hot pink
+- Dashboard Event Log shows specific exception types (NullReferenceException, TimeoutException, etc.) in brown
 - Each error takes ~1.5 seconds, making them visible in latency monitoring
 
 ---
