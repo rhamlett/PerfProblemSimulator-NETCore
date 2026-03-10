@@ -632,6 +632,229 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p>During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem <strong>visible</strong> — you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.</p>
         </section>
 
+        <!-- CPU Stress Section -->
+        <section id="cpu" class="doc-section">
+            <h2>🔥 CPU Stress Simulation</h2>
+            <p>The CPU Stress simulation creates high CPU usage through parallel spin loops, saturating all available CPU cores for a specified duration.</p>
+
+            <h3>How It Works</h3>
+            <p>The simulation spawns one thread per CPU core, each running a busy-wait spin loop (incrementing a counter in a tight <code>while(true)</code> loop). This consumes 100% of CPU capacity across all cores.</p>
+
+            <h3>Dashboard Controls</h3>
+            <ul>
+                <li><strong>Duration:</strong> How long to run the stress test (10-300 seconds, default 30)</li>
+                <li><strong>Start/Stop:</strong> Begin or cancel the simulation</li>
+            </ul>
+
+            <h3>What You'll Observe</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>During Simulation</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU %</td>
+                        <td>~100%</td>
+                        <td>All cores saturated by spin loops</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>Unchanged</td>
+                        <td>Spin loops don't allocate memory</td>
+                    </tr>
+                    <tr>
+                        <td>Latency</td>
+                        <td>May increase</td>
+                        <td>Less CPU available for request processing</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Real-World CPU Issues</h3>
+            <p>High CPU in production is typically caused by:</p>
+            <ul>
+                <li>Inefficient algorithms (O(n²) when O(n) is possible)</li>
+                <li>Infinite loops due to bugs</li>
+                <li>Excessive regular expression backtracking</li>
+                <li>Unoptimized LINQ queries with large datasets</li>
+                <li>Busy-waiting instead of using async/await</li>
+            </ul>
+
+            <h3>Diagnosis Tools</h3>
+            <ul>
+                <li><code>dotnet-counters monitor -p {PID} --counters System.Runtime</code></li>
+                <li><code>dotnet-trace collect -p {PID}</code> for CPU profiling</li>
+                <li>Azure App Service → Diagnose and Solve Problems → CPU usage</li>
+                <li>Application Insights Performance blade</li>
+            </ul>
+        </section>
+
+        <!-- Memory Pressure Section -->
+        <section id="memory" class="doc-section">
+            <h2>💾 Memory Pressure Simulation</h2>
+            <p>The Memory Pressure simulation allocates and holds large byte arrays to demonstrate memory consumption patterns and garbage collection behavior.</p>
+
+            <h3>How It Works</h3>
+            <p>Large byte arrays (minimum 10MB, default 100MB) are allocated using <code>GC.AllocateArray&lt;byte&gt;(pinned: true)</code>. The pinned allocation prevents the garbage collector from moving the memory, simulating problematic allocation patterns.</p>
+
+            <h3>Dashboard Controls</h3>
+            <ul>
+                <li><strong>Size (MB):</strong> Amount of memory to allocate (10-500MB)</li>
+                <li><strong>Allocate:</strong> Adds a new memory block</li>
+                <li><strong>Release All:</strong> Frees all allocated blocks and triggers GC</li>
+            </ul>
+
+            <h3>What You'll Observe</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>After Allocation</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memory (MB)</td>
+                        <td>Increases by allocation size</td>
+                        <td>Charts reflect working set increase</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>Brief spike</td>
+                        <td>Memory allocation and zeroing</td>
+                    </tr>
+                    <tr>
+                        <td>After Release</td>
+                        <td>Memory drops</td>
+                        <td>GC.Collect() reclaims memory</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Large Object Heap (LOH)</h3>
+            <p>Objects larger than 85KB are allocated on the Large Object Heap:</p>
+            <ul>
+                <li>LOH is collected less frequently (Gen 2 collections only)</li>
+                <li>Pinned allocations prevent memory compaction</li>
+                <li>Can lead to memory fragmentation over time</li>
+                <li>Our allocations (10MB+) always go to LOH</li>
+            </ul>
+
+            <h3>Real-World Memory Issues</h3>
+            <ul>
+                <li>Static collections that accumulate data without limits</li>
+                <li>Event handlers not being unsubscribed</li>
+                <li>Improper IDisposable implementation</li>
+                <li>Caching without size limits or expiration</li>
+                <li>Keeping references to large objects longer than needed</li>
+            </ul>
+
+            <h3>Diagnosis Tools</h3>
+            <ul>
+                <li><code>dotnet-dump collect -p {PID}</code> for memory dumps</li>
+                <li><code>dotnet-gcdump collect -p {PID}</code> for GC heap analysis</li>
+                <li>Visual Studio Memory Profiler</li>
+                <li>Azure App Service → Memory Working Set blade</li>
+            </ul>
+        </section>
+
+        <!-- Thread Pool Starvation Section -->
+        <section id="threadpool" class="doc-section">
+            <h2>🧵 Thread Pool Starvation</h2>
+            <p>The Thread Pool Starvation simulation demonstrates the dangerous "sync-over-async" anti-pattern, where synchronous code blocks waiting for asynchronous operations to complete.</p>
+
+            <h3>How It Works</h3>
+            <p>The simulation spawns multiple parallel tasks (default: 2× CPU cores) that each call <code>Task.Delay().Wait()</code>. This blocks thread pool threads, causing:</p>
+            <ol>
+                <li>Thread pool threads become blocked waiting</li>
+                <li>.NET slowly adds new threads (~1 per second)</li>
+                <li>Incoming requests queue up waiting for threads</li>
+                <li>Request latency spikes dramatically</li>
+            </ol>
+
+            <h3>Dashboard Controls</h3>
+            <ul>
+                <li><strong>Duration:</strong> How long each blocking operation lasts (default 15s)</li>
+                <li><strong>Threads:</strong> Number of blocking threads to spawn</li>
+                <li><strong>Start/Stop:</strong> Begin or cancel the simulation</li>
+            </ul>
+
+            <h3>The Sync-Over-Async Anti-Pattern</h3>
+            <p>These patterns block threads and should be avoided:</p>
+            <pre><code>// ❌ BAD - Blocks thread waiting for Task
+var result = SomeAsyncMethod().Result;
+var result = SomeAsyncMethod().GetAwaiter().GetResult();
+SomeAsyncMethod().Wait();
+
+// ✅ GOOD - Properly awaits the Task
+var result = await SomeAsyncMethod();</code></pre>
+
+            <h3>What You'll Observe</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th>During Starvation</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU</td>
+                        <td>LOW</td>
+                        <td>Threads are waiting, not working</td>
+                    </tr>
+                    <tr>
+                        <td>Memory</td>
+                        <td>Normal</td>
+                        <td>No memory leak occurring</td>
+                    </tr>
+                    <tr>
+                        <td>Thread Count</td>
+                        <td>Slowly climbing</td>
+                        <td>.NET adds ~1 thread/second</td>
+                    </tr>
+                    <tr>
+                        <td>Latency</td>
+                        <td>🔴 Spikes to seconds</td>
+                        <td>Requests queued waiting for threads</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Why CPU is Low but Latency is High</h3>
+            <p>This is the signature of thread pool starvation. The CPU isn't working because all threads are blocked waiting. New requests can't start because there are no available threads. It looks like the app is idle, but users experience timeouts.</p>
+
+            <h3>Real-World Causes</h3>
+            <ul>
+                <li>Calling async libraries from sync code: <code>httpClient.GetAsync(url).Result</code></li>
+                <li>Mixing sync and async in constructors</li>
+                <li>Using <code>.Result</code> in properties</li>
+                <li>Calling async methods from Dispose()</li>
+                <li>Third-party libraries that block internally</li>
+            </ul>
+
+            <h3>How to Fix</h3>
+            <ul>
+                <li>Use <code>await</code> all the way up the call stack ("async all the way down")</li>
+                <li>Avoid <code>.Result</code>, <code>.Wait()</code>, and <code>.GetAwaiter().GetResult()</code></li>
+                <li>Use <code>ConfigureAwait(false)</code> in library code</li>
+                <li>Consider <code>IAsyncEnumerable</code> for streaming data</li>
+            </ul>
+
+            <h3>Diagnosis Tools</h3>
+            <ul>
+                <li><code>dotnet-counters</code>: Watch "ThreadPool Thread Count" and "ThreadPool Queue Length"</li>
+                <li>Response times spike for ALL endpoints simultaneously</li>
+                <li>Azure App Service → Diagnose and Solve Problems → Thread count</li>
+            </ul>
+        </section>
+
         <!-- Slow Request Section -->
         <section id="slowrequest" class="doc-section">
             <h2>🐌 Slow Request Simulator</h2>
