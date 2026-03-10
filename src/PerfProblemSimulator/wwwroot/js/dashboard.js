@@ -54,7 +54,8 @@ const state = {
     clientProbeInterval: null,
     activeSimulations: new Map(),
     lastProcessId: null,
-    isIdle: false  // Tracks whether the server is in idle state
+    isIdle: false,  // Tracks whether the server is in idle state
+    lastFailedRequestCompletedAt: null  // Suppress load test stats after failed request sim
 };
 
 // ==========================================================================
@@ -618,6 +619,13 @@ function handleSlowRequestLatency(data) {
  * Broadcast every 60 seconds while /api/loadtest endpoint is receiving traffic.
  */
 function handleLoadTestStats(data) {
+    // Suppress load test stats if a failed request simulation recently completed
+    // (since failed requests use the load test endpoint internally)
+    if (state.lastFailedRequestCompletedAt && 
+        (Date.now() - state.lastFailedRequestCompletedAt) < 90000) {
+        return; // Suppress for 90 seconds after failed request sim
+    }
+    
     const completed = data.requestsCompleted;
     const avgMs = data.avgResponseTimeMs;
     const maxMs = data.maxResponseTimeMs;
@@ -1304,6 +1312,9 @@ async function pollFailedRequestStatus() {
                 // Simulation ended
                 startBtn.disabled = false;
                 removeSimulationsByType('failedrequest');
+                
+                // Track completion time to suppress load test stats message
+                state.lastFailedRequestCompletedAt = Date.now();
                 
                 if (status.requestsCompleted > 0) {
                     logEvent('failedrequests', `Completed: Generated ${status.requestsCompleted} HTTP 500 errors`);
