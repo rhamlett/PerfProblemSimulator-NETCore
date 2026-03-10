@@ -51,7 +51,6 @@ const state = {
     latencyStats: {
         timeoutCount: 0
     },
-    clientProbeInterval: null,
     activeSimulations: new Map(),
     lastProcessId: null,
     isIdle: false,  // Tracks whether the server is in idle state
@@ -159,9 +158,6 @@ async function initializeSignalR() {
         await state.connection.start();
         updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Connected to metrics hub');
-        
-        // Start client-side probe as backup/additional measurement
-        startClientProbe();
     } catch (err) {
         updateConnectionStatus('disconnected', 'Failed to connect');
         logEvent('system', `Connection failed: ${err.message}`);
@@ -655,16 +651,13 @@ function handleIdleState(data) {
     if (data.isIdle && !wasIdle) {
         // Going idle
         logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
-        stopClientProbe();
     } else if (!data.isIdle && wasIdle) {
         // Waking up (client knew we were idle)
         logEvent('system', data.message || 'App waking up from idle state. There may be gaps in diagnostics and logs.');
-        startClientProbe();
     } else if (!data.isIdle && !wasIdle && data.message && data.message.toLowerCase().includes('waking up')) {
         // Server was idle but client didn't know (e.g., after reconnect)
         // The server's message indicates it just woke up
         logEvent('system', data.message);
-        startClientProbe();
     }
 }
 
@@ -829,75 +822,6 @@ function updateLatencyChart() {
         }
     };
     state.charts.latency.update('none');
-}
-
-/**
- * Start client-side probe as a backup/additional measurement.
- * This runs independently in the browser and won't be affected by server thread pool issues.
- * 
- * Hybrid Probing Strategy:
- * - Server probes at CONFIG.latencyProbeIntervalMs (e.g., 200ms)
- * - Client probes at same interval, but offset by half (e.g., start at 100ms, then 200ms intervals)
- * - Combined effect: ~100ms effective sample rate with half the server-side overhead
- */
-function startClientProbe() {
-    // Don't start probes if server is idle
-    if (state.isIdle) return;
-    
-    // Idempotency check: Don't start if already running
-    if (state.isClientProbeRunning) return;
-
-    // Use a flag to track running state
-    state.isClientProbeRunning = true;
-    
-    const runProbe = async () => {
-        if (!state.isClientProbeRunning) return;
-        
-        // Stop if server went idle
-        if (state.isIdle) {
-            stopClientProbe();
-            return;
-        }
-
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), CONFIG.latencyTimeoutMs);
-            
-            try {
-                await fetch(`${CONFIG.apiBaseUrl}/health/probe`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-            } catch (e) {
-                clearTimeout(timeoutId);
-                // Ignore errors/aborts
-            }
-        } catch (err) {
-            // Ignore network errors
-        }
-
-        // Schedule next probe ONLY after this one completes (Closed Loop)
-        if (state.isClientProbeRunning) {
-            state.clientProbeTimeout = setTimeout(runProbe, CONFIG.latencyProbeIntervalMs);
-        }
-    };
-
-    // Start with half-interval offset to interleave with server probes
-    // Server probes at: 0ms, 200ms, 400ms, ...
-    // Client probes at: 100ms, 300ms, 500ms, ... (offset by half)
-    const offsetMs = Math.floor(CONFIG.latencyProbeIntervalMs / 2);
-    state.clientProbeTimeout = setTimeout(runProbe, offsetMs);
-}
-
-/**
- * Stop client-side probe.
- */
-function stopClientProbe() {
-    state.isClientProbeRunning = false;
-    if (state.clientProbeTimeout) {
-        clearTimeout(state.clientProbeTimeout);
-        state.clientProbeTimeout = null;
-    }
 }
 
 // ==========================================================================
@@ -1417,9 +1341,6 @@ function handleSimulationStarted(simulationType, simulationId) {
         if (overlay) overlay.classList.add('active');
         if (statusOverlay) statusOverlay.classList.add('active');
         if (msg) msg.style.display = 'block';
-        
-        // Stop client probe to ensure clean profile
-        stopClientProbe();
     }
 }
 
