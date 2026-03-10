@@ -297,14 +297,21 @@ public class FailedRequestService : IFailedRequestService, IDisposable
             client.BaseAddress = new Uri(_baseUrl!);
             client.Timeout = TimeSpan.FromSeconds(30);
 
-            var jsonContent = JsonSerializer.Serialize(FailureRequestBody);
-            using var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            // Build query string for GET request (LoadTestController uses [HttpGet] with [FromQuery] params)
+            // Values match the FailureRequestBody constants above
+            var queryParams = "?baselineDelayMs=1500" +
+                             "&workIterations=500" +
+                             "&bufferSizeKb=100" +
+                             "&softLimit=10000" +
+                             "&degradationFactor=0" +
+                             "&errorAfter=1" +
+                             "&errorPercent=100";
 
             _logger.LogDebug(
                 "Sending failed request {RequestId} to {Url}",
-                requestId, $"{_baseUrl}/api/loadtest");
+                requestId, $"{_baseUrl}/api/loadtest{queryParams}");
 
-            var response = await client.PostAsync("/api/loadtest", content, cancellationToken);
+            var response = await client.GetAsync($"/api/loadtest{queryParams}", cancellationToken);
 
             stopwatch.Stop();
 

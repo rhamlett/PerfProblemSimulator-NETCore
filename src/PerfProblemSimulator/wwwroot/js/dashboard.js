@@ -1224,13 +1224,11 @@ async function startFailedRequests() {
     const requestCount = parseInt(document.getElementById('failedRequestCount').value) || 10;
     
     const startBtn = document.getElementById('btnStartFailedRequests');
-    const stopBtn = document.getElementById('btnStopFailedRequests');
     
     try {
         logEvent('failedrequests', `Generating ${requestCount} HTTP 500 errors...`);
         
         startBtn.disabled = true;
-        stopBtn.disabled = false;
         
         const response = await fetch(`${CONFIG.apiBaseUrl}/failedrequest/start`, {
             method: 'POST',
@@ -1251,21 +1249,20 @@ async function startFailedRequests() {
             const error = await response.json();
             logEvent('failedrequests', `Failed to start: ${error.message || error.title || 'Unknown error'}`);
             startBtn.disabled = false;
-            stopBtn.disabled = true;
         }
     } catch (err) {
         logEvent('failedrequests', `Request failed: ${err.message}`);
         startBtn.disabled = false;
-        stopBtn.disabled = true;
     }
 }
 
 /**
  * Stops the failed request simulator.
+ * Note: Stop button removed from UI - requests complete too quickly to intervene.
+ * This function retained for API compatibility.
  */
 async function stopFailedRequests() {
     const startBtn = document.getElementById('btnStartFailedRequests');
-    const stopBtn = document.getElementById('btnStopFailedRequests');
     
     try {
         logEvent('failedrequests', 'Stopping failed request simulator...');
@@ -1286,7 +1283,6 @@ async function stopFailedRequests() {
         logEvent('failedrequests', `Request failed: ${err.message}`);
     } finally {
         startBtn.disabled = false;
-        stopBtn.disabled = true;
     }
 }
 
@@ -1295,7 +1291,6 @@ async function stopFailedRequests() {
  */
 async function pollFailedRequestStatus() {
     const startBtn = document.getElementById('btnStartFailedRequests');
-    const stopBtn = document.getElementById('btnStopFailedRequests');
     
     try {
         const response = await fetch(`${CONFIG.apiBaseUrl}/failedrequest/status`);
@@ -1308,7 +1303,6 @@ async function pollFailedRequestStatus() {
             } else {
                 // Simulation ended
                 startBtn.disabled = false;
-                stopBtn.disabled = true;
                 removeSimulationsByType('failedrequest');
                 
                 if (status.requestsCompleted > 0) {
@@ -1319,7 +1313,6 @@ async function pollFailedRequestStatus() {
     } catch (err) {
         // Connection lost - probably a restart
         startBtn.disabled = false;
-        stopBtn.disabled = true;
     }
 }
 
@@ -1659,11 +1652,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnStartSlowRequests').addEventListener('click', startSlowRequests);
     document.getElementById('btnStopSlowRequests').addEventListener('click', stopSlowRequests);
     document.getElementById('btnStartFailedRequests').addEventListener('click', startFailedRequests);
-    document.getElementById('btnStopFailedRequests').addEventListener('click', stopFailedRequests);
     
     // Initialize slow request Stop button as disabled
     document.getElementById('btnStopSlowRequests').disabled = true;
-    document.getElementById('btnStopFailedRequests').disabled = true;
     
     // Wire up side panel toggle
     initializeSidePanel();
