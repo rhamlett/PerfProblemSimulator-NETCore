@@ -13,10 +13,9 @@
 
 const CONFIG = {
     maxDataPoints: 240,  // 1 minute of data at 250ms intervals
-    maxLatencyDataPoints: 600, // 60 seconds at 100ms effective intervals (hybrid probing)
+    maxLatencyDataPoints: 600, // 60 seconds of probe data
     // latencyProbeIntervalMs is loaded from server config (default 200ms).
-    // Hybrid probing: Server probes at this interval, client probes at same interval
-    // but offset by half, achieving ~100ms effective sample rate.
+    // Server probes at this interval and broadcasts results via SignalR.
     latencyProbeIntervalMs: 200,
     latencyTimeoutMs: 30000,
     reconnectDelayMs: 2000,
@@ -119,13 +118,9 @@ async function initializeSignalR() {
         updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Reconnected to server');
         
-        // Wake up server and sync idle state after reconnect
-        // This is important because the server may have gone idle while disconnected
-        try {
-            await state.connection.invoke('WakeUp');
-        } catch (err) {
-            console.warn('Failed to invoke WakeUp on reconnect:', err);
-        }
+        // NOTE: We do NOT wake the server on reconnect. Only page loads should wake the app.
+        // This prevents SignalR auto-reconnects (from network hiccups or keepalives) from
+        // waking the app when the user isn't actually interacting with the dashboard.
     });
 
     state.connection.onclose(error => {
@@ -158,6 +153,14 @@ async function initializeSignalR() {
         await state.connection.start();
         updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Connected to metrics hub');
+        
+        // Wake up the server on initial page load (not on auto-reconnects)
+        // This is the ONLY place that should wake the app from idle state
+        try {
+            await state.connection.invoke('WakeUp');
+        } catch (err) {
+            console.warn('Failed to invoke WakeUp on initial connect:', err);
+        }
     } catch (err) {
         updateConnectionStatus('disconnected', 'Failed to connect');
         logEvent('system', `Connection failed: ${err.message}`);
@@ -1526,7 +1529,7 @@ async function fetchBuildInfo() {
 /**
  * Fetches app configuration and updates the UI.
  * The PageFooter can be set via Azure App Service environment variable: PAGE_FOOTER
- * LatencyProbeIntervalMs configures hybrid probing rate.
+ * LatencyProbeIntervalMs configures the server probe rate.
  */
 async function fetchAppConfig() {
     try {
@@ -1534,10 +1537,10 @@ async function fetchAppConfig() {
         if (response.ok) {
             const config = await response.json();
             
-            // Update probe interval for hybrid probing (server sends its interval)
+            // Update probe interval (server sends its interval for display)
             if (config.latencyProbeIntervalMs && config.latencyProbeIntervalMs > 0) {
                 CONFIG.latencyProbeIntervalMs = config.latencyProbeIntervalMs;
-                console.log(`Latency probe interval set to ${CONFIG.latencyProbeIntervalMs}ms (hybrid effective: ~${Math.floor(CONFIG.latencyProbeIntervalMs / 2)}ms)`);
+                console.log(`Latency probe interval set to ${CONFIG.latencyProbeIntervalMs}ms`);
             }
             
             // Update page footer if configured
@@ -1560,7 +1563,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize charts first
     initializeCharts();
     
-    // Fetch app configuration BEFORE starting probes (sets probe interval for hybrid mode)
+    // Fetch app configuration
     await fetchAppConfig();
     
     // Fetch SKU info (non-blocking)
@@ -1569,7 +1572,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch build info (non-blocking)
     fetchBuildInfo();
     
-    // Start SignalR connection (this starts client probes with correct interval)
+    // Start SignalR connection (receives probe results from server)
     initializeSignalR();
 
     

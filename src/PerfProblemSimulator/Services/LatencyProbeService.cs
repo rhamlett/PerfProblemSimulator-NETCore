@@ -161,18 +161,14 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         // Get the base URL (may need to refresh after server starts)
         var baseUrl = _baseUrl ?? GetProbeBaseUrl();
-        var isAzure = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WEBSITE_HOSTNAME"));
-        _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe (Azure: {IsAzure})", baseUrl, isAzure);
+        _logger.LogInformation("Latency probe targeting: {BaseUrl}/api/health/probe", baseUrl);
 
-        // Create a handler configured for the environment
+        // Create a handler - all probes go through the Azure frontend when deployed
         var handler = new SocketsHttpHandler
         {
-            // For Azure, allow connection pooling for better performance
-            // For local, disable pooling to avoid socket reuse issues
-            PooledConnectionLifetime = isAzure ? TimeSpan.FromMinutes(2) : TimeSpan.Zero,
-            PooledConnectionIdleTimeout = isAzure ? TimeSpan.FromMinutes(1) : TimeSpan.Zero,
+            PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(1),
             ConnectTimeout = TimeSpan.FromSeconds(10),
-            // Enable automatic decompression
             AutomaticDecompression = System.Net.DecompressionMethods.All
         };
 

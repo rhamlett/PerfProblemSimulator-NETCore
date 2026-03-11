@@ -646,7 +646,7 @@ git push origin main</code></pre>
             <p>You can customize the application behavior using Azure App Service environment variables.</p>
 
             <h3>Health Probe Rate</h3>
-            <p>Control how often the server sends health probes to measure request latency. The dashboard uses <strong>hybrid probing</strong>: server and client probes are interleaved for higher effective sample rate with lower server overhead.</p>
+            <p>Control how often the server sends health probes to measure request latency. All probes are routed through the Azure frontend to capture realistic end-to-end latency.</p>
             
             <h4>Environment Variable</h4>
             <table class="env-table">
@@ -660,7 +660,7 @@ git push origin main</code></pre>
                 <tbody>
                     <tr>
                         <td><code>HEALTH_PROBE_RATE</code></td>
-                        <td>Probe interval in milliseconds. Minimum 100ms. Effective rate is ~half this value due to hybrid client probing.</td>
+                        <td>Probe interval in milliseconds. Minimum 100ms.</td>
                         <td><code>200</code></td>
                     </tr>
                 </tbody>

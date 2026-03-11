@@ -78,9 +78,9 @@ public class MetricsHub : Hub<IMetricsClient>
     {
         _logger.LogInformation("Dashboard client connected: {ConnectionId}", Context.ConnectionId);
 
-        // Wake up from idle state when a dashboard connects
-        // This is the primary mechanism for waking the app when a user opens the dashboard
-        _idleStateService.WakeUp();
+        // NOTE: We do NOT auto-wake here. The client explicitly calls WakeUp() on page load.
+        // This prevents SignalR auto-reconnects from waking the app unexpectedly.
+        // Only intentional page loads should wake the app from idle state.
 
         // Send current metrics immediately so client doesn't have to wait
         var currentSnapshot = _metricsCollector.LatestSnapshot;

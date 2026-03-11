@@ -291,17 +291,17 @@ The following environment variables can be configured to customize application b
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `HEALTH_PROBE_RATE` | Health probe interval in milliseconds. Controls how often the server sends latency probes. Combined with client-side probes, effective rate is halved. Minimum 100ms. | `200` |
+| `HEALTH_PROBE_RATE` | Health probe interval in milliseconds. Controls how often the server sends latency probes through the Azure frontend. Minimum 100ms. | `200` |
 | `IDLE_TIMEOUT_MINUTES` | Minutes of inactivity before suspending health probes. Reduces network traffic and Application Insights telemetry when idle. | `20` |
 | `PAGE_FOOTER` | Custom HTML footer text displayed at the bottom of the dashboard. Supports HTML links for attribution. | (empty) |
 
 #### HEALTH_PROBE_RATE
 
-Controls the interval between server-side health probes. The dashboard uses **hybrid probing**: server probes at this rate, client probes at the same rate but offset by half, achieving roughly double the effective sample rate.
+Controls the interval between server-side health probes. All probes are routed through the Azure frontend to capture realistic end-to-end latency including network hops.
 
-- **Default:** 200ms (5 probes/sec server-side, ~100ms effective with hybrid)
+- **Default:** 200ms (5 probes/sec)
 - **Safety limit:** Minimum 100ms to prevent probe overlap
-- **Use case:** Reduce if CLR profiling shows probe requests overlapping; increase for lower overhead
+- **Use case:** Increase if CLR profiling shows probe requests overlapping; decrease for finer granularity
 
 **Setting via Azure CLI:**
 ```bash

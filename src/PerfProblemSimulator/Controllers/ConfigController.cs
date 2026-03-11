@@ -85,7 +85,6 @@ public class ClientConfig
 
     /// <summary>
     /// How often the server sends latency probes in milliseconds.
-    /// Client uses this to coordinate its own probing for hybrid coverage.
     /// </summary>
     public int LatencyProbeIntervalMs { get; init; } = 200;
 }

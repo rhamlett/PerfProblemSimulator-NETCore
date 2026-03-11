@@ -1448,9 +1448,9 @@ GET /api/loadtest?workIterations=0&amp;bufferSizeKb=100
             </table>
 
             <h4>HEALTH_PROBE_RATE</h4>
-            <p>Controls the interval between server-side health probes. The dashboard uses <strong>hybrid probing</strong>: server probes at this rate, client probes at the same rate but offset by half, achieving roughly double the effective sample rate.</p>
+            <p>Controls the interval between server-side health probes. All probes are routed through the Azure frontend to capture realistic end-to-end latency including network hops.</p>
             <ul>
-                <li><strong>Default:</strong> 200ms (5 probes/sec server-side, ~100ms effective with hybrid)</li>
+                <li><strong>Default:</strong> 200ms (5 probes/sec)</li>
                 <li><strong>Safety limit:</strong> Minimum 100ms to prevent probe overlap</li>
                 <li><strong>Use case:</strong> Increase if CLR profiling shows probe requests overlapping; decrease for finer granularity</li>
             </ul>
