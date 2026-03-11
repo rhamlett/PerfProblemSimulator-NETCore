@@ -949,7 +949,7 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
         // Fetch and display build info
         async function fetchBuildInfo() {
             try {
-                const response = await fetch('/api/config');
+                const response = await fetch('/api/health/build');
                 if (response.ok) {
                     const data = await response.json();
                     if (data.buildTimestamp) {

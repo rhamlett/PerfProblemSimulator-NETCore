@@ -1872,7 +1872,7 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
         // Fetch and display build info
         async function fetchBuildInfo() {
             try {
-                const response = await fetch('/api/config');
+                const response = await fetch('/api/health/build');
                 if (response.ok) {
                     const data = await response.json();
                     if (data.buildTimestamp) {

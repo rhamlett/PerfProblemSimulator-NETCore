@@ -341,6 +341,7 @@ logger.LogInformation(
         ? "DISABLED"
         : "ENABLED");
 
+// Start the application
 app.Run();
 
 // =============================================================================
