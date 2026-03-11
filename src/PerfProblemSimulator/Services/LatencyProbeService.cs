@@ -86,7 +86,7 @@ public class LatencyProbeService : IHostedService, IDisposable
     /// it's recorded as a timeout with this value as the latency.
     /// Set to 30s to match the UI threshold for timeout detection.
     /// </summary>
-    private const int RequestTimeoutMs = 30000;
+    private const int _requestTimeoutMs = 30000;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LatencyProbeService"/> class.
@@ -108,7 +108,7 @@ public class LatencyProbeService : IHostedService, IDisposable
         _idleStateService = idleStateService ?? throw new ArgumentNullException(nameof(idleStateService));
         
         // Apply safety limit: minimum 100ms (10 probes/sec max) to prevent overlap
-        var configuredInterval = options?.Value?.LatencyProbeIntervalMs ?? 200;
+        var configuredInterval = options.Value.LatencyProbeIntervalMs;
         _probeIntervalMs = Math.Max(100, configuredInterval);
     }
 
@@ -131,7 +131,7 @@ public class LatencyProbeService : IHostedService, IDisposable
         _logger.LogInformation(
             "Latency probe service started. Interval: {Interval}ms, Timeout: {Timeout}ms, Target: {BaseUrl}",
             _probeIntervalMs,
-            RequestTimeoutMs,
+            _requestTimeoutMs,
             _baseUrl);
 
         return Task.CompletedTask;
@@ -174,7 +174,7 @@ public class LatencyProbeService : IHostedService, IDisposable
 
         using var httpClient = new HttpClient(handler);
         httpClient.BaseAddress = new Uri(baseUrl);
-        httpClient.Timeout = TimeSpan.FromMilliseconds(RequestTimeoutMs);
+        httpClient.Timeout = TimeSpan.FromMilliseconds(_requestTimeoutMs);
 
         // Add a user agent for Azure (some proxies require it)
         httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("LatencyProbe/1.0");
@@ -193,7 +193,7 @@ public class LatencyProbeService : IHostedService, IDisposable
                 }
 
                 // Check if Slow Request simulation is running
-                var isSlowRequestActive = _simulationTracker.GetActiveCountByType(Models.SimulationType.SlowRequest) > 0;
+                var isSlowRequestActive = _simulationTracker.GetActiveCountByType(SimulationType.SlowRequest) > 0;
                 
                 // If Slow Request simulation is running, we slow down the probe frequency DRAMATICALLY
                 // but we DO NOT stop it completely.
@@ -287,11 +287,11 @@ public class LatencyProbeService : IHostedService, IDisposable
         // Always report the actual elapsed time, even on error/timeout
         // This ensures the chart shows the full impact of queuing (Total Time)
         // Also flag as timeout if elapsed time exceeds threshold (request completed but too slowly)
-        if (!isTimeout && stopwatch.ElapsedMilliseconds >= RequestTimeoutMs)
+        if (!isTimeout && stopwatch.ElapsedMilliseconds >= _requestTimeoutMs)
         {
             isTimeout = true;
             _logger.LogWarning("Probe request exceeded timeout threshold: {ElapsedMs}ms >= {TimeoutMs}ms", 
-                stopwatch.ElapsedMilliseconds, RequestTimeoutMs);
+                stopwatch.ElapsedMilliseconds, _requestTimeoutMs);
         }
 
         return new LatencyMeasurement

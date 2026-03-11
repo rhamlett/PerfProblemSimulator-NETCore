@@ -44,14 +44,9 @@ namespace PerfProblemSimulator.Controllers;
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
-public class ConfigController : ControllerBase
+public class ConfigController(IOptions<ProblemSimulatorOptions> options) : ControllerBase
 {
-    private readonly ProblemSimulatorOptions _options;
-
-    public ConfigController(IOptions<ProblemSimulatorOptions> options)
-    {
-        _options = options.Value;
-    }
+    private readonly ProblemSimulatorOptions _options = options.Value;
 
     /// <summary>
     /// Gets client-side configuration settings.
