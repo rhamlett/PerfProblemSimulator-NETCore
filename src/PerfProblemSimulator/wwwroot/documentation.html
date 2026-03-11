@@ -428,7 +428,7 @@
             </a>
         </nav>
         <div class="sidebar-footer">
-            PerfSim .NET v1.0 • .NET 8/10
+            Build: <span id="sidebarBuildTime">--</span>
         </div>
     </aside>
 
@@ -1868,6 +1868,25 @@ https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSiz
             }
         }
         fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
     </script>
 </body>
 </html>
