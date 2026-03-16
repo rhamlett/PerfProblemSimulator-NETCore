@@ -13,7 +13,10 @@
     --color-danger: #d13438;
     --color-secondary: #6c757d;
     
-    --color-bg: #e8f1f8;
+    --color-bg: #f5f8fb;
+    --color-bg-tint-faint: #ebf2f8;
+    --color-bg-tint-neutral: #f2f6fa;
+    --color-bg-tint-saturated: #d9e8f4;
     --color-card: #ffffff;
     --color-text: #323130;
     --color-text-muted: #605e5c;
@@ -48,10 +51,23 @@
 
 body {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--color-bg);
+    background-color: var(--color-bg-tint-neutral);
+    background-image: linear-gradient(135deg, 
+        var(--color-bg-tint-faint) 5%, 
+        var(--color-bg-tint-neutral) 50%, 
+        var(--color-bg-tint-saturated) 100%);
     color: var(--color-text);
     line-height: 1.5;
     min-height: 100vh;
+}
+
+/* Secondary pages: documentation, diagnostics, deployment */
+body.page-secondary {
+    background-color: var(--color-bg-tint-neutral);
+    background-image: linear-gradient(90deg, 
+        var(--color-bg-tint-faint) 5%, 
+        var(--color-bg-tint-neutral) 40%, 
+        var(--color-bg-tint-saturated) 80%);
 }
 
 /* --------------------------------------------------------------------------
@@ -794,6 +810,7 @@ body {
     border-radius: var(--radius-md);
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
+    border: var(--border-card);
 }
 
 .active-simulations h2 {
@@ -857,6 +874,7 @@ body {
     border-radius: var(--radius-md);
     padding: 1.5rem;
     box-shadow: var(--shadow-sm);
+    border: var(--border-card);
 }
 
 .event-log h2 {
