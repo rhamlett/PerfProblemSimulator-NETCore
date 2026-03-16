@@ -22,6 +22,127 @@ const CONFIG = {
     apiBaseUrl: '/api'
 };
 
+// ==========================================================================
+// Latency Color Thresholds & Gradients
+// ==========================================================================
+
+// RGB values for smooth color interpolation on latency chart
+const LATENCY_RGB = {
+    good:     { r: 16,  g: 124, b: 16  }, // Green - good (<150ms)
+    degraded: { r: 255, g: 185, b: 0   }, // Yellow - degraded (150ms-1s)
+    severe:   { r: 255, g: 140, b: 0   }, // Orange - severe (1s+)
+    critical: { r: 209, g: 52,  b: 56  }  // Red - critical (30s+)
+};
+
+/**
+ * Interpolates between two RGB colors.
+ * @param {Object} color1 - Start color {r, g, b}
+ * @param {Object} color2 - End color {r, g, b}
+ * @param {number} t - Interpolation factor (0-1)
+ * @returns {string} - RGB color string
+ */
+function lerpColor(color1, color2, t) {
+    t = Math.max(0, Math.min(1, t)); // Clamp to 0-1
+    const r = Math.round(color1.r + (color2.r - color1.r) * t);
+    const g = Math.round(color1.g + (color2.g - color1.g) * t);
+    const b = Math.round(color1.b + (color2.b - color1.b) * t);
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+/**
+ * Gets a smoothly interpolated color for a latency value.
+ * Blends between threshold colors based on where the value falls.
+ * @param {number} latencyMs - Latency value in milliseconds
+ * @returns {string} - RGB color string
+ */
+function getInterpolatedLatencyColor(latencyMs) {
+    if (latencyMs <= 0) return lerpColor(LATENCY_RGB.good, LATENCY_RGB.good, 0);
+    
+    // 0-150ms: green → yellow
+    if (latencyMs <= 150) {
+        const t = latencyMs / 150;
+        return lerpColor(LATENCY_RGB.good, LATENCY_RGB.degraded, t);
+    }
+    
+    // 150-1000ms: yellow → orange
+    if (latencyMs <= 1000) {
+        const t = (latencyMs - 150) / (1000 - 150);
+        return lerpColor(LATENCY_RGB.degraded, LATENCY_RGB.severe, t);
+    }
+    
+    // 1000-30000ms: orange → red
+    if (latencyMs <= 30000) {
+        const t = (latencyMs - 1000) / (30000 - 1000);
+        return lerpColor(LATENCY_RGB.severe, LATENCY_RGB.critical, t);
+    }
+    
+    // >30000ms: solid red
+    return lerpColor(LATENCY_RGB.critical, LATENCY_RGB.critical, 1);
+}
+
+/**
+ * Gets a smoothly interpolated RGBA color for a latency value (for gradient fills).
+ * @param {number} latencyMs - Latency value in milliseconds
+ * @param {number} alpha - Alpha value (0-1)
+ * @returns {string} - RGBA color string
+ */
+function getInterpolatedLatencyColorRGBA(latencyMs, alpha) {
+    let r, g, b;
+    
+    if (latencyMs <= 0) {
+        r = LATENCY_RGB.good.r; g = LATENCY_RGB.good.g; b = LATENCY_RGB.good.b;
+    } else if (latencyMs <= 150) {
+        const t = latencyMs / 150;
+        r = Math.round(LATENCY_RGB.good.r + (LATENCY_RGB.degraded.r - LATENCY_RGB.good.r) * t);
+        g = Math.round(LATENCY_RGB.good.g + (LATENCY_RGB.degraded.g - LATENCY_RGB.good.g) * t);
+        b = Math.round(LATENCY_RGB.good.b + (LATENCY_RGB.degraded.b - LATENCY_RGB.good.b) * t);
+    } else if (latencyMs <= 1000) {
+        const t = (latencyMs - 150) / (1000 - 150);
+        r = Math.round(LATENCY_RGB.degraded.r + (LATENCY_RGB.severe.r - LATENCY_RGB.degraded.r) * t);
+        g = Math.round(LATENCY_RGB.degraded.g + (LATENCY_RGB.severe.g - LATENCY_RGB.degraded.g) * t);
+        b = Math.round(LATENCY_RGB.degraded.b + (LATENCY_RGB.severe.b - LATENCY_RGB.degraded.b) * t);
+    } else if (latencyMs <= 30000) {
+        const t = (latencyMs - 1000) / (30000 - 1000);
+        r = Math.round(LATENCY_RGB.severe.r + (LATENCY_RGB.critical.r - LATENCY_RGB.severe.r) * t);
+        g = Math.round(LATENCY_RGB.severe.g + (LATENCY_RGB.critical.g - LATENCY_RGB.severe.g) * t);
+        b = Math.round(LATENCY_RGB.severe.b + (LATENCY_RGB.critical.b - LATENCY_RGB.severe.b) * t);
+    } else {
+        r = LATENCY_RGB.critical.r; g = LATENCY_RGB.critical.g; b = LATENCY_RGB.critical.b;
+    }
+    
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
+ * Creates a vertical gradient for the latency chart with smooth color blending.
+ * Adds many intermediate color stops for seamless transitions between thresholds.
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} chartArea - Chart area dimensions
+ * @param {Object} scales - Chart scales
+ * @returns {CanvasGradient} - The gradient fill
+ */
+function createLatencyGradient(ctx, chartArea, scales) {
+    if (!chartArea || !scales.y) return 'rgba(16, 124, 16, 0.2)';
+    
+    const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+    const yMax = scales.y.max || 200;
+    
+    // Add many color stops for smooth blending (20 stops from bottom to top)
+    const numStops = 20;
+    for (let i = 0; i <= numStops; i++) {
+        const position = i / numStops; // 0 = bottom, 1 = top
+        const latencyAtPosition = position * yMax;
+        
+        // Alpha increases slightly with latency for better visual distinction
+        const alpha = 0.25 + (position * 0.25); // 0.25 at bottom to 0.50 at top
+        
+        const color = getInterpolatedLatencyColorRGBA(latencyAtPosition, alpha);
+        gradient.addColorStop(position, color);
+    }
+    
+    return gradient;
+}
+
 // Probe visualization history (24-dot indicator)
 const probeHistory = [];
 const MAX_PROBE_DOTS = 24;
@@ -431,13 +552,29 @@ function initializeCharts() {
                 {
                     label: 'Latency (ms)',
                     data: [],
-                    borderColor: '#0078d4',
-                    backgroundColor: 'rgba(0, 120, 212, 0.1)',
-                    tension: 0.2,
-                    fill: 'origin',
+                    // Segment-based border color - smooth gradient based on data value
+                    segment: {
+                        borderColor: (ctx) => {
+                            const p0 = ctx.p0.parsed?.y;
+                            const p1 = ctx.p1.parsed?.y;
+                            if (p0 == null || p1 == null) return 'rgba(0,0,0,0)';
+                            const value = Math.max(p0, p1);
+                            return getInterpolatedLatencyColor(value);
+                        },
+                    },
+                    borderColor: '#107c10', // Default/fallback (green)
+                    // Dynamic gradient fill based on latency thresholds
+                    backgroundColor: (context) => {
+                        const chart = context.chart;
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return 'rgba(16, 124, 16, 0.2)';
+                        return createLatencyGradient(ctx, chartArea, scales);
+                    },
+                    tension: 0.3,
+                    fill: true,
                     pointRadius: 0, // Hide points for performance with many data points
                     pointHoverRadius: 0, // Disable hover circles to prevent visual artifacts
-                    borderWidth: 1
+                    borderWidth: 1.5
                 }
             ]
         },
