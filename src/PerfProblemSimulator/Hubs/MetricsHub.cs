@@ -142,15 +142,17 @@ public class MetricsHub : Hub<IMetricsClient>
         if (wasIdle)
         {
             _logger.LogInformation("Server woken up by client request from: {ConnectionId}", Context.ConnectionId);
+            // The MetricsBroadcastService will broadcast the wake-up message to all clients
+            // via the WakingUp event, so we don't need to send it directly here
+            return;
         }
 
-        // Send current idle state back to caller
+        // Only send direct response when app was already active (not waking up)
+        // to confirm current state to caller
         var idleData = new IdleStateData
         {
             IsIdle = _idleStateService.IsIdle,
-            Message = wasIdle 
-                ? "App waking up from idle state. There may be gaps in diagnostics and logs."
-                : "Application is active",
+            Message = "Application is active",
             Timestamp = DateTimeOffset.UtcNow
         };
         await Clients.Caller.ReceiveIdleState(idleData);

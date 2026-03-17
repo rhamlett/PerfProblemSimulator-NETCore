@@ -17,6 +17,7 @@ const CONFIG = {
     // latencyProbeIntervalMs is loaded from server config (default 200ms).
     // Server probes at this interval and broadcasts results via SignalR.
     latencyProbeIntervalMs: 200,
+    idleTimeoutMinutes: 20,
     latencyTimeoutMs: 30000,
     reconnectDelayMs: 2000,
     apiBaseUrl: '/api'
@@ -1679,6 +1680,12 @@ async function fetchAppConfig() {
                 CONFIG.latencyProbeIntervalMs = config.latencyProbeIntervalMs;
                 console.log(`Latency probe interval set to ${CONFIG.latencyProbeIntervalMs}ms`);
             }
+
+            // Update idle timeout (server sends its timeout for display)
+            if (config.idleTimeoutMinutes && config.idleTimeoutMinutes > 0) {
+                CONFIG.idleTimeoutMinutes = config.idleTimeoutMinutes;
+                console.log(`Idle timeout set to ${CONFIG.idleTimeoutMinutes}m`);
+            }
             
             // Update page footer if configured
             const footerElement = document.getElementById('pageFooterContent');
@@ -1731,7 +1738,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Wire up side panel toggle
     initializeSidePanel();
     
-    logEvent('system', 'Dashboard initialized');
+    logEvent('system', `Dashboard initialized (probe rate: ${CONFIG.latencyProbeIntervalMs}ms, idle timeout: ${CONFIG.idleTimeoutMinutes}m)`);
 });
 
 // ==========================================================================

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using PerfProblemSimulator.Models;
+using PerfProblemSimulator.Services;
 
 namespace PerfProblemSimulator.Controllers;
 
@@ -44,9 +45,10 @@ namespace PerfProblemSimulator.Controllers;
 /// </remarks>
 [ApiController]
 [Route("api/[controller]")]
-public class ConfigController(IOptions<ProblemSimulatorOptions> options) : ControllerBase
+public class ConfigController(IOptions<ProblemSimulatorOptions> options, IIdleStateService idleStateService) : ControllerBase
 {
     private readonly ProblemSimulatorOptions _options = options.Value;
+    private readonly IIdleStateService _idleStateService = idleStateService;
 
     /// <summary>
     /// Gets client-side configuration settings.
@@ -63,7 +65,8 @@ public class ConfigController(IOptions<ProblemSimulatorOptions> options) : Contr
         return Ok(new ClientConfig
         {
             PageFooter = pageFooter,
-            LatencyProbeIntervalMs = _options.LatencyProbeIntervalMs
+            LatencyProbeIntervalMs = _options.LatencyProbeIntervalMs,
+            IdleTimeoutMinutes = _idleStateService.IdleTimeoutMinutes
         });
     }
 }
@@ -82,4 +85,9 @@ public class ClientConfig
     /// How often the server sends latency probes in milliseconds.
     /// </summary>
     public int LatencyProbeIntervalMs { get; init; } = 200;
+
+    /// <summary>
+    /// How long until the app goes idle (stops probing) in minutes.
+    /// </summary>
+    public int IdleTimeoutMinutes { get; init; } = 20;
 }
