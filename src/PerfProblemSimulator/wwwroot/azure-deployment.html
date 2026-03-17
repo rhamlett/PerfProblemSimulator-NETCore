@@ -355,7 +355,7 @@
                 <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
                 <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
             </svg>
-            <h1>Performance Problem Simulator - .NET 10 on Windows</h1>
+            <h1>Performance Problem Simulator</h1>
         </div>
         <div id="skuDisplay" class="sku-display">SKU: Loading...</div>
         <div class="header-right">
@@ -398,7 +398,7 @@
                 <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
                 <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
             </svg>
-            <h2>PerfSim .NET</h2>
+            <h2>Perf Simulator</h2>
             <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">&times;</button>
         </div>
         <nav class="sidebar-nav">
@@ -423,7 +423,7 @@
             </a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-label">External</div>
-            <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" rel="noopener" class="sidebar-nav-item">
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item">
                 <span class="nav-icon">🐙</span>
                 <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
             </a>
@@ -443,7 +443,7 @@
 
         <section id="overview" class="card">
             <h2>Overview</h2>
-            <p>This guide walks you through deploying the Performance Problem Simulator (.NET 8 or .NET 10) to Azure App Service using GitHub Actions with OpenID Connect (OIDC) authentication. OIDC eliminates the need to store credentials as secrets.</p>
+            <p>This guide walks you through deploying the Performance Problem Simulator to Azure App Service using GitHub Actions with OpenID Connect (OIDC) authentication. OIDC eliminates the need to store credentials as secrets.</p>
             
             <h3>Prerequisites</h3>
             <ul>
@@ -480,10 +480,10 @@
                         <tr><th>Setting</th><th>Value</th></tr>
                         <tr><td>Subscription</td><td>Your subscription</td></tr>
                         <tr><td>Resource Group</td><td>Create new or use existing</td></tr>
-                        <tr><td>Name</td><td><code>perfproblemsimulator</code> (or your preferred name)</td></tr>
+                        <tr><td>Name</td><td><code>your-app-name</code> (must be globally unique)</td></tr>
                         <tr><td>Publish</td><td>Code</td></tr>
-                        <tr><td>Runtime stack</td><td><strong>.NET 8 (LTS)</strong> or <strong>.NET 10</strong></td></tr>
-                        <tr><td>Operating System</td><td><strong>Windows</strong> (recommended) or Linux</td></tr>
+                        <tr><td>Runtime stack</td><td>Select your application's runtime</td></tr>
+                        <tr><td>Operating System</td><td>Windows or Linux (as appropriate for your runtime)</td></tr>
                         <tr><td>Region</td><td>Your preferred region</td></tr>
                     </table>
                 </li>
@@ -504,10 +504,11 @@
 az login
 
 # Set variables
-RESOURCE_GROUP="perfsim-rg"
-APP_NAME="perfproblemsimulator"
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
 LOCATION="eastus"
-APP_SERVICE_PLAN="perfsim-plan"
+APP_SERVICE_PLAN="your-app-plan"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
 
 # Create resource group
 az group create --name $RESOURCE_GROUP --location $LOCATION
@@ -519,12 +520,12 @@ az appservice plan create \
   --location $LOCATION \
   --sku B1
 
-# Create Web App with .NET 8 (or use "dotnet:10" for .NET 10)
+# Create Web App with your runtime
 az webapp create \
   --name $APP_NAME \
   --resource-group $RESOURCE_GROUP \
   --plan $APP_SERVICE_PLAN \
-  --runtime "dotnet:8"</code></pre>
+  --runtime $RUNTIME</code></pre>
 
             <h3>Enable WebSockets</h3>
             <p>After creation, enable WebSockets for SignalR real-time communication:</p>
@@ -556,7 +557,7 @@ az webapp create \
                 <li><strong>Configure Registration</strong>
                     <table>
                         <tr><th>Setting</th><th>Value</th></tr>
-                        <tr><td>Name</td><td><code>github-perfsim-deploy</code></td></tr>
+                        <tr><td>Name</td><td><code>github-your-app-deploy</code> (descriptive name for your deployment identity)</td></tr>
                         <tr><td>Supported account types</td><td>Accounts in this organizational directory only</td></tr>
                         <tr><td>Redirect URI</td><td>Leave empty</td></tr>
                     </table>
@@ -597,7 +598,7 @@ az webapp create \
                         <tr><th>Setting</th><th>Value</th></tr>
                         <tr><td>Federated credential scenario</td><td><strong>GitHub Actions deploying Azure resources</strong></td></tr>
                         <tr><td>Organization</td><td>Your GitHub username or organization</td></tr>
-                        <tr><td>Repository</td><td><code>PerfProblemSimulator-NETCore</code> (your repo name)</td></tr>
+                        <tr><td>Repository</td><td>Your repository name</td></tr>
                         <tr><td>Entity type</td><td><strong>Branch</strong></td></tr>
                         <tr><td>GitHub branch name</td><td><code>main</code></td></tr>
                         <tr><td>Name</td><td><code>github-main-branch</code></td></tr>
@@ -628,7 +629,7 @@ az webapp create \
                         <tr><th>Setting</th><th>Value</th></tr>
                         <tr><td>Role</td><td><strong>Contributor</strong></td></tr>
                         <tr><td>Assign access to</td><td>User, group, or service principal</td></tr>
-                        <tr><td>Members</td><td>Search for <code>github-perfsim-deploy</code></td></tr>
+                        <tr><td>Members</td><td>Search for your App Registration name</td></tr>
                     </table>
                 </li>
                 <li><strong>Click Review + assign</strong></li>
@@ -642,7 +643,7 @@ az webapp create \
             <ol>
                 <li><strong>Fork the Repository</strong>
                     <ul>
-                        <li>Go to the <a href="https://github.com/rhamlett/PerfProblemSimulator-NETCore" target="_blank" rel="noopener">PerfProblemSimulator-NETCore repository</a></li>
+                        <li>Go to the Performance Problem Simulator repository for your stack</li>
                         <li>Click <strong>Fork</strong> to create your own copy</li>
                     </ul>
                 </li>
@@ -672,10 +673,10 @@ az webapp create \
             </div>
 
             <h3>Update Workflow (if needed)</h3>
-            <p>If your App Service name is different from <code>perfproblemsimulator</code>, edit <code>.github/workflows/deploy.yml</code>:</p>
+            <p>Update <code>.github/workflows/deploy.yml</code> with your App Service name and runtime version:</p>
             <pre><code>env:
-  AZURE_WEBAPP_NAME: your-app-service-name  # Change this
-  DOTNET_VERSION: '8.0.x'  # Or '10.0.x' for .NET 10</code></pre>
+  AZURE_WEBAPP_NAME: your-app-service-name  # Your App Service name
+  # Add any runtime-specific version variables as needed</code></pre>
         </section>
 
         <section id="deploy" class="card">
@@ -735,6 +736,32 @@ git push origin main</code></pre>
 az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
   --settings HEALTH_PROBE_RATE=400</code></pre>
 
+            <h3>Idle Timeout</h3>
+            <p>When the application is idle (no dashboard connections or load test requests), health probes are automatically suspended to reduce unnecessary network traffic to Azure's frontend and Application Insights telemetry.</p>
+            
+            <h4>Environment Variable</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>Minutes of inactivity before suspending health probes. Activity resumes automatically when the dashboard is opened or any request is received.</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Setting via Azure CLI</h4>
+            <pre><code># Extend idle timeout to 30 minutes
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings IDLE_TIMEOUT_MINUTES=30</code></pre>
+
             <h3>Custom Page Footer</h3>
             <p>Set a custom footer message that appears on all pages. The footer supports HTML, allowing you to include links.</p>
             
@@ -755,12 +782,12 @@ az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GRO
             </table>
 
             <h4>Example Value</h4>
-            <pre><code>Created by &lt;a href="https://speckit.org/"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot"&gt;Github Copilot&lt;/a&gt; in collaboration with &lt;a href="mailto:rhamlett@microsoft.com"&gt;Richard Hamlett&lt;/a&gt;</code></pre>
+            <pre><code>Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes</code></pre>
 
             <h4>Setting via Azure CLI</h4>
             <pre><code># Set the footer via Azure CLI
 az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
-  --settings 'PAGE_FOOTER=Created by &lt;a href="https://speckit.org/"&gt;SpecKit&lt;/a&gt; and &lt;a href="https://github.com/copilot"&gt;Github Copilot&lt;/a&gt; in collaboration with &lt;a href="mailto:rhamlett@microsoft.com"&gt;Richard Hamlett&lt;/a&gt;'</code></pre>
+  --settings 'PAGE_FOOTER=Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes'</code></pre>
 
             <h4>Setting via Azure Portal</h4>
             <ol>
@@ -801,8 +828,8 @@ az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GRO
             <ul>
                 <li>View Log stream in Azure Portal (App Service → Log stream)</li>
                 <li>Enable Application Logging under App Service → App Service Logs</li>
-                <li>Verify .NET version matches (should be .NET 8 or .NET 10)</li>
-                <li>Check for missing configuration in appsettings.json</li>
+                <li>Verify runtime version matches your application's requirements</li>
+                <li>Check for missing configuration or environment variables</li>
             </ul>
 
             <h3>View Logs</h3>
@@ -817,15 +844,16 @@ az webapp log deployment show --name $APP_NAME --resource-group $RESOURCE_GROUP<
             <h2>Quick Reference - CLI One-Liner</h2>
             <p>Complete setup script (customize variables at top):</p>
             <pre><code># Full setup (customize variables at top)
-RESOURCE_GROUP="perfsim-rg"
-APP_NAME="perfproblemsimulator"
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
 LOCATION="eastus"
-GITHUB_REPO="YOUR_USERNAME/PerfProblemSimulator-NETCore"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
+GITHUB_REPO="YOUR_USERNAME/YOUR_REPO"
 
 # Create resources
 az group create -n $RESOURCE_GROUP -l $LOCATION
 az appservice plan create -n "${APP_NAME}-plan" -g $RESOURCE_GROUP -l $LOCATION --sku B1
-az webapp create -n $APP_NAME -g $RESOURCE_GROUP -p "${APP_NAME}-plan" --runtime "dotnet:8"  # Or "dotnet:10"
+az webapp create -n $APP_NAME -g $RESOURCE_GROUP -p "${APP_NAME}-plan" --runtime $RUNTIME
 az webapp config set -n $APP_NAME -g $RESOURCE_GROUP --web-sockets-enabled true
 
 # Create App Registration and get IDs
@@ -906,7 +934,7 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
     <script>
         // Fetch and display custom page footer and build info
         (async function() {
-            // Fetch app config for footer
+            // Fetch app config for footer and GitHub repo link
             try {
                 const response = await fetch('/api/config');
                 if (response.ok) {
@@ -919,9 +947,22 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
                             footerEl.style.display = 'none';
                         }
                     }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.githubRepoUrl && config.githubRepoUrl.trim()) {
+                            githubLink.href = config.githubRepoUrl;
+                        } else {
+                            // Hide link if no GitHub URL configured
+                            githubLink.style.display = 'none';
+                        }
+                    }
                 }
             } catch (e) {
                 console.error('Failed to fetch config', e);
+                // Hide GitHub link on error
+                const githubLink = document.getElementById('githubRepoLink');
+                if (githubLink) githubLink.style.display = 'none';
             }
             // Fetch build info
             try {
