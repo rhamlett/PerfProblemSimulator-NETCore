@@ -788,17 +788,20 @@ function handleIdleState(data) {
     const wasIdle = state.isIdle;
     state.isIdle = data.isIdle;
     
-    // Log the state change
+    // Log the state change and update connection status
     if (data.isIdle && !wasIdle) {
         // Going idle
         logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
+        updateConnectionStatus('idle', 'Idle');
     } else if (!data.isIdle && wasIdle) {
         // Waking up (client knew we were idle)
         logEvent('system', data.message || 'App waking up from idle state. There may be gaps in diagnostics and logs.');
+        updateConnectionStatus('connected', 'Connected');
     } else if (!data.isIdle && !wasIdle && data.message && data.message.toLowerCase().includes('waking up')) {
         // Server was idle but client didn't know (e.g., after reconnect)
         // The server's message indicates it just woke up
         logEvent('system', data.message);
+        updateConnectionStatus('connected', 'Connected');
     }
 }
 
@@ -1550,6 +1553,40 @@ function updateActiveSimulationsUI() {
 // ==========================================================================
 
 /**
+ * Copies the event log content to the clipboard.
+ */
+function copyEventLog() {
+    const log = document.getElementById('eventLog');
+    const entries = log.querySelectorAll('.log-entry');
+    
+    // Extract text from each log entry
+    const logText = Array.from(entries).map(entry => {
+        const time = entry.querySelector('.log-time')?.textContent || '';
+        const icon = entry.querySelector('.log-icon')?.textContent || '';
+        // Get the text content after time and icon
+        const clone = entry.cloneNode(true);
+        clone.querySelector('.log-time')?.remove();
+        clone.querySelector('.log-icon')?.remove();
+        const message = clone.textContent.trim();
+        return `${time} ${icon} ${message}`.trim();
+    }).join('\n');
+    
+    navigator.clipboard.writeText(logText).then(() => {
+        const btn = document.getElementById('btnCopyEventLog');
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.classList.remove('copied');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy event log:', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+
+/**
  * Category icons for event log entries
  */
 const LOG_ICONS = {
@@ -1731,6 +1768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btnStartSlowRequests').addEventListener('click', startSlowRequests);
     document.getElementById('btnStopSlowRequests').addEventListener('click', stopSlowRequests);
     document.getElementById('btnStartFailedRequests').addEventListener('click', startFailedRequests);
+    document.getElementById('btnCopyEventLog').addEventListener('click', copyEventLog);
     
     // Initialize slow request Stop button as disabled
     document.getElementById('btnStopSlowRequests').disabled = true;
