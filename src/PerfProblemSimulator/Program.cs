@@ -18,8 +18,8 @@ using OpenApiInfo = Microsoft.OpenApi.OpenApiInfo;
 // - Thread pool starvation (sync-over-async anti-patterns)
 //
 // WARNING: This application should ONLY be used in controlled environments
-// for learning and demonstration purposes. Do not deploy to production
-// without setting DISABLE_PROBLEM_ENDPOINTS=true.
+// for learning and demonstration purposes. Set DISABLE_PROBLEM_ENDPOINTS=true
+// to disable potentially destructive simulation endpoints.
 // =============================================================================
 //
 // PORTING TO OTHER LANGUAGES:
@@ -107,8 +107,8 @@ builder.Services.AddSignalR(options =>
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);       // Send keepalive every 15s
         options.HandshakeTimeout = TimeSpan.FromSeconds(15);        // Handshake must complete in 15s
         
-        // Enable detailed errors for debugging (disable in production)
-        options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+        // Enable detailed errors for debugging
+        options.EnableDetailedErrors = true;
     })
     .AddJsonProtocol(options =>
     {
@@ -235,9 +235,7 @@ builder.Services.AddHostedService<LatencyProbeService>();
 // -----------------------------------------------------------------------------
 // CORS Configuration
 // -----------------------------------------------------------------------------
-// Allow any origin for development. In production, you would restrict this
-// to specific domains. CORS is needed when the SPA is served from a different
-// origin during development.
+// Allow any origin. CORS is needed when the SPA is served from a different origin.
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
@@ -251,10 +249,10 @@ builder.Services.AddCors(options =>
 // -----------------------------------------------------------------------------
 // Request Timeouts (Kestrel)
 // -----------------------------------------------------------------------------
-// Add request timeouts for local development to match IIS behavior (web.config).
+// Add request timeouts to match IIS behavior (web.config).
 // This ensures slow requests timeout after 30 seconds, consistent with the UI threshold.
 // Educational Note: In Azure App Service, the web.config requestTimeout handles this.
-// For local Kestrel development, we use the RequestTimeouts middleware instead.
+// For Kestrel, we use the RequestTimeouts middleware instead.
 builder.Services.AddRequestTimeouts(options =>
 {
     // Default 30-second timeout for all endpoints (matches web.config and UI threshold)
@@ -292,15 +290,12 @@ var app = builder.Build();
 // 5. Routing
 // 6. Endpoints
 
-// Development-only middleware
-if (app.Environment.IsDevelopment())
+// Swagger/OpenAPI documentation - enabled in all environments for this educational tool
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.DocumentTitle = "Performance Problem Simulator API";
-    });
-}
+    options.DocumentTitle = "Performance Problem Simulator API";
+});
 
 // CORS must be called before UseRouting
 app.UseCors();
