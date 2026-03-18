@@ -398,7 +398,7 @@
                 <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
                 <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
             </svg>
-            <h2>Perf Simulator</h2>
+            <h2>PerfSim .Net 10</h2>
             <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">&times;</button>
         </div>
         <nav class="sidebar-nav">
@@ -423,9 +423,18 @@
             </a>
             <div class="sidebar-divider"></div>
             <div class="sidebar-section-label">External</div>
-            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item">
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item" style="display: none;">
                 <span class="nav-icon">🐙</span>
                 <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API documentation</span></span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -799,6 +808,43 @@ az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GRO
                 <li>Click <strong>Apply</strong>, then <strong>Confirm</strong></li>
             </ol>
 
+            <h3>GitHub Repository Link</h3>
+            <p>Optionally display a GitHub Repository link in the sidebar navigation menu. The link is hidden by default. When both environment variables are provided, the link will appear in the menu and point to <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>Environment Variables</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub username or organization name. Required to show the link.</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub repository name. Required to show the link.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Setting via Azure CLI</h4>
+            <pre><code># Set the GitHub link via Azure CLI
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings GITHUB_USER_NAME=your-username GITHUB_REPO_NAME=your-repo-name</code></pre>
+
+            <h4>Setting via Azure Portal</h4>
+            <ol>
+                <li>Navigate to your App Service in the Azure Portal</li>
+                <li>Go to <strong>Settings</strong> → <strong>Environment variables</strong></li>
+                <li>Click <strong>+ Add</strong> and set Name: <code>GITHUB_USER_NAME</code>, Value: your GitHub username or organization</li>
+                <li>Click <strong>+ Add</strong> and set Name: <code>GITHUB_REPO_NAME</code>, Value: your repository name</li>
+                <li>Click <strong>Apply</strong>, then <strong>Confirm</strong></li>
+            </ol>
+
         </section>
 
         <section id="troubleshooting" class="card">
@@ -950,19 +996,14 @@ echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
                     // Update GitHub repo link if provided in config
                     const githubLink = document.getElementById('githubRepoLink');
                     if (githubLink) {
-                        if (config.githubRepoUrl && config.githubRepoUrl.trim()) {
-                            githubLink.href = config.githubRepoUrl;
-                        } else {
-                            // Hide link if no GitHub URL configured
-                            githubLink.style.display = 'none';
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
                         }
                     }
                 }
             } catch (e) {
                 console.error('Failed to fetch config', e);
-                // Hide GitHub link on error
-                const githubLink = document.getElementById('githubRepoLink');
-                if (githubLink) githubLink.style.display = 'none';
             }
             // Fetch build info
             try {

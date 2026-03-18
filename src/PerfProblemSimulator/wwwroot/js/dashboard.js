@@ -1734,6 +1734,15 @@ async function fetchAppConfig() {
                     footerElement.style.display = 'none';
                 }
             }
+
+            // Update GitHub repo link if configured
+            const githubLink = document.getElementById('githubRepoLink');
+            if (githubLink) {
+                if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                    githubLink.href = config.gitHubRepoUrl;
+                    githubLink.style.display = '';
+                }
+            }
         }
     } catch (error) {
         console.error('Failed to fetch app config', error);
