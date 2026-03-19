@@ -517,6 +517,10 @@
                 <span class="nav-icon">☁️</span>
                 <span class="nav-label">Azure Diagnostics<span class="nav-desc">Diagnose issues in App Service</span></span>
             </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure Load Testing<span class="nav-desc">Load test endpoint & parameters</span></span>
+            </a>
             <a href="/azure-deployment.html" class="sidebar-nav-item">
                 <span class="nav-icon">🚀</span>
                 <span class="nav-label">Deploy to Azure<span class="nav-desc">GitHub Actions + OIDC setup</span></span>
@@ -1204,218 +1208,6 @@ procdump -ma -h w3wp.exe
             </ul>
         </section>
 
-        <!-- Azure Load Testing Section -->
-        <section id="load-testing" class="doc-section">
-            <h2>🔬 Azure Load Testing</h2>
-            <p>The Performance Problem Simulator includes a dedicated load testing endpoint designed for use with Azure Load Testing. This endpoint simulates realistic application behavior that degrades gracefully under load.</p>
-
-            <h3>Load Test Endpoint</h3>
-            <p>The <code>/api/loadtest</code> endpoint is designed to:</p>
-            <ul>
-                <li>Perform sustained CPU work (interleaved SHA256 cycles at ~50% CPU per thread)</li>
-                <li>Hold memory buffers for entire request duration (creates visible memory pressure)</li>
-                <li>Degrade gracefully as concurrent requests increase (soft limit pattern)</li>
-                <li>Throw random exceptions after configurable threshold (default: 120 seconds at 20% probability)</li>
-                <li>Eventually trigger Azure's 230-second timeout under extreme load</li>
-            </ul>
-
-            <h3>Setting Up Azure Load Testing</h3>
-            <ol>
-                <li>In the Azure Portal, create an <strong>Azure Load Testing</strong> resource</li>
-                <li>Create a new test and configure the target URL using one of these options:</li>
-            </ol>
-
-            <h4>GET with Query Parameters</h4>
-            <p>Use the target URL directly — no JMeter script required:</p>
-            <div class="code-block">
-<span class="comment"># With defaults (tuned for Premium0V3)</span>
-https://your-app.azurewebsites.net/api/loadtest
-
-<span class="comment"># Custom parameters</span>
-https://your-app.azurewebsites.net/api/loadtest?workIterations=500&amp;bufferSizeKb=10000
-
-<span class="comment"># Thread pool only (no CPU work)</span>
-https://your-app.azurewebsites.net/api/loadtest?workIterations=0&amp;bufferSizeKb=100
-            </div>
-            <p><strong>Query Parameters:</strong></p>
-            <ul>
-                <li><code>workIterations</code> - SHA256 iterations per CPU work cycle (default: 200)</li>
-                <li><code>bufferSizeKb</code> - Memory buffer held for request duration in KB (default: 20000)</li>
-                <li><code>baselineDelayMs</code> - Minimum request duration in ms (default: 500)</li>
-                <li><code>softLimit</code> - Concurrent requests before degradation (default: 25)</li>
-                <li><code>degradationFactor</code> - Delay ms per request over limit (default: 500)</li>
-                <li><code>errorAfter</code> - Seconds before random errors may be thrown (default: 120, set to 0 to disable)</li>
-                <li><code>errorPercent</code> - Percentage chance (0-100) of random error after threshold (default: 20)</li>
-            </ul>
-
-            <ol start="3">
-                <li>Configure load pattern (ramp up, steady state, ramp down)</li>
-                <li>Set up Azure Monitor integration to correlate metrics</li>
-            </ol>
-
-            <h3>Understanding the Soft Limit</h3>
-            <p>The soft limit creates a degradation curve where response times increase as concurrent requests exceed the threshold. The degradation formula is:</p>
-            <div class="code-block">
-additionalDelay = max(0, concurrent - softLimit) × degradationFactor
-            </div>
-            <div class="info-box">
-                <strong>Note:</strong> Actual response times will vary based on your Azure App Service tier, current load, and other factors. Use Azure Load Testing to establish baseline performance for your specific environment. These example scenarios, and the defaults, are for a Premium0V3 worker. Any other SKU or worker size will need individual tuning.
-            </div>
-
-            <h3>Diagnosing Load Test Results</h3>
-            <h4>1. Application Insights Integration</h4>
-            <ul>
-                <li>Go to <strong>Application Insights</strong> &gt; <strong>Performance</strong></li>
-                <li>Filter by operation name <code>GET /api/loadtest</code></li>
-                <li>Observe response time percentiles (p50, p95, p99)</li>
-                <li>Check failure rates for the configurable random error threshold (default: 120s)</li>
-            </ul>
-
-            <h4>2. Azure Monitor Metrics</h4>
-            <ul>
-                <li><strong>Requests</strong> - Total request count and rate</li>
-                <li><strong>Response Time</strong> - Average and percentile latencies</li>
-                <li><strong>Http Server Errors</strong> - 5xx errors from random exceptions</li>
-                <li><strong>CPU Percentage</strong> - Should increase with load</li>
-            </ul>
-
-            <h4>3. Load Testing Statistics</h4>
-            <p>Query the stats endpoint during the test:</p>
-            <div class="code-block">
-GET /api/loadtest/stats
-
-{
-  "currentConcurrentRequests": 127,
-  "totalRequestsProcessed": 45230,
-  "totalExceptionsThrown": 23,
-  "averageResponseTimeMs": 847.5
-}
-            </div>
-
-            <h3>Request Body Parameters Reference</h3>
-            <p>Each parameter controls a specific resource independently:</p>
-            <table class="api-table">
-                <thead>
-                    <tr>
-                        <th>Parameter</th>
-                        <th>Default</th>
-                        <th>Resource</th>
-                        <th>Purpose</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>workIterations</code></td>
-                        <td>200</td>
-                        <td><strong>CPU</strong></td>
-                        <td>SHA256 hash iterations per CPU work cycle. Controls sustained CPU usage (~50% per thread).</td>
-                    </tr>
-                    <tr>
-                        <td><code>bufferSizeKb</code></td>
-                        <td>20000</td>
-                        <td><strong>Memory</strong></td>
-                        <td>Memory held for entire request duration. Creates sustained memory pressure.</td>
-                    </tr>
-                    <tr>
-                        <td><code>baselineDelayMs</code></td>
-                        <td>500</td>
-                        <td><strong>Thread Pool</strong></td>
-                        <td>Minimum request duration (ms). CPU work and sleep interleaved throughout.</td>
-                    </tr>
-                    <tr>
-                        <td><code>softLimit</code></td>
-                        <td>25</td>
-                        <td><strong>Thread Pool</strong></td>
-                        <td>Concurrent requests before degradation. Lower = faster exhaustion.</td>
-                    </tr>
-                    <tr>
-                        <td><code>degradationFactor</code></td>
-                        <td>500</td>
-                        <td><strong>Thread Pool</strong></td>
-                        <td>Additional delay (ms) per request over softLimit.</td>
-                    </tr>
-                    <tr>
-                        <td><code>errorAfter</code></td>
-                        <td>120</td>
-                        <td><strong>Chaos</strong></td>
-                        <td>Seconds before random errors may be thrown. Set to 0 to disable.</td>
-                    </tr>
-                    <tr>
-                        <td><code>errorPercent</code></td>
-                        <td>20</td>
-                        <td><strong>Chaos</strong></td>
-                        <td>Percentage chance (0-100) of throwing a random error per check interval after threshold.</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3>Tuning Parameters for Different Scenarios</h3>
-            <p>Complete request body examples for various test scenarios:</p>
-            <div class="info-box">
-                <strong>Note:</strong> Actual response times will vary based on your Azure App Service tier, current load, and other factors. Use Azure Load Testing to establish baseline performance for your specific environment. These example scenarios, and the defaults, are for a Premium0V3 worker. Any other SKU or worker size will need individual tuning.
-            </div>
-            <table class="api-table compact">
-                <thead>
-                    <tr>
-                        <th>Scenario</th>
-                        <th>workIterations</th>
-                        <th>bufferSizeKb</th>
-                        <th>baselineDelayMs</th>
-                        <th>softLimit</th>
-                        <th>degradationFactor</th>
-                        <th>Primary Stress</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Thread pool only</td>
-                        <td>0</td>
-                        <td>2000</td>
-                        <td>500</td>
-                        <td>25</td>
-                        <td>500</td>
-                        <td>Thread pool exhaustion, minimal CPU</td>
-                    </tr>
-                    <tr>
-                        <td>CPU intensive</td>
-                        <td>10000</td>
-                        <td>2000</td>
-                        <td>0</td>
-                        <td>500</td>
-                        <td>25</td>
-                        <td>High CPU, minimal thread blocking</td>
-                    </tr>
-                    <tr>
-                        <td>Memory pressure</td>
-                        <td>20</td>
-                        <td>100000</td>
-                        <td>100</td>
-                        <td>100</td>
-                        <td>125</td>
-                        <td>High memory allocation (100MB/request)</td>
-                    </tr>
-                    <tr>
-                        <td>Balanced (default)</td>
-                        <td>200</td>
-                        <td>20000</td>
-                        <td>500</td>
-                        <td>25</td>
-                        <td>500</td>
-                        <td>Tuned for Premium0V3 worker</td>
-                    </tr>
-                    <tr>
-                        <td>High concurrency</td>
-                        <td>100</td>
-                        <td>10000</td>
-                        <td>200</td>
-                        <td>250</td>
-                        <td>50</td>
-                        <td>Gradual degradation under high load</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
         <!-- Recommended Monitoring Setup Section -->
         <section id="setup" class="doc-section">
             <h2>🛠️ Recommended Monitoring Setup</h2>
@@ -1576,9 +1368,6 @@ az webapp log config \
                         <li class="doc-toc-section-item">Tools</li>
                         <li class="doc-toc-item">
                             <a href="#latency"><span class="toc-icon">⏱️</span>Latency Monitor</a>
-                        </li>
-                        <li class="doc-toc-item">
-                            <a href="#load-testing"><span class="toc-icon">📈</span>Load Testing</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Reference</li>

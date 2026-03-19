@@ -1632,11 +1632,6 @@ function logEvent(levelOrCategory, message, options = {}) {
     entry.innerHTML = `<span class="log-time">${time} UTC</span>${iconHtml}${message}`;
     
     log.insertBefore(entry, log.firstChild);
-    
-    // Limit log entries
-    while (log.children.length > 50) {
-        log.removeChild(log.lastChild);
-    }
 }
 
 // ==========================================================================
