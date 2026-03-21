@@ -160,9 +160,10 @@ public class CpuStressService : ICpuStressService
         // STEP 3: Track SimulationStarted event BEFORE starting background work
         // ==========================================================================
         // IMPORTANT: We track the start event here, in the synchronous HTTP request flow,
-        // BEFORE launching the CPU-intensive background task. This ensures the telemetry
-        // is transmitted before CPU saturation prevents I/O threads from running.
-        _simulationContext.TrackSimulationStarted(simulationId, SimulationType.Cpu.ToString());
+        // BEFORE launching the CPU-intensive background task. We use waitForTransmission: true
+        // to ensure the telemetry is actually transmitted over the network before CPU saturation
+        // prevents I/O threads from running.
+        _simulationContext.TrackSimulationStarted(simulationId, SimulationType.Cpu.ToString(), waitForTransmission: true);
 
         // ==========================================================================
         // STEP 4: Start the CPU stress in the background

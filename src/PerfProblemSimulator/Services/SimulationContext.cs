@@ -36,7 +36,8 @@ public interface ISimulationContext
     /// </summary>
     /// <param name="simulationId">The simulation ID.</param>
     /// <param name="simulationType">The type of simulation.</param>
-    void TrackSimulationStarted(Guid simulationId, string simulationType);
+    /// <param name="waitForTransmission">If true, blocks until telemetry transmission completes. Use for CPU-intensive simulations.</param>
+    void TrackSimulationStarted(Guid simulationId, string simulationType, bool waitForTransmission = false);
 
     /// <summary>
     /// Tracks a SimulationEnded event in Application Insights.
@@ -101,9 +102,9 @@ public class SimulationContext : ISimulationContext
     }
 
     /// <inheritdoc />
-    public void TrackSimulationStarted(Guid simulationId, string simulationType)
+    public void TrackSimulationStarted(Guid simulationId, string simulationType, bool waitForTransmission = false)
     {
-        TrackSimulationEvent("SimulationStarted", simulationId, simulationType);
+        TrackSimulationEvent("SimulationStarted", simulationId, simulationType, waitForTransmission);
     }
 
     /// <inheritdoc />
@@ -115,7 +116,11 @@ public class SimulationContext : ISimulationContext
     /// <summary>
     /// Tracks a simulation event in Application Insights.
     /// </summary>
-    internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType)
+    /// <param name="eventName">The event name (SimulationStarted/SimulationEnded).</param>
+    /// <param name="simulationId">The simulation ID.</param>
+    /// <param name="simulationType">The simulation type.</param>
+    /// <param name="waitForTransmission">If true, blocks until transmission completes (use for CPU-intensive simulations).</param>
+    internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType, bool waitForTransmission = false)
     {
         _logger.LogInformation(
             "Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
@@ -128,7 +133,7 @@ public class SimulationContext : ISimulationContext
             
             if (telemetryClient == null)
             {
-                _logger.LogDebug("TelemetryClient not available (App Insights not configured), skipping event tracking");
+                _logger.LogWarning("TelemetryClient not available (App Insights not configured), skipping event tracking");
                 return;
             }
 
@@ -140,8 +145,16 @@ public class SimulationContext : ISimulationContext
 
             telemetryClient.TrackEvent(eventName, properties);
             
-            // Flush to ensure event is sent immediately (important for short-lived simulations)
+            // Flush to ensure event is sent
             telemetryClient.Flush();
+            
+            // For CPU-intensive operations, wait to ensure transmission completes
+            // before background threads saturate all cores
+            if (waitForTransmission)
+            {
+                _logger.LogDebug("Waiting for telemetry transmission to complete...");
+                Thread.Sleep(1000); // Give network I/O time to complete
+            }
             
             _logger.LogDebug("Successfully tracked and flushed event {EventName}", eventName);
         }
