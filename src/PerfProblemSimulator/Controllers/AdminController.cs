@@ -1,3 +1,4 @@
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
 using PerfProblemSimulator.Services;
@@ -30,16 +31,22 @@ public class AdminController : ControllerBase
 {
     private readonly ISimulationTracker _simulationTracker;
     private readonly IMemoryPressureService _memoryPressureService;
+    private readonly TelemetryClient? _telemetryClient;
+    private readonly ILogger<AdminController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AdminController"/> class.
     /// </summary>
     public AdminController(
         ISimulationTracker simulationTracker,
-        IMemoryPressureService memoryPressureService)
+        IMemoryPressureService memoryPressureService,
+        ILogger<AdminController> logger,
+        TelemetryClient? telemetryClient = null)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _memoryPressureService = memoryPressureService ?? throw new ArgumentNullException(nameof(memoryPressureService));
+        _logger = logger;
+        _telemetryClient = telemetryClient;
     }
 
     /// <summary>
@@ -88,6 +95,57 @@ public class AdminController : ControllerBase
                 ComputerName = Environment.GetEnvironmentVariable("COMPUTERNAME")
             }
         });
+    }
+
+    /// <summary>
+    /// Tests Application Insights telemetry by sending a test event and trace.
+    /// Use this endpoint to verify Application Insights is configured correctly.
+    /// </summary>
+    /// <returns>Diagnostic information about Application Insights configuration.</returns>
+    /// <response code="200">Returns telemetry diagnostic information.</response>
+    [HttpGet("test-appinsights")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult TestAppInsights()
+    {
+        var testId = Guid.NewGuid();
+        var diagnostics = new AppInsightsDiagnostics
+        {
+            TestId = testId,
+            TelemetryClientResolved = _telemetryClient != null,
+            TelemetryClientEnabled = _telemetryClient?.IsEnabled() ?? false,
+            ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING") is { } cs 
+                ? (cs.Length > 20 ? cs[..20] + "..." : cs) // Truncate for security
+                : null
+        };
+
+        // Log a test trace via ILogger
+        _logger.LogWarning("🧪 TEST TRACE via ILogger - TestId: {TestId} - If you see this in AppTraces, ILogger works!", testId);
+        
+        // Send a test event via TelemetryClient
+        if (_telemetryClient != null && _telemetryClient.IsEnabled())
+        {
+            _telemetryClient.TrackEvent("TestEvent", new Dictionary<string, string>
+            {
+                ["TestId"] = testId.ToString(),
+                ["Source"] = "AdminController.TestAppInsights"
+            });
+            _telemetryClient.Flush();
+            Thread.Sleep(500); // Give time for flush
+            
+            diagnostics.TestEventSent = true;
+            
+            _logger.LogWarning("🧪 TEST EVENT sent via TelemetryClient - TestId: {TestId} - If you see this in AppEvents, TrackEvent works!", testId);
+        }
+        else
+        {
+            diagnostics.TestEventSent = false;
+            _logger.LogWarning("⚠️ TelemetryClient not available or disabled - cannot send test event");
+        }
+
+        diagnostics.KqlQueryForTrace = $@"AppTraces | where TimeGenerated > ago(5m) | where Message contains ""{testId}"" | project TimeGenerated, Message";
+        diagnostics.KqlQueryForEvent = $@"AppEvents | where TimeGenerated > ago(5m) | where Name == ""TestEvent"" | where Properties.TestId == ""{testId}"" | project TimeGenerated, Name, Properties";
+
+        return Ok(diagnostics);
     }
 }
 
@@ -214,3 +272,44 @@ public class ThreadPoolStats
         /// </summary>
         public string? ComputerName { get; init; }
     }
+
+/// <summary>
+/// Diagnostic information about Application Insights configuration.
+/// </summary>
+public class AppInsightsDiagnostics
+{
+    /// <summary>
+    /// Unique identifier for this test run.
+    /// </summary>
+    public Guid TestId { get; init; }
+
+    /// <summary>
+    /// Whether TelemetryClient was resolved from DI.
+    /// </summary>
+    public bool TelemetryClientResolved { get; init; }
+
+    /// <summary>
+    /// Whether TelemetryClient.IsEnabled() returns true.
+    /// </summary>
+    public bool TelemetryClientEnabled { get; init; }
+
+    /// <summary>
+    /// Truncated connection string (for verification).
+    /// </summary>
+    public string? ConnectionString { get; init; }
+
+    /// <summary>
+    /// Whether a test event was sent.
+    /// </summary>
+    public bool TestEventSent { get; set; }
+
+    /// <summary>
+    /// KQL query to find the test trace in AppTraces.
+    /// </summary>
+    public string? KqlQueryForTrace { get; set; }
+
+    /// <summary>
+    /// KQL query to find the test event in AppEvents.
+    /// </summary>
+    public string? KqlQueryForEvent { get; set; }
+}

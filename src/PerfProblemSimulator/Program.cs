@@ -1,3 +1,4 @@
+using Microsoft.ApplicationInsights;
 using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
 using PerfProblemSimulator.Services;
@@ -254,12 +255,30 @@ builder.Services.AddCors(options =>
 // or the ApplicationInsights:ConnectionString configuration setting.
 // Educational Note: Application Insights v3 uses OpenTelemetry under the hood.
 // Request tracking, dependency tracking, exception logging are automatic.
-builder.Services.AddApplicationInsightsTelemetry();
+// ILogger integration is also automatic - no separate AddApplicationInsights() call needed.
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    // Enable automatic tracking of ILogger logs
+    options.EnableQuickPulseMetricStream = true;
+});
 
 // SimulationContext - Singleton service for tracking current simulation context
 // Educational Note: This uses AsyncLocal<T> to flow the simulation ID across async calls.
 // The context also uses TelemetryClient to track simulation events with the ID attached.
-builder.Services.AddSingleton<ISimulationContext, SimulationContext>();
+// The TelemetryClient is resolved from DI after Application Insights is configured.
+builder.Services.AddSingleton<ISimulationContext>(sp =>
+{
+    var logger = sp.GetRequiredService<ILogger<SimulationContext>>();
+    var telemetryClient = sp.GetService<TelemetryClient>();
+    
+    // Log the telemetry configuration status at startup
+    logger.LogWarning(
+        "🔧 Resolving SimulationContext from DI. TelemetryClient resolved: {Resolved}, IsEnabled: {IsEnabled}",
+        telemetryClient != null,
+        telemetryClient?.IsEnabled() ?? false);
+    
+    return new SimulationContext(logger, telemetryClient);
+});
 
 // -----------------------------------------------------------------------------
 // Request Timeouts (Kestrel)
