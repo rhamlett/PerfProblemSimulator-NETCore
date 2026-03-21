@@ -157,7 +157,15 @@ public class CpuStressService : ICpuStressService
             processorCount);
 
         // ==========================================================================
-        // STEP 3: Start the CPU stress in the background
+        // STEP 3: Track SimulationStarted event BEFORE starting background work
+        // ==========================================================================
+        // IMPORTANT: We track the start event here, in the synchronous HTTP request flow,
+        // BEFORE launching the CPU-intensive background task. This ensures the telemetry
+        // is transmitted before CPU saturation prevents I/O threads from running.
+        _simulationContext.TrackSimulationStarted(simulationId, SimulationType.Cpu.ToString());
+
+        // ==========================================================================
+        // STEP 4: Start the CPU stress in the background
         // ==========================================================================
         // We use Task.Run to offload the CPU-intensive work to the thread pool,
         // allowing this method to return immediately with the simulation metadata.
@@ -167,7 +175,7 @@ public class CpuStressService : ICpuStressService
         _ = Task.Run(() => ExecuteCpuStress(simulationId, actualDuration, normalizedLevel, cts.Token), cts.Token);
 
         // ==========================================================================
-        // STEP 4: Return the result immediately
+        // STEP 5: Return the result immediately
         // ==========================================================================
         // The caller gets back the simulation ID and can use it to track progress
         // or cancel the simulation early.
@@ -209,13 +217,10 @@ public class CpuStressService : ICpuStressService
     /// </remarks>
     private void ExecuteCpuStress(Guid simulationId, int durationSeconds, string level, CancellationToken cancellationToken)
     {
-        // Set simulation context for Application Insights telemetry correlation
-        using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.Cpu.ToString());
-        
-        // IMPORTANT: Brief delay to allow telemetry transmission before CPU saturation.
-        // Without this, the spin loops start immediately and starve the I/O threads
-        // that App Insights uses to send telemetry, causing events to be lost.
-        Thread.Sleep(500);
+        // Set simulation context for Activity tags and SimulationEnded tracking.
+        // Pass trackStart: false because we already tracked SimulationStarted synchronously
+        // in TriggerCpuStressAsync before launching this background task.
+        using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.Cpu.ToString(), trackStart: false);
         
         // Convert level to internal percentage: moderate = 65%, high = 100%
         var targetPercentage = level == "moderate" ? 65 : 100;

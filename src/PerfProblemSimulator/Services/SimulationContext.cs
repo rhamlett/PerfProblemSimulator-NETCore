@@ -26,8 +26,24 @@ public interface ISimulationContext
     /// </summary>
     /// <param name="simulationId">The simulation ID.</param>
     /// <param name="simulationType">The type of simulation.</param>
+    /// <param name="trackStart">Whether to track the SimulationStarted event. Set to false if already tracked externally.</param>
     /// <returns>A disposable that clears the context and tracks simulation end when disposed.</returns>
-    IDisposable SetContext(Guid simulationId, string simulationType);
+    IDisposable SetContext(Guid simulationId, string simulationType, bool trackStart = true);
+
+    /// <summary>
+    /// Tracks a SimulationStarted event in Application Insights.
+    /// Use this to track the event synchronously before starting CPU-intensive background work.
+    /// </summary>
+    /// <param name="simulationId">The simulation ID.</param>
+    /// <param name="simulationType">The type of simulation.</param>
+    void TrackSimulationStarted(Guid simulationId, string simulationType);
+
+    /// <summary>
+    /// Tracks a SimulationEnded event in Application Insights.
+    /// </summary>
+    /// <param name="simulationId">The simulation ID.</param>
+    /// <param name="simulationType">The type of simulation.</param>
+    void TrackSimulationEnded(Guid simulationId, string simulationType);
 }
 
 /// <summary>
@@ -59,7 +75,7 @@ public class SimulationContext : ISimulationContext
     public string? CurrentSimulationType => _currentSimulationType.Value;
 
     /// <inheritdoc />
-    public IDisposable SetContext(Guid simulationId, string simulationType)
+    public IDisposable SetContext(Guid simulationId, string simulationType, bool trackStart = true)
     {
         var previousId = _currentSimulationId.Value;
         var previousType = _currentSimulationType.Value;
@@ -67,8 +83,11 @@ public class SimulationContext : ISimulationContext
         _currentSimulationId.Value = simulationId;
         _currentSimulationType.Value = simulationType;
 
-        // Track simulation start event in Application Insights
-        TrackSimulationEvent("SimulationStarted", simulationId, simulationType);
+        // Track simulation start event in Application Insights (unless already tracked externally)
+        if (trackStart)
+        {
+            TrackSimulationEvent("SimulationStarted", simulationId, simulationType);
+        }
 
         // Also set tags on the current Activity for W3C trace context correlation
         var activity = Activity.Current;
@@ -79,6 +98,18 @@ public class SimulationContext : ISimulationContext
         }
 
         return new ContextScope(this, simulationId, simulationType, previousId, previousType);
+    }
+
+    /// <inheritdoc />
+    public void TrackSimulationStarted(Guid simulationId, string simulationType)
+    {
+        TrackSimulationEvent("SimulationStarted", simulationId, simulationType);
+    }
+
+    /// <inheritdoc />
+    public void TrackSimulationEnded(Guid simulationId, string simulationType)
+    {
+        TrackSimulationEvent("SimulationEnded", simulationId, simulationType);
     }
 
     /// <summary>
