@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Microsoft.ApplicationInsights;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace PerfProblemSimulator.Services;
@@ -55,18 +54,22 @@ public class SimulationContext : ISimulationContext
 {
     private static readonly AsyncLocal<Guid?> _currentSimulationId = new();
     private static readonly AsyncLocal<string?> _currentSimulationType = new();
-    private readonly IServiceProvider _serviceProvider;
+    private readonly TelemetryClient? _telemetryClient;
     private readonly ILogger<SimulationContext> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SimulationContext"/> class.
     /// </summary>
-    /// <param name="serviceProvider">Service provider for resolving TelemetryClient.</param>
+    /// <param name="telemetryClient">Application Insights TelemetryClient (optional - may be null if not configured).</param>
     /// <param name="logger">Logger for diagnostic output.</param>
-    public SimulationContext(IServiceProvider serviceProvider, ILogger<SimulationContext> logger)
+    public SimulationContext(ILogger<SimulationContext> logger, TelemetryClient? telemetryClient = null)
     {
-        _serviceProvider = serviceProvider;
         _logger = logger;
+        _telemetryClient = telemetryClient;
+        
+        _logger.LogWarning(
+            "🔧 SimulationContext initialized. TelemetryClient available: {Available}",
+            _telemetryClient != null);
     }
 
     /// <inheritdoc />
@@ -122,18 +125,15 @@ public class SimulationContext : ISimulationContext
     /// <param name="waitForTransmission">If true, blocks until transmission completes (use for CPU-intensive simulations).</param>
     internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType, bool waitForTransmission = false)
     {
-        _logger.LogInformation(
-            "Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
+        _logger.LogWarning(
+            "📊 Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
             eventName, simulationId, simulationType);
 
         try
         {
-            // Lazily resolve TelemetryClient - it may not be registered if App Insights isn't configured
-            var telemetryClient = _serviceProvider.GetService<TelemetryClient>();
-            
-            if (telemetryClient == null)
+            if (_telemetryClient == null)
             {
-                _logger.LogWarning("TelemetryClient not available (App Insights not configured), skipping event tracking");
+                _logger.LogWarning("⚠️ TelemetryClient not available (App Insights not configured), skipping event tracking");
                 return;
             }
 
@@ -143,24 +143,26 @@ public class SimulationContext : ISimulationContext
                 ["SimulationType"] = simulationType
             };
 
-            telemetryClient.TrackEvent(eventName, properties);
+            _telemetryClient.TrackEvent(eventName, properties);
+            _logger.LogWarning("📊 TrackEvent called for {EventName}", eventName);
             
             // Flush to ensure event is sent
-            telemetryClient.Flush();
+            _telemetryClient.Flush();
+            _logger.LogWarning("📊 Flush called for {EventName}", eventName);
             
             // For CPU-intensive operations, wait to ensure transmission completes
             // before background threads saturate all cores
             if (waitForTransmission)
             {
-                _logger.LogDebug("Waiting for telemetry transmission to complete...");
+                _logger.LogWarning("📊 Waiting 1s for telemetry transmission...");
                 Thread.Sleep(1000); // Give network I/O time to complete
             }
             
-            _logger.LogDebug("Successfully tracked and flushed event {EventName}", eventName);
+            _logger.LogWarning("📊 Successfully tracked event {EventName}", eventName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to track App Insights event {EventName}", eventName);
+            _logger.LogError(ex, "❌ Failed to track App Insights event {EventName}", eventName);
         }
     }
 

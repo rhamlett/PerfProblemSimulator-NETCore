@@ -336,7 +336,8 @@ app.MapHub<MetricsHub>("/hubs/metrics");
 
 // Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Performance Problem Simulator starting...");
+logger.LogWarning(
+    "🚀 PerfProblemSimulator starting. This message should appear in AppTraces if App Insights logging is configured correctly.");
 logger.LogInformation(
     "Problem endpoints are {Status}",
     Environment.GetEnvironmentVariable("DISABLE_PROBLEM_ENDPOINTS")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true
