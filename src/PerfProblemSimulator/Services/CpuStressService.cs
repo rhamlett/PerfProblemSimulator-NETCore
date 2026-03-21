@@ -212,6 +212,11 @@ public class CpuStressService : ICpuStressService
         // Set simulation context for Application Insights telemetry correlation
         using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.Cpu.ToString());
         
+        // IMPORTANT: Brief delay to allow telemetry transmission before CPU saturation.
+        // Without this, the spin loops start immediately and starve the I/O threads
+        // that App Insights uses to send telemetry, causing events to be lost.
+        Thread.Sleep(500);
+        
         // Convert level to internal percentage: moderate = 65%, high = 100%
         var targetPercentage = level == "moderate" ? 65 : 100;
         
