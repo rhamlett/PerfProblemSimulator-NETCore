@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace PerfProblemSimulator.Services;
@@ -37,28 +38,18 @@ public class SimulationContext : ISimulationContext
 {
     private static readonly AsyncLocal<Guid?> _currentSimulationId = new();
     private static readonly AsyncLocal<string?> _currentSimulationType = new();
-    private readonly TelemetryClient? _telemetryClient;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SimulationContext> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SimulationContext"/> class.
     /// </summary>
+    /// <param name="serviceProvider">Service provider for resolving TelemetryClient.</param>
     /// <param name="logger">Logger for diagnostic output.</param>
-    /// <param name="telemetryClient">The Application Insights telemetry client (optional - null when App Insights not configured).</param>
-    public SimulationContext(ILogger<SimulationContext> logger, TelemetryClient? telemetryClient = null)
+    public SimulationContext(IServiceProvider serviceProvider, ILogger<SimulationContext> logger)
     {
+        _serviceProvider = serviceProvider;
         _logger = logger;
-        _telemetryClient = telemetryClient;
-        
-        if (_telemetryClient == null)
-        {
-            _logger.LogWarning("SimulationContext: TelemetryClient is null - Application Insights events will not be tracked. " +
-                "Ensure APPLICATIONINSIGHTS_CONNECTION_STRING is set.");
-        }
-        else
-        {
-            _logger.LogInformation("SimulationContext: TelemetryClient initialized successfully");
-        }
     }
 
     /// <inheritdoc />
@@ -99,24 +90,27 @@ public class SimulationContext : ISimulationContext
             "Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
             eventName, simulationId, simulationType);
 
-        if (_telemetryClient == null)
-        {
-            _logger.LogDebug("TelemetryClient is null, skipping event tracking");
-            return;
-        }
-
         try
         {
+            // Lazily resolve TelemetryClient - it may not be registered if App Insights isn't configured
+            var telemetryClient = _serviceProvider.GetService<TelemetryClient>();
+            
+            if (telemetryClient == null)
+            {
+                _logger.LogDebug("TelemetryClient not available (App Insights not configured), skipping event tracking");
+                return;
+            }
+
             var properties = new Dictionary<string, string>
             {
                 ["SimulationId"] = simulationId.ToString(),
                 ["SimulationType"] = simulationType
             };
 
-            _telemetryClient.TrackEvent(eventName, properties);
+            telemetryClient.TrackEvent(eventName, properties);
             
             // Flush to ensure event is sent immediately (important for short-lived simulations)
-            _telemetryClient.Flush();
+            telemetryClient.Flush();
             
             _logger.LogDebug("Successfully tracked and flushed event {EventName}", eventName);
         }
