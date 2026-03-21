@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.ApplicationInsights;
+using Microsoft.Extensions.Logging;
 
 namespace PerfProblemSimulator.Services;
 
@@ -37,14 +38,27 @@ public class SimulationContext : ISimulationContext
     private static readonly AsyncLocal<Guid?> _currentSimulationId = new();
     private static readonly AsyncLocal<string?> _currentSimulationType = new();
     private readonly TelemetryClient? _telemetryClient;
+    private readonly ILogger<SimulationContext> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SimulationContext"/> class.
     /// </summary>
-    /// <param name="telemetryClient">The Application Insights telemetry client (optional).</param>
-    public SimulationContext(TelemetryClient? telemetryClient = null)
+    /// <param name="logger">Logger for diagnostic output.</param>
+    /// <param name="telemetryClient">The Application Insights telemetry client (optional - null when App Insights not configured).</param>
+    public SimulationContext(ILogger<SimulationContext> logger, TelemetryClient? telemetryClient = null)
     {
+        _logger = logger;
         _telemetryClient = telemetryClient;
+        
+        if (_telemetryClient == null)
+        {
+            _logger.LogWarning("SimulationContext: TelemetryClient is null - Application Insights events will not be tracked. " +
+                "Ensure APPLICATIONINSIGHTS_CONNECTION_STRING is set.");
+        }
+        else
+        {
+            _logger.LogInformation("SimulationContext: TelemetryClient initialized successfully");
+        }
     }
 
     /// <inheritdoc />
@@ -81,15 +95,35 @@ public class SimulationContext : ISimulationContext
     /// </summary>
     internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType)
     {
-        if (_telemetryClient == null) return;
+        _logger.LogInformation(
+            "Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
+            eventName, simulationId, simulationType);
 
-        var properties = new Dictionary<string, string>
+        if (_telemetryClient == null)
         {
-            ["SimulationId"] = simulationId.ToString(),
-            ["SimulationType"] = simulationType
-        };
+            _logger.LogDebug("TelemetryClient is null, skipping event tracking");
+            return;
+        }
 
-        _telemetryClient.TrackEvent(eventName, properties);
+        try
+        {
+            var properties = new Dictionary<string, string>
+            {
+                ["SimulationId"] = simulationId.ToString(),
+                ["SimulationType"] = simulationType
+            };
+
+            _telemetryClient.TrackEvent(eventName, properties);
+            
+            // Flush to ensure event is sent immediately (important for short-lived simulations)
+            _telemetryClient.Flush();
+            
+            _logger.LogDebug("Successfully tracked and flushed event {EventName}", eventName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to track App Insights event {EventName}", eventName);
+        }
     }
 
     private class ContextScope : IDisposable
