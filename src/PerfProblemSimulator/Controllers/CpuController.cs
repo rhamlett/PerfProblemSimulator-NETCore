@@ -109,22 +109,20 @@ public class CpuController : ControllerBase
         var durationSeconds = request?.DurationSeconds ?? 30;
         var level = request?.Level ?? "high";
 
-        // Log the incoming request (FR-010: Request logging)
-        _logger.LogInformation(
-            "Received CPU stress request: DurationSeconds={Duration}, Level={Level}, ClientIP={ClientIP}",
+        // Log at WARNING level to ensure visibility (bypasses level filtering)
+        _logger.LogWarning(
+            "🔥 CONTROLLER: Received CPU stress request: Duration={Duration}s, Level={Level}",
             durationSeconds,
-            level,
-            HttpContext.Connection.RemoteIpAddress);
+            level);
 
         try
         {
+            _logger.LogWarning("🔥 CONTROLLER: Calling TriggerCpuStressAsync...");
             var result = await _cpuStressService.TriggerCpuStressAsync(durationSeconds, cancellationToken, level);
 
-            _logger.LogInformation(
-                "Started CPU stress simulation {SimulationId} for {Duration}s @ {Level}",
-                result.SimulationId,
-                result.ActualParameters?["DurationSeconds"],
-                result.ActualParameters?["Level"]);
+            _logger.LogWarning(
+                "🔥 CONTROLLER: TriggerCpuStressAsync returned. SimulationId={SimulationId}",
+                result.SimulationId);
 
             return Ok(result);
         }
