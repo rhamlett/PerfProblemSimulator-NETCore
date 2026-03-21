@@ -109,45 +109,75 @@ public class AdminController : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     public IActionResult TestAppInsights()
     {
-        var testId = Guid.NewGuid();
-        var diagnostics = new AppInsightsDiagnostics
+        try
         {
-            TestId = testId,
-            TelemetryClientResolved = _telemetryClient != null,
-            TelemetryClientEnabled = _telemetryClient?.IsEnabled() ?? false,
-            ConnectionString = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING") is { } cs 
-                ? (cs.Length > 20 ? cs[..20] + "..." : cs) // Truncate for security
-                : null
-        };
-
-        // Log a test trace via ILogger
-        _logger.LogWarning("🧪 TEST TRACE via ILogger - TestId: {TestId} - If you see this in AppTraces, ILogger works!", testId);
-        
-        // Send a test event via TelemetryClient
-        if (_telemetryClient != null && _telemetryClient.IsEnabled())
-        {
-            _telemetryClient.TrackEvent("TestEvent", new Dictionary<string, string>
+            var testId = Guid.NewGuid();
+            
+            // Get connection string safely
+            string? connectionString = null;
+            try
             {
-                ["TestId"] = testId.ToString(),
-                ["Source"] = "AdminController.TestAppInsights"
-            });
-            _telemetryClient.Flush();
-            Thread.Sleep(500); // Give time for flush
+                var cs = Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+                connectionString = cs != null && cs.Length > 20 ? cs[..20] + "..." : cs;
+            }
+            catch { /* ignore */ }
+
+            var diagnostics = new AppInsightsDiagnostics
+            {
+                TestId = testId,
+                TelemetryClientResolved = _telemetryClient != null,
+                TelemetryClientEnabled = false,
+                ConnectionString = connectionString
+            };
+
+            // Safely check IsEnabled
+            try
+            {
+                diagnostics.TelemetryClientEnabled = _telemetryClient?.IsEnabled() ?? false;
+            }
+            catch (Exception ex)
+            {
+                diagnostics.Error = $"IsEnabled() threw: {ex.Message}";
+            }
+
+            // Log a test trace via ILogger
+            _logger.LogWarning("🧪 TEST TRACE via ILogger - TestId: {TestId}", testId);
             
-            diagnostics.TestEventSent = true;
-            
-            _logger.LogWarning("🧪 TEST EVENT sent via TelemetryClient - TestId: {TestId} - If you see this in AppEvents, TrackEvent works!", testId);
+            // Send a test event via TelemetryClient
+            if (_telemetryClient != null && diagnostics.TelemetryClientEnabled)
+            {
+                try
+                {
+                    _telemetryClient.TrackEvent("TestEvent", new Dictionary<string, string>
+                    {
+                        ["TestId"] = testId.ToString(),
+                        ["Source"] = "AdminController.TestAppInsights"
+                    });
+                    _telemetryClient.Flush();
+                    Thread.Sleep(500);
+                    
+                    diagnostics.TestEventSent = true;
+                    _logger.LogWarning("🧪 TEST EVENT sent - TestId: {TestId}", testId);
+                }
+                catch (Exception ex)
+                {
+                    diagnostics.Error = $"TrackEvent threw: {ex.Message}";
+                }
+            }
+            else
+            {
+                diagnostics.TestEventSent = false;
+            }
+
+            diagnostics.KqlQueryForTrace = $"AppTraces | where TimeGenerated > ago(5m) | where Message contains \"{testId}\"";
+            diagnostics.KqlQueryForEvent = $"AppEvents | where TimeGenerated > ago(5m) | where Name == \"TestEvent\"";
+
+            return Ok(diagnostics);
         }
-        else
+        catch (Exception ex)
         {
-            diagnostics.TestEventSent = false;
-            _logger.LogWarning("⚠️ TelemetryClient not available or disabled - cannot send test event");
+            return Ok(new { error = ex.Message, stackTrace = ex.StackTrace });
         }
-
-        diagnostics.KqlQueryForTrace = $@"AppTraces | where TimeGenerated > ago(5m) | where Message contains ""{testId}"" | project TimeGenerated, Message";
-        diagnostics.KqlQueryForEvent = $@"AppEvents | where TimeGenerated > ago(5m) | where Name == ""TestEvent"" | where Properties.TestId == ""{testId}"" | project TimeGenerated, Name, Properties";
-
-        return Ok(diagnostics);
     }
 }
 
@@ -283,27 +313,32 @@ public class AppInsightsDiagnostics
     /// <summary>
     /// Unique identifier for this test run.
     /// </summary>
-    public Guid TestId { get; init; }
+    public Guid TestId { get; set; }
 
     /// <summary>
     /// Whether TelemetryClient was resolved from DI.
     /// </summary>
-    public bool TelemetryClientResolved { get; init; }
+    public bool TelemetryClientResolved { get; set; }
 
     /// <summary>
     /// Whether TelemetryClient.IsEnabled() returns true.
     /// </summary>
-    public bool TelemetryClientEnabled { get; init; }
+    public bool TelemetryClientEnabled { get; set; }
 
     /// <summary>
     /// Truncated connection string (for verification).
     /// </summary>
-    public string? ConnectionString { get; init; }
+    public string? ConnectionString { get; set; }
 
     /// <summary>
     /// Whether a test event was sent.
     /// </summary>
     public bool TestEventSent { get; set; }
+
+    /// <summary>
+    /// Any error message encountered during the test.
+    /// </summary>
+    public string? Error { get; set; }
 
     /// <summary>
     /// KQL query to find the test trace in AppTraces.
