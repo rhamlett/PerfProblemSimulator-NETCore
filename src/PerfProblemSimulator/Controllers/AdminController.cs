@@ -148,20 +148,34 @@ public class AdminController : ControllerBase
             {
                 try
                 {
-                    _telemetryClient.TrackEvent("TestEvent", new Dictionary<string, string>
+                    // Try simplest possible TrackEvent first (no properties)
+                    _telemetryClient.TrackEvent("TestEvent_Simple");
+                    diagnostics.TestEventSent = true;
+                    
+                    // Now try with properties
+                    var props = new Dictionary<string, string>
                     {
                         ["TestId"] = testId.ToString(),
-                        ["Source"] = "AdminController.TestAppInsights"
-                    });
+                        ["Source"] = "AdminController"
+                    };
+                    _telemetryClient.TrackEvent("TestEvent_WithProps", props);
+                    
+                    // Also try TrackTrace
+                    _telemetryClient.TrackTrace($"TestTrace - TestId: {testId}");
+                    
                     _telemetryClient.Flush();
                     Thread.Sleep(500);
                     
-                    diagnostics.TestEventSent = true;
-                    _logger.LogWarning("🧪 TEST EVENT sent - TestId: {TestId}", testId);
+                    _logger.LogWarning("🧪 TEST EVENTS sent - TestId: {TestId}", testId);
                 }
                 catch (Exception ex)
                 {
-                    diagnostics.Error = $"TrackEvent threw: {ex.Message}";
+                    diagnostics.Error = $"Telemetry threw: {ex.GetType().Name}: {ex.Message}";
+                    // Include inner exception if present
+                    if (ex.InnerException != null)
+                    {
+                        diagnostics.Error += $" Inner: {ex.InnerException.Message}";
+                    }
                 }
             }
             else
