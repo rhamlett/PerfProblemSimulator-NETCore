@@ -1601,13 +1601,44 @@ const LOG_ICONS = {
 
 /**
  * Wraps a message with a simulation ID tooltip for correlation.
+ * Clicking the message copies the simulation ID to clipboard.
  * @param {string} message - The message to display
  * @param {string} simulationId - The full GUID simulation ID (shown in tooltip)
  * @returns {string} HTML string with message and tooltip
  */
 function withSimulationId(message, simulationId) {
     if (!simulationId) return message;
-    return `<span class="sim-msg" title="Simulation ID: ${simulationId}">${message}</span>`;
+    return `<span class="sim-msg" data-simid="${simulationId}" title="Click to copy Simulation ID: ${simulationId}">${message}</span>`;
+}
+
+/**
+ * Copies the simulation ID to clipboard when a sim-msg element is clicked.
+ * Shows a brief visual feedback to indicate successful copy.
+ */
+function initSimulationIdCopyHandlers() {
+    document.getElementById('eventLog').addEventListener('click', async (e) => {
+        const simMsg = e.target.closest('.sim-msg');
+        if (!simMsg) return;
+        
+        const simId = simMsg.dataset.simid;
+        if (!simId) return;
+        
+        try {
+            await navigator.clipboard.writeText(simId);
+            
+            // Visual feedback
+            simMsg.classList.add('copied');
+            const originalTitle = simMsg.title;
+            simMsg.title = 'Copied!';
+            
+            setTimeout(() => {
+                simMsg.classList.remove('copied');
+                simMsg.title = originalTitle;
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to copy simulation ID:', err);
+        }
+    });
 }
 
 /**
@@ -1779,6 +1810,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Wire up side panel toggle
     initializeSidePanel();
+    
+    // Enable click-to-copy for simulation IDs in event log
+    initSimulationIdCopyHandlers();
     
     logEvent('system', `Dashboard initialized (probe rate: ${CONFIG.latencyProbeIntervalMs}ms, idle timeout: ${CONFIG.idleTimeoutMinutes}m)`);
 });
