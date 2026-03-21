@@ -173,6 +173,7 @@ const state = {
         timeoutCount: 0
     },
     activeSimulations: new Map(),
+    slowRequestSimulationId: null,  // Current slow request simulation ID for correlation
     lastProcessId: null,
     isIdle: false,  // Tracks whether the server is in idle state
     lastFailedRequestCompletedAt: null  // Suppress load test stats after failed request sim
@@ -1235,7 +1236,9 @@ async function startSlowRequests() {
         
         if (response.ok) {
             const result = await response.json();
-            // Note: Don't log result.message - "Starting slow request simulator" already logged above
+            state.slowRequestSimulationId = result.simulationId;
+            addActiveSimulation(result.simulationId, 'slowrequest', 'Slow Requests');
+            logEvent('slowrequest', withSimulationId(`Started: ${durationSeconds}s requests every ${intervalSeconds}s (max ${maxRequests})`, result.simulationId));
             statusDiv.textContent = `Running: ${durationSeconds}s requests every ${intervalSeconds}s (max ${maxRequests})`;
             statusDiv.classList.add('active');
             
@@ -1273,7 +1276,14 @@ async function stopSlowRequests() {
         
         if (response.ok) {
             const result = await response.json();
-            logEvent('slowrequest', `${result.message}`);
+            const simId = state.slowRequestSimulationId;
+            if (simId) {
+                removeActiveSimulation(simId);
+                logEvent('slowrequest', withSimulationId('Stopped', simId));
+            } else {
+                logEvent('slowrequest', 'Stopped');
+            }
+            state.slowRequestSimulationId = null;
         } else {
             const error = await response.json();
             logEvent('slowrequest', `Stop request: ${error.message || 'May have already stopped'}`);
@@ -1443,7 +1453,14 @@ async function pollSlowRequestStatus() {
                 if (msg) msg.style.display = 'none';
 
                 if (status.requestsCompleted > 0) {
-                    logEvent('slowrequest', `Slow request simulation completed: ${status.requestsCompleted} requests`);
+                    const simId = state.slowRequestSimulationId;
+                    if (simId) {
+                        removeActiveSimulation(simId);
+                        logEvent('slowrequest', withSimulationId(`Completed: ${status.requestsCompleted} requests`, simId));
+                    } else {
+                        logEvent('slowrequest', `Completed: ${status.requestsCompleted} requests`);
+                    }
+                    state.slowRequestSimulationId = null;
                 }
             }
         }
