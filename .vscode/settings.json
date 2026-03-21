@@ -11,6 +11,9 @@
         ".specify/scripts/powershell/": true
     },
     "appService.defaultWebAppToDeploy": "/subscriptions/b9417dff-0689-4c48-b456-30db654d55d9/resourceGroups/rhamlettrg/providers/Microsoft.Web/sites/rhamlettDotNetWebApp",
-    "appService.deploySubpath": "src\\PerfProblemSimulator"
+    "appService.deploySubpath": "src\\PerfProblemSimulator",
+    "resharper.solution.showSolutionFoundInTheWorkspaceNotification": false,
+    "resharper.solution.autoOpenSingleSolution": false,
+    "resharper.solution.autoOpenLastSolution": false
 }
 

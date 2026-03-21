@@ -165,9 +165,9 @@ public class ThreadBlockService : IThreadBlockService
         var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         // Get current thread pool stats for logging
-        ThreadPool.GetAvailableThreads(out var workerThreads, out var ioThreads);
-        ThreadPool.GetMinThreads(out var minWorker, out var minIo);
-        ThreadPool.GetMaxThreads(out var maxWorker, out var maxIo);
+        ThreadPool.GetAvailableThreads(out var workerThreads, out _);
+        ThreadPool.GetMinThreads(out var minWorker, out _);
+        ThreadPool.GetMaxThreads(out var maxWorker, out _);
 
         var parameters = new Dictionary<string, object>
         {

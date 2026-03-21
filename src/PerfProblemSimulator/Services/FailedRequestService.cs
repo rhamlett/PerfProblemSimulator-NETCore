@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.SignalR;
 using PerfProblemSimulator.Hubs;
 using PerfProblemSimulator.Models;
 using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 
 namespace PerfProblemSimulator.Services;
@@ -63,27 +62,6 @@ public class FailedRequestService : IFailedRequestService, IDisposable
     private string? _baseUrl;
 
     public bool IsRunning => _isRunning;
-
-    /// <summary>
-    /// Load test request parameters tuned for guaranteed failure with visible latency.
-    /// </summary>
-    private static readonly object FailureRequestBody = new
-    {
-        // Enough delay to exceed errorAfterSeconds and appear in latency monitor
-        baselineDelayMs = 1500,
-        // Some CPU work so request is visible in metrics
-        workIterations = 500,
-        // Small memory allocation
-        bufferSizeKb = 100,
-        // High soft limit to avoid degradation delays
-        softLimit = 10000,
-        // No additional degradation
-        degradationFactor = 0,
-        // Error check starts after 1 second
-        errorAfterSeconds = 1,
-        // 100% guaranteed failure
-        errorPercent = 100
-    };
 
     public FailedRequestService(
         ISimulationTracker simulationTracker,
@@ -304,7 +282,7 @@ public class FailedRequestService : IFailedRequestService, IDisposable
             client.Timeout = TimeSpan.FromSeconds(30);
 
             // Build query string for GET request (LoadTestController uses [HttpGet] with [FromQuery] params)
-            // Values match the FailureRequestBody constants above
+            // Parameters tuned for guaranteed failure: 100% error rate after 1 second delay
             var queryParams = "?baselineDelayMs=1500" +
                              "&workIterations=500" +
                              "&bufferSizeKb=100" +

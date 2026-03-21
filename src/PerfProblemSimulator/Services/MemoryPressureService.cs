@@ -367,8 +367,8 @@ public class MemoryPressureService : IMemoryPressureService
             // to its minimum, releasing physical pages back to the system
             bool success = SetProcessWorkingSetSizeEx(
                 process.Handle,
-                (nint)(-1),
-                (nint)(-1),
+                -1,
+                -1,
                 0);
 
             if (success)
