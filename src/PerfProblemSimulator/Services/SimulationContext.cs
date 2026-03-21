@@ -67,8 +67,8 @@ public class SimulationContext : ISimulationContext
         _logger = logger;
         _telemetryClient = telemetryClient;
         
-        _logger.LogWarning(
-            "🔧 SimulationContext initialized. TelemetryClient available: {Available}",
+        _logger.LogDebug(
+            "SimulationContext initialized. TelemetryClient available: {Available}",
             _telemetryClient != null);
     }
 
@@ -125,15 +125,15 @@ public class SimulationContext : ISimulationContext
     /// <param name="waitForTransmission">If true, waits briefly to allow transmission (use for CPU-intensive simulations).</param>
     internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType, bool waitForTransmission = false)
     {
-        _logger.LogWarning(
-            "📊 Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
+        _logger.LogDebug(
+            "Tracking App Insights event: {EventName} for simulation {SimulationId} ({SimulationType})",
             eventName, simulationId, simulationType);
 
         try
         {
             if (_telemetryClient == null)
             {
-                _logger.LogWarning("⚠️ TelemetryClient not available, skipping event tracking");
+                _logger.LogDebug("TelemetryClient not available, skipping event tracking");
                 return;
             }
 
@@ -144,7 +144,6 @@ public class SimulationContext : ISimulationContext
             };
 
             _telemetryClient.TrackEvent(eventName, properties);
-            _logger.LogWarning("📊 TrackEvent called for {EventName}", eventName);
             
             // Note: Don't call Flush() - SDK v3 has a bug where it throws NullReferenceException
             // The SDK will batch and send telemetry automatically
@@ -153,15 +152,12 @@ public class SimulationContext : ISimulationContext
             // before background threads saturate all cores
             if (waitForTransmission)
             {
-                _logger.LogWarning("📊 Waiting 1s for telemetry transmission...");
                 Thread.Sleep(1000);
             }
-            
-            _logger.LogWarning("📊 Successfully tracked event {EventName}", eventName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Failed to track App Insights event {EventName}", eventName);
+            _logger.LogError(ex, "Failed to track App Insights event {EventName}", eventName);
         }
     }
 

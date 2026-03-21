@@ -270,13 +270,6 @@ builder.Services.AddSingleton<ISimulationContext>(sp =>
 {
     var logger = sp.GetRequiredService<ILogger<SimulationContext>>();
     var telemetryClient = sp.GetService<TelemetryClient>();
-    
-    // Log the telemetry configuration status at startup
-    logger.LogWarning(
-        "🔧 Resolving SimulationContext from DI. TelemetryClient resolved: {Resolved}, IsEnabled: {IsEnabled}",
-        telemetryClient != null,
-        telemetryClient?.IsEnabled() ?? false);
-    
     return new SimulationContext(logger, telemetryClient);
 });
 
@@ -355,8 +348,6 @@ app.MapHub<MetricsHub>("/hubs/metrics");
 
 // Log startup information
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogWarning(
-    "🚀 PerfProblemSimulator starting. This message should appear in AppTraces if App Insights logging is configured correctly.");
 logger.LogInformation(
     "Problem endpoints are {Status}",
     Environment.GetEnvironmentVariable("DISABLE_PROBLEM_ENDPOINTS")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true

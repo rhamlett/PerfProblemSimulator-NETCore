@@ -149,8 +149,8 @@ public class CpuStressService : ICpuStressService
         // Register this simulation with the tracker
         _simulationTracker.RegisterSimulation(simulationId, SimulationType.Cpu, parameters, cts);
 
-        _logger.LogWarning(
-            "🔥 CPU STRESS: Starting simulation {SimulationId}: {Duration}s @ {Level} across {ProcessorCount} cores",
+        _logger.LogInformation(
+            "CPU stress: Starting simulation {SimulationId}: {Duration}s @ {Level} across {ProcessorCount} cores",
             simulationId,
             actualDuration,
             normalizedLevel,
@@ -163,9 +163,7 @@ public class CpuStressService : ICpuStressService
         // BEFORE launching the CPU-intensive background task. We use waitForTransmission: true
         // to ensure the telemetry is actually transmitted over the network before CPU saturation
         // prevents I/O threads from running.
-        _logger.LogWarning("🔥 CPU STRESS: About to call TrackSimulationStarted for {SimulationId}", simulationId);
         _simulationContext.TrackSimulationStarted(simulationId, SimulationType.Cpu.ToString(), waitForTransmission: true);
-        _logger.LogWarning("🔥 CPU STRESS: TrackSimulationStarted completed for {SimulationId}", simulationId);
 
         // ==========================================================================
         // STEP 4: Start the CPU stress in the background
