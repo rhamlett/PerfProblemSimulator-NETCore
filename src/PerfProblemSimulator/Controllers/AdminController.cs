@@ -1,6 +1,7 @@
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Http.Timeouts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using PerfProblemSimulator.Services;
 
 namespace PerfProblemSimulator.Controllers;
@@ -41,12 +42,13 @@ public class AdminController : ControllerBase
         ISimulationTracker simulationTracker,
         IMemoryPressureService memoryPressureService,
         ILogger<AdminController> logger,
-        TelemetryClient? telemetryClient = null)
+        IServiceProvider serviceProvider)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
         _memoryPressureService = memoryPressureService ?? throw new ArgumentNullException(nameof(memoryPressureService));
         _logger = logger;
-        _telemetryClient = telemetryClient;
+        // Safely try to get TelemetryClient - may not be registered if App Insights not configured
+        _telemetryClient = serviceProvider.GetService<TelemetryClient>();
     }
 
     /// <summary>
