@@ -122,7 +122,7 @@ public class SimulationContext : ISimulationContext
     /// <param name="eventName">The event name (SimulationStarted/SimulationEnded).</param>
     /// <param name="simulationId">The simulation ID.</param>
     /// <param name="simulationType">The simulation type.</param>
-    /// <param name="waitForTransmission">If true, blocks until transmission completes (use for CPU-intensive simulations).</param>
+    /// <param name="waitForTransmission">If true, waits briefly to allow transmission (use for CPU-intensive simulations).</param>
     internal void TrackSimulationEvent(string eventName, Guid simulationId, string simulationType, bool waitForTransmission = false)
     {
         _logger.LogWarning(
@@ -133,7 +133,7 @@ public class SimulationContext : ISimulationContext
         {
             if (_telemetryClient == null)
             {
-                _logger.LogWarning("⚠️ TelemetryClient not available (App Insights not configured), skipping event tracking");
+                _logger.LogWarning("⚠️ TelemetryClient not available, skipping event tracking");
                 return;
             }
 
@@ -146,16 +146,15 @@ public class SimulationContext : ISimulationContext
             _telemetryClient.TrackEvent(eventName, properties);
             _logger.LogWarning("📊 TrackEvent called for {EventName}", eventName);
             
-            // Flush to ensure event is sent
-            _telemetryClient.Flush();
-            _logger.LogWarning("📊 Flush called for {EventName}", eventName);
+            // Note: Don't call Flush() - SDK v3 has a bug where it throws NullReferenceException
+            // The SDK will batch and send telemetry automatically
             
-            // For CPU-intensive operations, wait to ensure transmission completes
+            // For CPU-intensive operations, wait briefly to allow the SDK to send
             // before background threads saturate all cores
             if (waitForTransmission)
             {
                 _logger.LogWarning("📊 Waiting 1s for telemetry transmission...");
-                Thread.Sleep(1000); // Give network I/O time to complete
+                Thread.Sleep(1000);
             }
             
             _logger.LogWarning("📊 Successfully tracked event {EventName}", eventName);

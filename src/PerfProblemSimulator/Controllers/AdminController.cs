@@ -146,37 +146,61 @@ public class AdminController : ControllerBase
             // Send a test event via TelemetryClient
             if (_telemetryClient != null && diagnostics.TelemetryClientEnabled)
             {
+                var errors = new List<string>();
+                
+                // Step 1: Simple TrackEvent (no properties)
                 try
                 {
-                    // Try simplest possible TrackEvent first (no properties)
                     _telemetryClient.TrackEvent("TestEvent_Simple");
                     diagnostics.TestEventSent = true;
-                    
-                    // Now try with properties
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"TrackEvent(simple): {ex.GetType().Name}: {ex.Message}");
+                }
+                
+                // Step 2: TrackEvent with properties
+                try
+                {
                     var props = new Dictionary<string, string>
                     {
                         ["TestId"] = testId.ToString(),
                         ["Source"] = "AdminController"
                     };
                     _telemetryClient.TrackEvent("TestEvent_WithProps", props);
-                    
-                    // Also try TrackTrace
-                    _telemetryClient.TrackTrace($"TestTrace - TestId: {testId}");
-                    
-                    _telemetryClient.Flush();
-                    Thread.Sleep(500);
-                    
-                    _logger.LogWarning("🧪 TEST EVENTS sent - TestId: {TestId}", testId);
                 }
                 catch (Exception ex)
                 {
-                    diagnostics.Error = $"Telemetry threw: {ex.GetType().Name}: {ex.Message}";
-                    // Include inner exception if present
-                    if (ex.InnerException != null)
-                    {
-                        diagnostics.Error += $" Inner: {ex.InnerException.Message}";
-                    }
+                    errors.Add($"TrackEvent(props): {ex.GetType().Name}: {ex.Message}");
                 }
+                
+                // Step 3: TrackTrace
+                try
+                {
+                    _telemetryClient.TrackTrace($"TestTrace - TestId: {testId}");
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"TrackTrace: {ex.GetType().Name}: {ex.Message}");
+                }
+                
+                // Step 4: Flush
+                try
+                {
+                    _telemetryClient.Flush();
+                    Thread.Sleep(500);
+                }
+                catch (Exception ex)
+                {
+                    errors.Add($"Flush: {ex.GetType().Name}: {ex.Message}");
+                }
+                
+                if (errors.Count > 0)
+                {
+                    diagnostics.Error = string.Join(" | ", errors);
+                }
+                
+                _logger.LogWarning("🧪 TEST complete - TestId: {TestId}, Errors: {ErrorCount}", testId, errors.Count);
             }
             else
             {
