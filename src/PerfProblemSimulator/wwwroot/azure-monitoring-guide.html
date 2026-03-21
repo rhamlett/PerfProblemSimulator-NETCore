@@ -585,18 +585,50 @@
 
             <h3>Correlation Queries</h3>
             <p>Use these KQL queries in Log Analytics to correlate dashboard events with server telemetry:</p>
-            <div class="code-block">
-<span class="comment">// Find all traces for a specific simulation</span>
-traces
-| <span class="keyword">where</span> message <span class="keyword">contains</span> <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
-| <span class="keyword">order by</span> timestamp <span class="keyword">asc</span>
+            
+            <div class="note" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 16px 0;">
+                <strong>⚠️ Table Name Differences:</strong> Log Analytics workspaces use different table and column names than classic Application Insights. If you see errors like <em>"The name 'traces' does not refer to any known table"</em>, use the Log Analytics names below:
+                <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Classic Application Insights</th>
+                            <th style="border: 1px solid #dee2e6; padding: 8px; text-align: left;">Log Analytics Workspace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>traces</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>AppTraces</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>customEvents</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>AppEvents</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>requests</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>AppRequests</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>exceptions</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>AppExceptions</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>dependencies</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>AppDependencies</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>message</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>Message</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>timestamp</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>TimeGenerated</code></td></tr>
+                        <tr><td style="border: 1px solid #dee2e6; padding: 8px;"><code>customDimensions</code></td><td style="border: 1px solid #dee2e6; padding: 8px;"><code>Properties</code></td></tr>
+                    </tbody>
+                </table>
             </div>
 
             <div class="code-block">
-<span class="comment">// Find custom events for a simulation</span>
-customEvents
-| <span class="keyword">where</span> customDimensions[<span class="string">"SimulationId"</span>] == <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
-| <span class="keyword">order by</span> timestamp <span class="keyword">asc</span>
+<span class="comment">// Find all traces for a specific simulation (search in message text)</span>
+AppTraces
+| <span class="keyword">where</span> Message <span class="keyword">contains</span> <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">// Find all requests for a simulation (using Activity tags)</span>
+AppRequests
+| <span class="keyword">where</span> Properties[<span class="string">"simulation.id"</span>] == <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">// Find all telemetry for a simulation (traces, requests, exceptions)</span>
+<span class="keyword">union</span> AppTraces, AppRequests, AppExceptions
+| <span class="keyword">where</span> Message <span class="keyword">contains</span> <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+     <span class="keyword">or</span> Properties[<span class="string">"simulation.id"</span>] == <span class="string">"YOUR-SIMULATION-ID-HERE"</span>
+| <span class="keyword">project</span> TimeGenerated, Type=\$table, Name, Message, Properties
+| <span class="keyword">order by</span> TimeGenerated <span class="keyword">asc</span>
             </div>
 
             <h3>Troubleshooting Workflow</h3>

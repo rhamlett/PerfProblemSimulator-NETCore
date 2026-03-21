@@ -59,6 +59,7 @@ namespace PerfProblemSimulator.Services;
 public class SlowRequestService : ISlowRequestService, IDisposable
 {
     private readonly ISimulationTracker _simulationTracker;
+    private readonly ISimulationContext _simulationContext;
     private readonly ILogger<SlowRequestService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IHubContext<MetricsHub, IMetricsClient> _hubContext;
@@ -84,12 +85,14 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 
     public SlowRequestService(
         ISimulationTracker simulationTracker,
+        ISimulationContext simulationContext,
         ILogger<SlowRequestService> logger,
         IHttpClientFactory httpClientFactory,
         IHubContext<MetricsHub, IMetricsClient> hubContext,
         IServer server)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _simulationContext = simulationContext ?? throw new ArgumentNullException(nameof(simulationContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
         _hubContext = hubContext ?? throw new ArgumentNullException(nameof(hubContext));
@@ -218,6 +221,9 @@ public class SlowRequestService : ISlowRequestService, IDisposable
 
     private void SpawnRequestsLoop(int maxRequests, CancellationToken ct)
     {
+        // Set simulation context for Application Insights telemetry correlation
+        using var simulationScope = _simulationContext.SetContext(_simulationId, SimulationType.SlowRequest.ToString());
+        
         // =========================================================================================
         // WAIT FOR EXISTING PROBES TO DRAIN
         // IsSimulationActive(SlowRequest) is already true (set in Start method).

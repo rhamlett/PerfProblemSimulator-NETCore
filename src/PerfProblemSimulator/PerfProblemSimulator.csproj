@@ -30,6 +30,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="3.0.0" />
   </ItemGroup>
 
   <!-- Generate build timestamp as assembly metadata -->

@@ -86,6 +86,7 @@ namespace PerfProblemSimulator.Services;
 public class CpuStressService : ICpuStressService
 {
     private readonly ISimulationTracker _simulationTracker;
+    private readonly ISimulationContext _simulationContext;
     private readonly ILogger<CpuStressService> _logger;
 
     /// <summary>
@@ -97,12 +98,15 @@ public class CpuStressService : ICpuStressService
     /// Initializes a new instance of the <see cref="CpuStressService"/> class.
     /// </summary>
     /// <param name="simulationTracker">Service for tracking active simulations.</param>
+    /// <param name="simulationContext">Service for tracking current simulation context for telemetry.</param>
     /// <param name="logger">Logger for diagnostic information.</param>
     public CpuStressService(
         ISimulationTracker simulationTracker,
+        ISimulationContext simulationContext,
         ILogger<CpuStressService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _simulationContext = simulationContext ?? throw new ArgumentNullException(nameof(simulationContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -205,6 +209,9 @@ public class CpuStressService : ICpuStressService
     /// </remarks>
     private void ExecuteCpuStress(Guid simulationId, int durationSeconds, string level, CancellationToken cancellationToken)
     {
+        // Set simulation context for Application Insights telemetry correlation
+        using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.Cpu.ToString());
+        
         // Convert level to internal percentage: moderate = 65%, high = 100%
         var targetPercentage = level == "moderate" ? 65 : 100;
         

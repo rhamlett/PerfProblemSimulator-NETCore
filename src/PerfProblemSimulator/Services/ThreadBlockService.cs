@@ -107,6 +107,7 @@ namespace PerfProblemSimulator.Services;
 public class ThreadBlockService : IThreadBlockService
 {
     private readonly ISimulationTracker _simulationTracker;
+    private readonly ISimulationContext _simulationContext;
     private readonly ILogger<ThreadBlockService> _logger;
 
     /// <summary>
@@ -129,9 +130,11 @@ public class ThreadBlockService : IThreadBlockService
     /// </summary>
     public ThreadBlockService(
         ISimulationTracker simulationTracker,
+        ISimulationContext simulationContext,
         ILogger<ThreadBlockService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _simulationContext = simulationContext ?? throw new ArgumentNullException(nameof(simulationContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -239,6 +242,9 @@ public class ThreadBlockService : IThreadBlockService
     /// </remarks>
     private void ExecuteThreadBlocking(Guid simulationId, int delayMs, int concurrentRequests, CancellationToken cancellationToken)
     {
+        // Set simulation context for Application Insights telemetry correlation
+        using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.ThreadBlock.ToString());
+        
         try
         {
             _logger.LogInformation(

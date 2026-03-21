@@ -90,6 +90,7 @@ namespace PerfProblemSimulator.Services;
 public class MemoryPressureService : IMemoryPressureService
 {
     private readonly ISimulationTracker _simulationTracker;
+    private readonly ISimulationContext _simulationContext;
     private readonly ILogger<MemoryPressureService> _logger;
 
     /// <summary>
@@ -122,12 +123,15 @@ public class MemoryPressureService : IMemoryPressureService
     /// Initializes a new instance of the <see cref="MemoryPressureService"/> class.
     /// </summary>
     /// <param name="simulationTracker">Service for tracking active simulations.</param>
+    /// <param name="simulationContext">Service for tracking current simulation context for telemetry.</param>
     /// <param name="logger">Logger for diagnostic information.</param>
     public MemoryPressureService(
         ISimulationTracker simulationTracker,
+        ISimulationContext simulationContext,
         ILogger<MemoryPressureService> logger)
     {
         _simulationTracker = simulationTracker ?? throw new ArgumentNullException(nameof(simulationTracker));
+        _simulationContext = simulationContext ?? throw new ArgumentNullException(nameof(simulationContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -147,12 +151,15 @@ public class MemoryPressureService : IMemoryPressureService
             currentAllocatedBytes = _allocatedBlocks.Sum(b => b.SizeBytes);
         }
 
+        var simulationId = Guid.NewGuid();
+        
+        // Set simulation context for Application Insights telemetry correlation
+        using var simulationScope = _simulationContext.SetContext(simulationId, SimulationType.Memory.ToString());
+
         _logger.LogInformation(
             "Allocating {Size} MB. Current total: {Current} MB",
             actualSize,
             currentAllocatedBytes / (1024.0 * 1024.0));
-
-        var simulationId = Guid.NewGuid();
         var startedAt = DateTimeOffset.UtcNow;
         var sizeBytes = (long)actualSize * 1024 * 1024;
 

@@ -247,6 +247,25 @@ builder.Services.AddCors(options =>
 });
 
 // -----------------------------------------------------------------------------
+// Application Insights Telemetry
+// -----------------------------------------------------------------------------
+// Add Application Insights for Azure monitoring integration.
+// The connection string is read from APPLICATIONINSIGHTS_CONNECTION_STRING env var
+// or the ApplicationInsights:ConnectionString configuration setting.
+// Educational Note: Application Insights v3 uses OpenTelemetry under the hood.
+// Request tracking, dependency tracking, exception logging are automatic.
+// Custom properties are added via Activity.Current.SetTag() in SimulationContext.
+builder.Services.AddApplicationInsightsTelemetry();
+
+// SimulationContext - Singleton service for tracking current simulation context
+// Educational Note: This uses AsyncLocal<T> to flow the simulation ID across async calls
+// and sets Activity tags which automatically flow to Application Insights telemetry.
+// This enables KQL queries like:
+//   AppRequests | where Properties["simulation.id"] == "your-id-here"
+//   AppTraces | where Properties["simulation.id"] == "your-id-here"
+builder.Services.AddSingleton<ISimulationContext, SimulationContext>();
+
+// -----------------------------------------------------------------------------
 // Request Timeouts (Kestrel)
 // -----------------------------------------------------------------------------
 // Add request timeouts to match IIS behavior (web.config).
