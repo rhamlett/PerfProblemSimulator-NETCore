@@ -1814,6 +1814,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize charts first
     initializeCharts();
     
+    // Log license disclaimer to event log panel
+    logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The authors and Microsoft Corporation shall not be liable for any damages arising from use or misuse. Deploy only in isolated, non-production environments. Licensed under MIT License.');
+    
     // Fetch app configuration
     await fetchAppConfig();
     
