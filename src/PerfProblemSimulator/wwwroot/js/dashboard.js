@@ -1801,10 +1801,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn(
         'This application intentionally creates performance problems for educational ' +
         'and diagnostic purposes only.\n\n' +
-        'This software is provided "AS IS", without warranty of any kind. The authors ' +
-        'and Microsoft Corporation shall not be liable for any damages, including but ' +
-        'not limited to service disruptions, data loss, or costs arising from the use ' +
-        'or misuse of this software.\n\n' +
+        'This software is provided "AS IS", without warranty of any kind. The author ' +
+        'shall not be liable for any damages, including but not limited to service ' +
+        'disruptions, data loss, or costs arising from the use or misuse of this software.\n\n' +
         'By using this application, you acknowledge that it is designed to stress ' +
         'system resources and should ONLY be deployed in isolated, non-production ' +
         'environments. You assume all responsibility for its deployment and use.\n\n' +
@@ -1815,7 +1814,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeCharts();
     
     // Log license disclaimer to event log panel
-    logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The authors and Microsoft Corporation shall not be liable for any damages arising from use or misuse. Deploy only in isolated, non-production environments. Licensed under MIT License.');
+    logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The author shall not be liable for any damages arising from use or misuse. Deploy only in isolated, non-production environments. Licensed under MIT License.');
     
     // Fetch app configuration
     await fetchAppConfig();
