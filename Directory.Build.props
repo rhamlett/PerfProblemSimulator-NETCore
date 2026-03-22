@@ -36,6 +36,18 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
+  <!-- Debug symbol configuration for profiling and diagnostics -->
+  <PropertyGroup>
+    <!-- Generate portable PDB files for all configurations -->
+    <DebugType>portable</DebugType>
+
+    <!-- Always generate debug symbols, even in Release builds -->
+    <DebugSymbols>true</DebugSymbols>
+
+    <!-- Optional: Include source file paths in PDB for better debugging/profiling -->
+    <EmbedAllSources Condition="'$(Configuration)' == 'Release'">true</EmbedAllSources>
+  </PropertyGroup>
+
   <!-- Common assembly information -->
   <PropertyGroup>
     <Authors>Performance Problem Simulator Team</Authors>
