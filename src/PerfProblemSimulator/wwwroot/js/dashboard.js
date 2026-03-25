@@ -1814,7 +1814,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeCharts();
     
     // Log license disclaimer to event log panel
-    logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The author shall not be liable for any damages arising from use or misuse. Deploy only in isolated, non-production environments. Licensed under MIT License.');
+    logEvent('warning', '⚖️ Deploy only in isolated, non-production environments. Licensed under MIT License.');
+    logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The author shall not be liable for any damages arising from use or misuse.');
     
     // Fetch app configuration
     await fetchAppConfig();

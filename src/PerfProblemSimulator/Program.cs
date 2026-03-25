@@ -248,7 +248,7 @@ builder.Services.AddCors(options =>
 });
 
 // -----------------------------------------------------------------------------
-// Application Insights Telemetry
+// Application Insights Telemetry (Optional)
 // -----------------------------------------------------------------------------
 // Add Application Insights for Azure monitoring integration.
 // The connection string is read from APPLICATIONINSIGHTS_CONNECTION_STRING env var
@@ -256,20 +256,29 @@ builder.Services.AddCors(options =>
 // Educational Note: Application Insights v3 uses OpenTelemetry under the hood.
 // Request tracking, dependency tracking, exception logging are automatic.
 // ILogger integration is also automatic - no separate AddApplicationInsights() call needed.
-builder.Services.AddApplicationInsightsTelemetry(options =>
+var appInsightsConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"]
+    ?? Environment.GetEnvironmentVariable("APPLICATIONINSIGHTS_CONNECTION_STRING");
+
+if (!string.IsNullOrEmpty(appInsightsConnectionString))
 {
-    // Enable automatic tracking of ILogger logs
-    options.EnableQuickPulseMetricStream = true;
-});
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        // Enable automatic tracking of ILogger logs
+        options.EnableQuickPulseMetricStream = true;
+    });
+}
 
 // SimulationContext - Singleton service for tracking current simulation context
 // Educational Note: This uses AsyncLocal<T> to flow the simulation ID across async calls.
 // The context also uses TelemetryClient to track simulation events with the ID attached.
-// The TelemetryClient is resolved from DI after Application Insights is configured.
+// The TelemetryClient is resolved from DI after Application Insights is configured (if available).
 builder.Services.AddSingleton<ISimulationContext>(sp =>
 {
     var logger = sp.GetRequiredService<ILogger<SimulationContext>>();
+    
+    // TelemetryClient will be null if Application Insights was not configured
     var telemetryClient = sp.GetService<TelemetryClient>();
+    
     return new SimulationContext(logger, telemetryClient);
 });
 
@@ -353,6 +362,9 @@ logger.LogInformation(
     Environment.GetEnvironmentVariable("DISABLE_PROBLEM_ENDPOINTS")?.Equals("true", StringComparison.OrdinalIgnoreCase) == true
         ? "DISABLED"
         : "ENABLED");
+logger.LogInformation(
+    "Application Insights telemetry is {Status}",
+    !string.IsNullOrEmpty(appInsightsConnectionString) ? "ENABLED" : "DISABLED (no connection string)");
 
 // Start the application
 app.Run();
