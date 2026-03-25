@@ -145,14 +145,20 @@ public class SimulationContext : ISimulationContext
 
             _telemetryClient.TrackEvent(eventName, properties);
             
-            // Note: Don't call Flush() - SDK v3 has a bug where it throws NullReferenceException
-            // The SDK will batch and send telemetry automatically
-            
-            // For CPU-intensive operations, wait briefly to allow the SDK to send
-            // before background threads saturate all cores
+            // For CPU-intensive operations, flush telemetry to ensure it's transmitted
+            // before background threads saturate all cores and block I/O
             if (waitForTransmission)
             {
-                Thread.Sleep(1000);
+                try
+                {
+                    _telemetryClient.Flush();
+                    // Brief wait after flush to allow network transmission to complete
+                    Thread.Sleep(500);
+                }
+                catch (Exception flushEx)
+                {
+                    _logger.LogWarning(flushEx, "Failed to flush telemetry - event may be delayed");
+                }
             }
         }
         catch (Exception ex)
