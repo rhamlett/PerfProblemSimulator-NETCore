@@ -238,8 +238,15 @@ async function initializeSignalR() {
     });
 
     state.connection.onreconnected(async connectionId => {
-        updateConnectionStatus('connected', 'Connected');
-        logEvent('system', 'Reconnected to server');
+        // Preserve idle status on reconnect - don't show "Connected" if app is still idle
+        // The server will send the current idle state via ReceiveIdleState after connect
+        if (state.isIdle) {
+            updateConnectionStatus('idle', 'Idle');
+            logEvent('system', 'Reconnected to server (still idle)');
+        } else {
+            updateConnectionStatus('connected', 'Connected');
+            logEvent('system', 'Reconnected to server');
+        }
         
         // NOTE: We do NOT wake the server on reconnect. Only page loads should wake the app.
         // This prevents SignalR auto-reconnects (from network hiccups or keepalives) from
@@ -793,6 +800,10 @@ function handleIdleState(data) {
     if (data.isIdle && !wasIdle) {
         // Going idle
         logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
+        updateConnectionStatus('idle', 'Idle');
+    } else if (data.isIdle && wasIdle) {
+        // Server confirms still idle - ensure status indicator is consistent
+        // This handles edge cases like reconnects that might have changed the UI status
         updateConnectionStatus('idle', 'Idle');
     } else if (!data.isIdle && wasIdle) {
         // Waking up (client knew we were idle)
