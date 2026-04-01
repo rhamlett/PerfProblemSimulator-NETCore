@@ -148,6 +148,18 @@ function createLatencyGradient(ctx, chartArea, scales) {
 const probeHistory = [];
 const MAX_PROBE_DOTS = 24;
 
+// Latency chart update interval (always 100ms, independent of probe rate)
+const LATENCY_CHART_UPDATE_INTERVAL_MS = 100;
+
+// Interpolation state: stores the latest probe result for the 100ms chart timer
+const latencyInterpolation = {
+    lastProbeValue: null,      // Most recent probe latency (ms)
+    lastProbeIsTimeout: false, // Most recent probe timeout flag
+    lastProbeIsError: false,   // Most recent probe error flag
+    chartUpdateTimer: null,    // The 100ms setInterval ID
+    chartsInitialized: false   // Whether charts are ready
+};
+
 const state = {
     connection: null,
     charts: {},
@@ -671,6 +683,10 @@ function updateCharts() {
 /**
  * Handle incoming latency measurement from server-side probe.
  * This shows the impact of thread pool starvation on request processing time.
+ * 
+ * NOTE: This handler stores the latest probe value for the 100ms chart update
+ * timer to consume. The chart is NOT updated directly here — it is decoupled
+ * from the probe rate and always updates at 100ms via startLatencyChartUpdates().
  */
 function handleLatencyUpdate(measurement) {
     // Log significant latency events to the dashboard log
@@ -689,16 +705,19 @@ function handleLatencyUpdate(measurement) {
         logEvent('warning', `High Latency Probe: ${formatLatency(measurement.latencyMs)}`);
     }
     
-    const timestamp = new Date(measurement.timestamp);
     const latencyMs = measurement.latencyMs;
     const isTimeout = measurement.isTimeout;
     const isError = measurement.isError;
 
-    addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
+    // Store latest probe value for the 100ms chart update timer
+    latencyInterpolation.lastProbeValue = latencyMs;
+    latencyInterpolation.lastProbeIsTimeout = isTimeout;
+    latencyInterpolation.lastProbeIsError = isError;
+
+    // Update the numeric display immediately (responsive to each probe)
     updateLatencyDisplay(latencyMs, isTimeout, isError);
-    updateLatencyChart();
     
-    // Update probe visualization dots
+    // Update probe visualization dots immediately
     updateProbeVisualization(latencyMs);
 }
 
@@ -734,10 +753,12 @@ function handleSlowRequestLatency(data) {
         history.scenarios.shift();
     }
     
-    // Add as a special latency point on the chart (it will show as a large spike)
-    addLatencyToHistory(timestamp, latencyMs, isTimeout, isError);
+    // Update the interpolation state so the 100ms chart timer picks up slow request latency.
+    // The spike will appear on the chart within the next 100ms tick.
+    latencyInterpolation.lastProbeValue = latencyMs;
+    latencyInterpolation.lastProbeIsTimeout = isTimeout;
+    latencyInterpolation.lastProbeIsError = isError;
     updateLatencyDisplay(latencyMs, isTimeout, isError);
-    updateLatencyChart();
     
     // Log the slow request completion with Queue Time breakdown
     const durationSec = (latencyMs / 1000).toFixed(1);
@@ -978,6 +999,37 @@ function updateLatencyChart() {
         }
     };
     state.charts.latency.update('none');
+}
+
+/**
+ * Starts the fixed 100ms latency chart update timer.
+ * 
+ * This timer is completely independent of the server's probe rate (HEALTH_PROBE_RATE).
+ * The probe rate controls how often the server measures latency; this timer controls
+ * how often the chart renders. Between probes, the last known value is repeated
+ * (sample-and-hold interpolation) to keep the chart scrolling smoothly at 10fps.
+ * 
+ * 600 data points at 100ms = 60 second chart window.
+ */
+function startLatencyChartUpdates() {
+    // Clear any existing timer
+    if (latencyInterpolation.chartUpdateTimer) {
+        clearInterval(latencyInterpolation.chartUpdateTimer);
+    }
+
+    latencyInterpolation.chartUpdateTimer = setInterval(() => {
+        // Skip if charts aren't ready or no probe data received yet
+        if (!state.charts.latency || latencyInterpolation.lastProbeValue === null) return;
+
+        // Push the latest probe value (sample-and-hold between probes)
+        addLatencyToHistory(
+            new Date(),
+            latencyInterpolation.lastProbeValue,
+            latencyInterpolation.lastProbeIsTimeout,
+            latencyInterpolation.lastProbeIsError
+        );
+        updateLatencyChart();
+    }, LATENCY_CHART_UPDATE_INTERVAL_MS);
 }
 
 // ==========================================================================
@@ -1840,6 +1892,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Start SignalR connection (receives probe results from server)
     initializeSignalR();
 
+    // Start the fixed 100ms latency chart update timer (independent of probe rate)
+    startLatencyChartUpdates();
     
     // Wire up button handlers
     document.getElementById('btnTriggerCpu').addEventListener('click', triggerCpuStress);
