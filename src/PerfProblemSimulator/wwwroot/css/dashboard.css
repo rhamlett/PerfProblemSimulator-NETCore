@@ -890,6 +890,7 @@ body.page-secondary {
 .simulation-badge.cpu { border: 2px solid var(--color-cpu); }
 .simulation-badge.memory { border: 2px solid var(--color-memory); }
 .simulation-badge.threadblock { border: 2px solid var(--color-threads); }
+.simulation-badge.failedrequest { border: 2px solid #8B4513; }
 
 .simulation-badge .spinner {
     width: 12px;

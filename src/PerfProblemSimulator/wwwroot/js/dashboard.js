@@ -188,6 +188,7 @@ const state = {
     slowRequestSimulationId: null,  // Current slow request simulation ID for correlation
     lastProcessId: null,
     isIdle: false,  // Tracks whether the server is in idle state
+    intentionalDisconnect: false,  // True when WS is closed on purpose (idle), suppresses reconnect
     lastFailedRequestCompletedAt: null  // Suppress load test stats after failed request sim
 };
 
@@ -250,22 +251,19 @@ async function initializeSignalR() {
     });
 
     state.connection.onreconnected(async connectionId => {
-        // Preserve idle status on reconnect - don't show "Connected" if app is still idle
-        // The server will send the current idle state via ReceiveIdleState after connect
-        if (state.isIdle) {
-            updateConnectionStatus('idle', 'Idle');
-            logEvent('system', 'Reconnected to server (still idle)');
-        } else {
-            updateConnectionStatus('connected', 'Connected');
-            logEvent('system', 'Reconnected to server');
-        }
-        
-        // NOTE: We do NOT wake the server on reconnect. Only page loads should wake the app.
-        // This prevents SignalR auto-reconnects (from network hiccups or keepalives) from
-        // waking the app when the user isn't actually interacting with the dashboard.
+        // Reset intentional disconnect flag - any successful connection means we're active
+        state.intentionalDisconnect = false;
+
+        // WS is intentionally closed during idle, so any reconnect means we're active
+        updateConnectionStatus('connected', 'Connected');
+        logEvent('system', 'Reconnected to server');
     });
 
     state.connection.onclose(error => {
+        // If we intentionally closed the WS (idle), don't update status or reconnect
+        if (state.intentionalDisconnect) {
+            return;
+        }
         updateConnectionStatus('disconnected', 'Disconnected');
         logEvent('system', 'Connection closed. Attempting to reconnect...');
         // Auto-reconnect after close (handles cases where withAutomaticReconnect gives up)
@@ -293,6 +291,7 @@ async function initializeSignalR() {
     try {
         updateConnectionStatus('connecting', 'Connecting...');
         await state.connection.start();
+        state.intentionalDisconnect = false;
         updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Connected to metrics hub');
         
@@ -317,6 +316,24 @@ function updateConnectionStatus(status, text) {
     
     indicator.className = `indicator ${status}`;
     textEl.textContent = text;
+}
+
+/**
+ * Ensures the SignalR WebSocket connection is active.
+ * If the connection was intentionally closed (idle) or is otherwise disconnected,
+ * re-initializes SignalR. Called at the top of every simulation trigger so that
+ * clicking a button automatically reconnects before making the API call.
+ */
+function ensureWebSocket() {
+    if (!state.connection ||
+        state.connection.state === signalR.HubConnectionState.Disconnected ||
+        state.connection.state === signalR.HubConnectionState.Disconnecting) {
+        state.intentionalDisconnect = false;
+        state.isIdle = false;
+        // Restart latency chart updates (stopped when going idle)
+        startLatencyChartUpdates();
+        initializeSignalR();
+    }
 }
 
 // ==========================================================================
@@ -819,9 +836,21 @@ function handleIdleState(data) {
     
     // Log the state change and update connection status
     if (data.isIdle && !wasIdle) {
-        // Going idle
+        // Going idle: stop latency chart updates, show Idle, then intentionally close WS
         logEvent('idle', data.message || 'Application going idle, no health probes being sent. There will be gaps in diagnostics and logs.');
         updateConnectionStatus('idle', 'Idle');
+
+        // Stop the latency chart interpolation timer (no probes during idle)
+        if (latencyInterpolation.chartUpdateTimer) {
+            clearInterval(latencyInterpolation.chartUpdateTimer);
+            latencyInterpolation.chartUpdateTimer = null;
+        }
+
+        // Intentionally close WebSocket to prevent reconnect-induced status flicker
+        state.intentionalDisconnect = true;
+        if (state.connection) {
+            state.connection.stop();
+        }
     } else if (data.isIdle && wasIdle) {
         // Server confirms still idle - ensure status indicator is consistent
         // This handles edge cases like reconnects that might have changed the UI status
@@ -830,6 +859,8 @@ function handleIdleState(data) {
         // Waking up (client knew we were idle)
         logEvent('system', data.message || 'App waking up from idle state. There may be gaps in diagnostics and logs.');
         updateConnectionStatus('connected', 'Connected');
+        // Restart latency chart updates now that probes will resume
+        startLatencyChartUpdates();
     } else if (!data.isIdle && !wasIdle && data.message && data.message.toLowerCase().includes('waking up')) {
         // Server was idle but client didn't know (e.g., after reconnect)
         // The server's message indicates it just woke up
@@ -1037,6 +1068,7 @@ function startLatencyChartUpdates() {
 // ==========================================================================
 
 async function triggerCpuStress() {
+    ensureWebSocket();
     const duration = parseInt(document.getElementById('cpuDuration').value) || 30;
     const level = document.getElementById('cpuLevel').value || 'high';
     
@@ -1069,6 +1101,7 @@ async function triggerCpuStress() {
  * Stops all active CPU stress simulations.
  */
 async function stopCpuStress() {
+    ensureWebSocket();
     try {
         logEvent('cpu', 'Stopping CPU stress simulations...');
         const response = await fetch(`${CONFIG.apiBaseUrl}/cpu/stop`, {
@@ -1090,6 +1123,7 @@ async function stopCpuStress() {
 }
 
 async function allocateMemory() {
+    ensureWebSocket();
     const sizeMb = parseInt(document.getElementById('memorySize').value) || 100;
     
     try {
@@ -1115,6 +1149,7 @@ async function allocateMemory() {
 }
 
 async function releaseMemory() {
+    ensureWebSocket();
     try {
         logEvent('memory', 'Releasing all allocated memory...');
         const response = await fetch(`${CONFIG.apiBaseUrl}/memory/release-memory`, {
@@ -1142,6 +1177,7 @@ async function releaseMemory() {
 }
 
 async function triggerThreadBlock() {
+    ensureWebSocket();
     const delaySeconds = parseFloat(document.getElementById('threadDelay').value) || 10;
     const delayMs = Math.round(delaySeconds * 1000);
     const concurrent = parseInt(document.getElementById('threadConcurrent').value) || 100;
@@ -1174,6 +1210,7 @@ async function triggerThreadBlock() {
  * Stops all active thread pool starvation simulations.
  */
 async function stopThreadBlock() {
+    ensureWebSocket();
     try {
         logEvent('threads', 'Stopping thread blocking simulations...');
         const response = await fetch(`${CONFIG.apiBaseUrl}/threadblock/stop`, {
@@ -1199,6 +1236,7 @@ async function stopThreadBlock() {
  * WARNING: This will terminate the application!
  */
 async function triggerCrash() {
+    ensureWebSocket();
     const crashType = document.getElementById('crashType').value;
     // Delay option removed from UI - default to 0 (immediate crash)
     const delayElement = document.getElementById('crashDelay');
@@ -1273,6 +1311,7 @@ async function triggerCrash() {
  * Generates requests with sync-over-async patterns for CLR Profiler analysis.
  */
 async function startSlowRequests() {
+    ensureWebSocket();
     const durationSeconds = parseInt(document.getElementById('slowRequestDuration').value) || 25;
     const intervalSeconds = parseInt(document.getElementById('slowRequestInterval').value) || 2;
     const maxRequests = parseInt(document.getElementById('slowRequestMax').value) || 10;
@@ -1326,6 +1365,7 @@ async function startSlowRequests() {
  * Stops the slow request simulator.
  */
 async function stopSlowRequests() {
+    ensureWebSocket();
     const statusDiv = document.getElementById('slowRequestStatus');
     const startBtn = document.getElementById('btnStartSlowRequests');
     const stopBtn = document.getElementById('btnStopSlowRequests');
@@ -1370,6 +1410,7 @@ async function stopSlowRequests() {
  * Generates HTTP 500 errors visible in AppLens and Application Insights.
  */
 async function startFailedRequests() {
+    ensureWebSocket();
     const requestCount = parseInt(document.getElementById('failedRequestCount').value) || 10;
     
     const startBtn = document.getElementById('btnStartFailedRequests');
@@ -1880,7 +1921,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     logEvent('warning', '⚖️ Deploy only in isolated, non-production environments. Licensed under MIT License.');
     logEvent('warning', '⚖️ This software is provided "AS IS" without warranty. The author shall not be liable for any damages arising from use or misuse.');
     
-    // Fetch app configuration
+    // Fetch app configuration - this HTTP request hits the activity tracking middleware
+    // and wakes the server BEFORE the WebSocket connects, so the first WS message
+    // arrives with is_idle: false (page load = user activity).
     await fetchAppConfig();
     
     // Fetch SKU info (non-blocking)
