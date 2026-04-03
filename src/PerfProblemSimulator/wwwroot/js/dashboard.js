@@ -246,17 +246,34 @@ async function initializeSignalR() {
 
     // Handle connection state changes
     state.connection.onreconnecting(error => {
+        // If we intentionally disconnected for idle, suppress reconnect UI
+        if (state.intentionalDisconnect) return;
         updateConnectionStatus('connecting', 'Reconnecting...');
         logEvent('system', 'Connection lost. Attempting to reconnect...');
     });
 
     state.connection.onreconnected(async connectionId => {
-        // Reset intentional disconnect flag - any successful connection means we're active
         state.intentionalDisconnect = false;
-
-        // WS is intentionally closed during idle, so any reconnect means we're active
-        updateConnectionStatus('connected', 'Connected');
         logEvent('system', 'Reconnected to server');
+
+        // After auto-reconnect, check if the server is idle.
+        // The server does NOT send idle state on connect (to avoid a race
+        // with WakeUp on initial page load), so we must query it explicitly.
+        try {
+            const idleData = await state.connection.invoke('GetIdleState');
+            if (idleData.isIdle) {
+                // Server is idle — re-enter idle mode and disconnect
+                handleIdleState(idleData);
+            } else {
+                // Server is active — show connected and resume chart
+                state.isIdle = false;
+                updateConnectionStatus('connected', 'Connected');
+                startLatencyChartUpdates();
+            }
+        } catch (err) {
+            // Query failed — assume connected
+            updateConnectionStatus('connected', 'Connected');
+        }
     });
 
     state.connection.onclose(error => {

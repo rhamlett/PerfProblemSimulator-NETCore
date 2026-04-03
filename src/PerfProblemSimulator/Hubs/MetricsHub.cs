@@ -153,4 +153,24 @@ public class MetricsHub : Hub<IMetricsClient>
         };
         await Clients.Caller.ReceiveIdleState(idleData);
     }
+
+    /// <summary>
+    /// Returns the server's current idle state without waking it.
+    /// Called by the client after auto-reconnect to determine whether the
+    /// server is idle (and therefore the client should disconnect again)
+    /// or active (and the client should stay connected).
+    /// </summary>
+    [UsedImplicitly]
+    public IdleStateData GetIdleState()
+    {
+        var isIdle = _idleStateService.IsIdle;
+        return new IdleStateData
+        {
+            IsIdle = isIdle,
+            Message = isIdle
+                ? "Application is idle, no health probes being sent."
+                : "Application is active",
+            Timestamp = DateTimeOffset.UtcNow
+        };
+    }
 }
