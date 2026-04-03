@@ -456,7 +456,7 @@ function initializeCharts() {
                     label: 'Memory MB',
                     data: [],
                     borderColor: '#107c10',
-                    backgroundColor: 'rgba(16, 124, 16, 0.1)',
+                    backgroundColor: 'rgba(16, 124, 16, 0.2)',
                     tension: 0.3,
                     fill: 'origin',
                     yAxisID: 'y1',
@@ -1004,7 +1004,7 @@ function updateLatencyChart() {
     const gradient = ctx.createLinearGradient(0, 0, 0, gradientHeight);
     gradient.addColorStop(0, 'rgba(209, 52, 56, 0.3)');   // Red at top (high latency)
     gradient.addColorStop(0.5, 'rgba(255, 185, 0, 0.2)'); // Yellow in middle
-    gradient.addColorStop(1, 'rgba(16, 124, 16, 0.1)');   // Green at bottom (low latency)
+    gradient.addColorStop(1, 'rgba(16, 124, 16, 0.2)');   // Green at bottom (low latency)
     
     // Map data points to colors based on latency
     const pointColors = history.values.map((v, i) => {
