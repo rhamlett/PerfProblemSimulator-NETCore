@@ -86,16 +86,11 @@ public class MetricsHub : Hub<IMetricsClient>
         var currentSnapshot = _metricsCollector.LatestSnapshot;
         await Clients.Caller.ReceiveMetrics(currentSnapshot);
 
-        // Send current idle state to the connecting client
-        var idleData = new IdleStateData
-        {
-            IsIdle = _idleStateService.IsIdle,
-            Message = _idleStateService.IsIdle 
-                ? "Application is idle, no health probes being sent. There will be gaps in diagnostics and logs."
-                : "Application is active",
-            Timestamp = DateTimeOffset.UtcNow
-        };
-        await Clients.Caller.ReceiveIdleState(idleData);
+        // NOTE: We intentionally do NOT send idle state here.
+        // The client calls WakeUp() immediately after connecting, which will
+        // wake the app if needed and send the correct idle state.
+        // Sending IsIdle=true here would cause the client to disconnect
+        // before WakeUp() can be invoked (race condition).
 
         await base.OnConnectedAsync();
     }
@@ -142,17 +137,18 @@ public class MetricsHub : Hub<IMetricsClient>
         if (wasIdle)
         {
             _logger.LogInformation("Server woken up by client request from: {ConnectionId}", Context.ConnectionId);
-            // The MetricsBroadcastService will broadcast the wake-up message to all clients
-            // via the WakingUp event, so we don't need to send it directly here
-            return;
         }
 
-        // Only send direct response when app was already active (not waking up)
-        // to confirm current state to caller
+        // Always send current idle state directly to the caller.
+        // When waking from idle, the broadcast via MetricsBroadcastService may be
+        // delayed (queued on the dedicated broadcast thread), so we must send
+        // the updated state directly to ensure the client knows we're active.
         var idleData = new IdleStateData
         {
-            IsIdle = _idleStateService.IsIdle,
-            Message = "Application is active",
+            IsIdle = false,
+            Message = wasIdle
+                ? "App waking up from idle state. There may be gaps in diagnostics and logs."
+                : "Application is active",
             Timestamp = DateTimeOffset.UtcNow
         };
         await Clients.Caller.ReceiveIdleState(idleData);
