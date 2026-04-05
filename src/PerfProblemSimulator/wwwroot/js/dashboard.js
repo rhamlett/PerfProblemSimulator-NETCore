@@ -1788,7 +1788,9 @@ function initSimulationIdCopyHandlers() {
  */
 function logEvent(levelOrCategory, message, options = {}) {
     const log = document.getElementById('eventLog');
-    const time = getCurrentUtcTime();
+    const now = new Date();
+    const time = formatUtcTime(now);
+    const localTime = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     
     // Determine CSS class and icon based on category
     let cssClass = levelOrCategory;
@@ -1798,7 +1800,7 @@ function logEvent(levelOrCategory, message, options = {}) {
     entry.className = `log-entry ${cssClass}`;
     
     const iconHtml = icon ? `<span class="log-icon">${icon}</span>` : '';
-    entry.innerHTML = `<span class="log-time">${time} UTC</span>${iconHtml}${message}`;
+    entry.innerHTML = `<span class="log-time log-time-tooltip" data-tooltip="Local Time: ${localTime}">${time} UTC</span>${iconHtml}${message}`;
     
     log.insertBefore(entry, log.firstChild);
 }

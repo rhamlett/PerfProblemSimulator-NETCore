@@ -1003,6 +1003,52 @@ body.page-secondary {
     margin-right: 0.35rem;
 }
 
+.log-time-tooltip {
+    position: relative;
+    border-bottom: 1px dotted currentColor;
+    cursor: default;
+}
+
+.log-time-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 6px);
+    background: var(--color-text);
+    color: var(--color-card);
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 400;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+    pointer-events: none;
+}
+
+.log-time-tooltip::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    bottom: calc(100% + 0px);
+    border: 5px solid transparent;
+    border-top-color: var(--color-text);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    z-index: 100;
+    pointer-events: none;
+}
+
+.log-time-tooltip:hover::after,
+.log-time-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
 .sim-msg {
     cursor: pointer;
     border-bottom: 1px dotted currentColor;
