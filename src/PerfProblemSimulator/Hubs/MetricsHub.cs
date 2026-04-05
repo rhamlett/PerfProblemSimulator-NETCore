@@ -130,7 +130,7 @@ public class MetricsHub : Hub<IMetricsClient>
     /// Used when the dashboard page loads or user interacts with it.
     /// </summary>
     [UsedImplicitly]
-    public async Task WakeUp()
+    public Task WakeUp()
     {
         var wasIdle = _idleStateService.WakeUp();
         
@@ -139,19 +139,12 @@ public class MetricsHub : Hub<IMetricsClient>
             _logger.LogInformation("Server woken up by client request from: {ConnectionId}", Context.ConnectionId);
         }
 
-        // Always send current idle state directly to the caller.
-        // When waking from idle, the broadcast via MetricsBroadcastService may be
-        // delayed (queued on the dedicated broadcast thread), so we must send
-        // the updated state directly to ensure the client knows we're active.
-        var idleData = new IdleStateData
-        {
-            IsIdle = false,
-            Message = wasIdle
-                ? "App waking up from idle state. There may be gaps in diagnostics and logs."
-                : "Application is active",
-            Timestamp = DateTimeOffset.UtcNow
-        };
-        await Clients.Caller.ReceiveIdleState(idleData);
+        // Do NOT send ReceiveIdleState directly here.
+        // The WakingUp event fired by IdleStateService.WakeUp() is handled by
+        // MetricsBroadcastService, which broadcasts ReceiveIdleState to all clients.
+        // Sending it here as well would cause the caller to receive the wake
+        // message twice (once direct, once broadcast), duplicating the event log entry.
+        return Task.CompletedTask;
     }
 
     /// <summary>

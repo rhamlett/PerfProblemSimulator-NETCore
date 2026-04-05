@@ -982,11 +982,13 @@ body.page-secondary {
     margin-right: 0.75rem;
 }
 
-/* Log entry severity levels (fallback) */
-.log-entry.info { color: var(--color-primary); }
-.log-entry.success { color: var(--color-success); }
-.log-entry.warning { color: var(--color-warning); }
-.log-entry.error { color: var(--color-danger); }
+/* Log entry non-simulation colors (matches title bar gradient dark end) */
+.log-entry.info { color: var(--color-primary-dark); }
+.log-entry.success { color: var(--color-primary-dark); }
+.log-entry.warning { color: var(--color-primary-dark); }
+.log-entry.error { color: var(--color-primary-dark); }
+.log-entry.system { color: var(--color-primary-dark); }
+.log-entry.idle { color: var(--color-primary-dark); }
 
 /* Log entry simulation-themed colors */
 .log-entry.cpu { color: var(--color-cpu); }
@@ -996,7 +998,6 @@ body.page-secondary {
 .log-entry.failedrequests { color: #8B4513; } /* Medium brown for failed requests */
 .log-entry.crash { color: var(--color-danger); }
 .log-entry.loadtest { color: var(--color-primary); } /* .NET theme: blue */
-.log-entry.system { color: var(--color-text-muted); }
 
 .log-icon {
     margin-right: 0.35rem;
