@@ -193,10 +193,10 @@
                 <p>Blocks worker threads using sync-over-async anti-pattern to simulate thread pool exhaustion. Server becomes unresponsive to new requests.</p>
                 <p class="info-note">⏱️ <strong>Duration Note:</strong> .NET thread pool starts with ~CPU cores (e.g., 4-8) and grows at only 1-2 threads/second when starved. Impact is visible almost immediately since the initial pool is small.</p>
                 <div class="control-inputs">
-                    <label>Delay (s):
+                    <label>Duration:
                         <input type="number" id="threadDelay" value="10" min="0.1" step="0.1" title="How long each blocking operation delays in seconds (minimum 0.1s)">
                     </label>
-                    <label>Count:
+                    <label>Threads:
                         <input type="number" id="threadConcurrent" value="100" min="1" title="Number of concurrent blocking operations (minimum 1)">
                     </label>
                 </div>

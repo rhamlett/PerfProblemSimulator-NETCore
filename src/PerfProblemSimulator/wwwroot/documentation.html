@@ -569,35 +569,136 @@
             </div>
         </section>
 
-        <!-- Quick Start Section -->
-        <section id="quick-start" class="doc-section">
-            <h2>🚀 Quick Start</h2>
+        <!-- Optional Configuration Section -->
+        <section id="optional-config" class="doc-section">
+            <h2>⚙️ Optional Configuration</h2>
+            <p>You can customize the application behavior using Azure App Service environment variables.</p>
+
+            <h3>Health Probe Rate</h3>
+            <p>Control how often the server sends health probes to measure request latency. All probes are routed through the Azure frontend to capture realistic end-to-end latency.</p>
             
-            <h3>Run Locally</h3>
-            <div class="code-block">
-<span class="comment"># Clone the repository</span>
-git clone https://github.com/your-org/perf-problem-simulator.git
-cd perf-problem-simulator
+            <h4>Environment Variable</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>Probe interval in milliseconds. Minimum 100ms.</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
 
-<span class="comment"># Restore and build</span>
-dotnet build
+            <h4>Setting via Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Slow down probes if CLR profiler shows overlapping requests</span>
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings HEALTH_PROBE_RATE=400</div>
 
-<span class="comment"># Run the application</span>
-dotnet run --project src/PerfProblemSimulator
+            <h3>Idle Timeout</h3>
+            <p>When the application is idle (no dashboard connections or load test requests), health probes are automatically suspended to reduce unnecessary network traffic to Azure's frontend and Application Insights telemetry.</p>
+            
+            <h4>Environment Variable</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>Minutes of inactivity before suspending health probes. Activity resumes automatically when the dashboard is opened or any request is received.</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
 
-<span class="comment"># Open in browser</span>
-<span class="comment"># Dashboard: http://localhost:5000</span>
-<span class="comment"># Swagger: http://localhost:5000/swagger</span>
-            </div>
+            <h4>Setting via Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Extend idle timeout to 30 minutes</span>
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings IDLE_TIMEOUT_MINUTES=30</div>
 
-            <h3>Run Tests</h3>
-            <div class="code-block">
-<span class="comment"># Run all tests</span>
-dotnet test
+            <h3>Custom Page Footer</h3>
+            <p>Set a custom footer message that appears on all pages. The footer supports HTML, allowing you to include links.</p>
+            
+            <h4>Environment Variable</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>HTML content for the footer's second line. If not set, only the app description and build info are shown.</td>
+                    </tr>
+                </tbody>
+            </table>
 
-<span class="comment"># Run with coverage</span>
-dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
-            </div>
+            <h4>Example Value</h4>
+            <div class="code-block">Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes</div>
+
+            <h4>Setting via Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Set the footer via Azure CLI</span>
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings 'PAGE_FOOTER=Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes'</div>
+
+            <h4>Setting via Azure Portal</h4>
+            <ol>
+                <li>Navigate to your App Service in the Azure Portal</li>
+                <li>Go to <strong>Settings</strong> → <strong>Environment variables</strong></li>
+                <li>Click <strong>+ Add</strong></li>
+                <li>Set Name: <code>PAGE_FOOTER</code></li>
+                <li>Set Value: Your HTML footer content</li>
+                <li>Click <strong>Apply</strong>, then <strong>Confirm</strong></li>
+            </ol>
+
+            <h3>GitHub Repository Link</h3>
+            <p>Optionally display a GitHub Repository link in the sidebar navigation menu. The link is hidden by default. When both environment variables are provided, the link will appear in the menu and point to <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>Environment Variables</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Variable Name</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub username or organization name. Required to show the link.</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub repository name. Required to show the link.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Setting via Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Set the GitHub link via Azure CLI</span>
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings GITHUB_USER_NAME=your-username GITHUB_REPO_NAME=your-repo-name</div>
+
+            <h4>Setting via Azure Portal</h4>
+            <ol>
+                <li>Navigate to your App Service in the Azure Portal</li>
+                <li>Go to <strong>Settings</strong> → <strong>Environment variables</strong></li>
+                <li>Click <strong>+ Add</strong> and set Name: <code>GITHUB_USER_NAME</code>, Value: your GitHub username or organization</li>
+                <li>Click <strong>+ Add</strong> and set Name: <code>GITHUB_REPO_NAME</code>, Value: your repository name</li>
+                <li>Click <strong>Apply</strong>, then <strong>Confirm</strong></li>
+            </ol>
         </section>
 
         <!-- Dashboard Section -->
@@ -707,6 +808,26 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 
             <h3>Why This Matters</h3>
             <p>During thread pool starvation, CPU and memory metrics often look normal, but users experience severe latency. The latency monitor makes this invisible problem <strong>visible</strong> — you can watch response times spike from milliseconds to seconds when triggering the sync-over-async simulation.</p>
+
+            <div class="info-box">
+                <h4>Key Insight</h4>
+                <p>The probe runs on a <strong>dedicated thread</strong> (not from the thread pool), so it can always send requests. However, the ASP.NET Core server uses the thread pool to process incoming requests. During starvation:</p>
+                <ol>
+                    <li>The probe request is sent immediately</li>
+                    <li>The request sits in the ASP.NET Core queue</li>
+                    <li>It waits for a thread pool thread to become available</li>
+                    <li>Latency = time spent waiting + processing time</li>
+                </ol>
+                <p>This directly demonstrates how sync-over-async anti-patterns impact end-user response times.</p>
+            </div>
+
+            <h3>Correlating with Azure Metrics</h3>
+            <p>Compare the dashboard's latency chart with:</p>
+            <ul>
+                <li><strong>Application Insights</strong> &gt; Live Metrics &gt; Request Duration</li>
+                <li><strong>App Service Metrics</strong> &gt; Response Time</li>
+                <li><strong>Thread Pool</strong> section showing blocked threads</li>
+            </ul>
         </section>
 
         <!-- CPU Stress Section -->
@@ -719,7 +840,7 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
 
             <h3>Dashboard Controls</h3>
             <ul>
-                <li><strong>Duration:</strong> How long to run the stress test (10-300 seconds, default 30)</li>
+                <li><strong>Duration:</strong> How long to run the stress test (default 30 seconds)</li>
                 <li><strong>Start/Stop:</strong> Begin or cancel the simulation</li>
             </ul>
 
@@ -776,11 +897,11 @@ dotnet test --collect:<span class="string">"XPlat Code Coverage"</span>
             <p>The Memory Pressure simulation allocates and holds large byte arrays to demonstrate memory consumption patterns and garbage collection behavior.</p>
 
             <h3>How It Works</h3>
-            <p>Large byte arrays (minimum 10MB, default 100MB) are allocated using <code>GC.AllocateArray&lt;byte&gt;(pinned: true)</code>. The pinned allocation prevents the garbage collector from moving the memory, simulating problematic allocation patterns.</p>
+            <p>Large byte arrays (default 100MB) are allocated using <code>GC.AllocateArray&lt;byte&gt;(pinned: true)</code>. The pinned allocation prevents the garbage collector from moving the memory, simulating problematic allocation patterns.</p>
 
             <h3>Dashboard Controls</h3>
             <ul>
-                <li><strong>Size (MB):</strong> Amount of memory to allocate (10-500MB)</li>
+                <li><strong>Size (MB):</strong> Amount of memory to allocate</li>
                 <li><strong>Allocate:</strong> Adds a new memory block</li>
                 <li><strong>Release All:</strong> Frees all allocated blocks and triggers GC</li>
             </ul>
@@ -980,73 +1101,16 @@ var result = await SomeAsyncMethod();</code></pre>
 
             <h3>Using with CLR Profiler</h3>
             <ol>
-                <li>Start a CPU Profiler trace (60-120 seconds)</li>
+                <li>Set the Request Execution Time long enough that the total simulation easily exceeds 60 seconds (e.g., 25s execution, 10s interval, 6 max requests)</li>
                 <li>Click <strong>🐌 Start Slow Requests</strong> in the dashboard</li>
-                <li>Wait for trace to complete</li>
-                <li>Download and analyze - look for the descriptive method names</li>
+                <li>Wait for the first slow request to appear in the event log — this confirms the simulation is running and health probe rate has been reduced</li>
+                <li>Start a CPU Profiler trace (60-120 seconds)</li>
+                <li>Wait for the trace to complete</li>
+                <li>Download and analyze — look for the descriptive method names</li>
             </ol>
+            <p><strong>Why start the simulation first?</strong> The app automatically slows health probes while slow request simulations are active. Starting the simulation before the profiler keeps health probe noise out of the trace, giving you a cleaner profile focused on the blocking patterns.</p>
 
             <p>See the <a href="/azure-monitoring-guide.html#slowrequest">Azure Diagnostics Guide</a> for detailed profiler analysis instructions.</p>
-        </section>
-
-        <!-- Crash Simulation Section -->
-        <section id="crash" class="doc-section">
-            <h2>💥 Crash Simulation</h2>
-            <p>The dashboard includes a <strong>Crash Simulation</strong> feature for testing Azure crash monitoring and memory dump collection.</p>
-
-            <div class="warning-box">
-                <h4>⚠️ Warning - This will TERMINATE the application!</h4>
-                <p>Crash simulations immediately terminate the process. Azure App Service will automatically restart the application after a crash. Make sure you have Azure Crash Monitoring enabled before triggering a crash.</p>
-            </div>
-
-            <h3>Available Crash Types</h3>
-            <table class="api-table">
-                <thead>
-                    <tr>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th>Best For</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>FailFast</strong></td>
-                        <td>Calls <code>Environment.FailFast()</code> which immediately terminates with a Windows Error Report</td>
-                        <td>General crash testing (recommended)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>StackOverflow</strong></td>
-                        <td>Infinite recursion causing stack overflow - cannot be caught</td>
-                        <td>Stack trace analysis practice</td>
-                    </tr>
-                    <tr>
-                        <td><strong>UnhandledException</strong></td>
-                        <td>Throws unhandled exception on background thread</td>
-                        <td>Exception handling education</td>
-                    </tr>
-                    <tr>
-                        <td><strong>AccessViolation</strong></td>
-                        <td>Writes to invalid memory (null pointer)</td>
-                        <td>Native/unsafe code debugging</td>
-                    </tr>
-                    <tr>
-                        <td><strong>OutOfMemory</strong></td>
-                        <td>Allocates memory until the process crashes</td>
-                        <td>Memory dump analysis</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3>Azure Crash Monitoring Setup</h3>
-            <ol>
-                <li>In Azure Portal, go to your App Service</li>
-                <li>Navigate to <strong>Diagnose and solve problems</strong></li>
-                <li>Search for <strong>"Crash Monitoring"</strong></li>
-                <li>Enable crash monitoring with <strong>"Collect Memory Dump"</strong></li>
-                <li>Trigger a crash using the dashboard or API</li>
-                <li>Download the crash dump from the Azure portal</li>
-                <li>Analyze with Visual Studio or WinDbg</li>
-            </ol>
         </section>
 
         <!-- Failed Requests Section -->
@@ -1125,6 +1189,66 @@ var result = await SomeAsyncMethod();</code></pre>
             </ul>
 
             <p>See the <a href="/azure-monitoring-guide.html#failedrequests">Azure Diagnostics Guide</a> for detailed AppLens analysis instructions.</p>
+        </section>
+
+        <!-- Crash Simulation Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 Crash Simulation</h2>
+            <p>The dashboard includes a <strong>Crash Simulation</strong> feature for testing Azure crash monitoring and memory dump collection.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ Warning - This will TERMINATE the application!</h4>
+                <p>Crash simulations immediately terminate the process. Azure App Service will automatically restart the application after a crash. Make sure you have Azure Crash Monitoring enabled before triggering a crash.</p>
+            </div>
+
+            <h3>Available Crash Types</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Best For</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FailFast</strong></td>
+                        <td>Calls <code>Environment.FailFast()</code> which immediately terminates with a Windows Error Report</td>
+                        <td>General crash testing (recommended)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>StackOverflow</strong></td>
+                        <td>Infinite recursion causing stack overflow - cannot be caught</td>
+                        <td>Stack trace analysis practice</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UnhandledException</strong></td>
+                        <td>Throws unhandled exception on background thread</td>
+                        <td>Exception handling education</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AccessViolation</strong></td>
+                        <td>Writes to invalid memory (null pointer)</td>
+                        <td>Native/unsafe code debugging</td>
+                    </tr>
+                    <tr>
+                        <td><strong>OutOfMemory</strong></td>
+                        <td>Allocates memory until the process crashes</td>
+                        <td>Memory dump analysis</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Azure Crash Monitoring Setup</h3>
+            <ol>
+                <li>In Azure Portal, go to your App Service</li>
+                <li>Navigate to <strong>Diagnose and solve problems</strong></li>
+                <li>Search for <strong>"Crash Monitoring"</strong></li>
+                <li>Enable crash monitoring with <strong>"Collect Memory Dump"</strong></li>
+                <li>Trigger a crash using the dashboard or API</li>
+                <li>Download the crash dump from the Azure portal</li>
+                <li>Analyze with Visual Studio or WinDbg</li>
+            </ol>
         </section>
 
         <!-- Architecture Section -->
@@ -1224,7 +1348,7 @@ var result = await SomeAsyncMethod();</code></pre>
                             <a href="#overview"><span class="toc-icon">🎯</span>Overview</a>
                         </li>
                         <li class="doc-toc-item">
-                            <a href="#quick-start"><span class="toc-icon">🚀</span>Quick Start</a>
+                            <a href="#optional-config"><span class="toc-icon">⚙️</span>Optional Config</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Features</li>
@@ -1247,10 +1371,10 @@ var result = await SomeAsyncMethod();</code></pre>
                             <a href="#slowrequest"><span class="toc-icon">🐌</span>Slow Requests</a>
                         </li>
                         <li class="doc-toc-item">
-                            <a href="#crash"><span class="toc-icon">💥</span>Crash Simulation</a>
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>Failed Requests</a>
                         </li>
                         <li class="doc-toc-item">
-                            <a href="#failedrequests"><span class="toc-icon">❌</span>Failed Requests</a>
+                            <a href="#crash"><span class="toc-icon">💥</span>Crash Simulation</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Reference</li>

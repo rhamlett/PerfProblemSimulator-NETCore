@@ -893,12 +893,14 @@ Task.Run(<span class="keyword">async</span> () =>
 
             <h4>2. CLR Profiler / Azure Profiler</h4>
             <ol>
-                <li>In App Service, go to <strong>Diagnose and solve problems</strong></li>
-                <li>Search for "Profiler"</li>
+                <li>In the dashboard, set execution time long enough that the total simulation easily exceeds 60 seconds (e.g., 25s execution, 10s interval, 6 max requests)</li>
+                <li>Click <strong>🐌 Start Slow Requests</strong> to begin the simulation</li>
+                <li>Wait for the first slow request to appear in the event log — this confirms health probe rate has been reduced</li>
+                <li>In App Service, go to <strong>Diagnose and solve problems</strong> → search for "Profiler"</li>
                 <li>Start a <strong>CPU Profiler</strong> trace (60-120 seconds recommended)</li>
-                <li>Trigger the slow request simulation</li>
-                <li>Download and analyze the trace</li>
+                <li>Wait for the trace to complete, then download and analyze</li>
             </ol>
+            <p><strong>Why start the simulation first?</strong> The app automatically slows health probes while slow request simulations are active. Starting the simulation before the profiler keeps health probe noise out of the trace, giving you a cleaner profile focused on the blocking patterns.</p>
 
             <h3>What to Look For in CLR Profiler</h3>
             <p>The service uses three different sync-over-async patterns with <strong>intentionally descriptive method names</strong>:</p>
@@ -1208,172 +1210,6 @@ procdump -ma -h w3wp.exe
             </div>
         </section>
 
-        <!-- Using the Request Latency Monitor Section -->
-        <section id="latency" class="doc-section">
-            <h2>⏱️ Using the Request Latency Monitor</h2>
-            <p>The dashboard includes a <strong>Request Latency Monitor</strong> that demonstrates how thread pool starvation affects request processing time.</p>
-
-            <h3>How It Works</h3>
-            <ol>
-                <li>A dedicated background thread (not from the thread pool) continuously sends probe requests to <code>/api/health/probe</code></li>
-                <li>The probe endpoint is lightweight - it simply returns a timestamp</li>
-                <li>Latency is measured from request start to response received</li>
-                <li>Results are broadcast via SignalR to the dashboard</li>
-            </ol>
-
-            <h3>What to Observe</h3>
-            <table class="latency-table">
-                <thead>
-                    <tr>
-                        <th>Scenario</th>
-                        <th>Latency (Total)</th>
-                        <th>Status</th>
-                        <th>What's Happening</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Normal operation</td>
-                        <td>&lt; 150ms</td>
-                        <td>✅ Good</td>
-                        <td>Thread pool threads are available</td>
-                    </tr>
-                    <tr>
-                        <td>Mild starvation</td>
-                        <td>150ms - 1s</td>
-                        <td>⚠️ Degraded</td>
-                        <td>Requests queued waiting for threads</td>
-                    </tr>
-                    <tr>
-                        <td>Severe starvation</td>
-                        <td>&gt; 1s</td>
-                        <td>❌ Severe</td>
-                        <td>Significant queuing delay</td>
-                    </tr>
-                    <tr>
-                        <td>Timeout</td>
-                        <td>30s</td>
-                        <td>❌ Critical</td>
-                        <td>No thread available within timeout</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="info-box">
-                <h4>Key Insight</h4>
-                <p>The probe runs on a <strong>dedicated thread</strong> (not from the thread pool), so it can always send requests. However, the ASP.NET Core server uses the thread pool to process incoming requests. During starvation:</p>
-                <ol>
-                    <li>The probe request is sent immediately</li>
-                    <li>The request sits in the ASP.NET Core queue</li>
-                    <li>It waits for a thread pool thread to become available</li>
-                    <li>Latency = time spent waiting + processing time</li>
-                </ol>
-                <p>This directly demonstrates how sync-over-async anti-patterns impact end-user response times.</p>
-            </div>
-
-            <h3>Correlating with Azure Metrics</h3>
-            <p>Compare the dashboard's latency chart with:</p>
-            <ul>
-                <li><strong>Application Insights</strong> &gt; Live Metrics &gt; Request Duration</li>
-                <li><strong>App Service Metrics</strong> &gt; Response Time</li>
-                <li><strong>Thread Pool</strong> section showing blocked threads</li>
-            </ul>
-        </section>
-
-        <!-- Recommended Monitoring Setup Section -->
-        <section id="setup" class="doc-section">
-            <h2>🛠️ Recommended Monitoring Setup</h2>
-
-            <h3>1. Enable Application Insights</h3>
-            <div class="code-block">
-<span class="comment"># Via Azure CLI</span>
-az monitor app-insights component create \
-  --app ai-perf-simulator \
-  --location eastus \
-  --resource-group rg-perf-simulator \
-  --application-type web
-
-<span class="comment"># Get instrumentation key</span>
-az monitor app-insights component show \
-  --app ai-perf-simulator \
-  --resource-group rg-perf-simulator \
-  --query instrumentationKey -o tsv
-            </div>
-
-            <h3>2. Configure Alerts</h3>
-            <p>Create alerts for:</p>
-            <table class="alert-table">
-                <thead>
-                    <tr>
-                        <th>Metric</th>
-                        <th>Threshold</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>CPU Percentage</td>
-                        <td>&gt; 80% for 5 min</td>
-                        <td>Email</td>
-                    </tr>
-                    <tr>
-                        <td>Memory Working Set</td>
-                        <td>&gt; 1 GB</td>
-                        <td>Email</td>
-                    </tr>
-                    <tr>
-                        <td>Response Time</td>
-                        <td>&gt; 5s average</td>
-                        <td>Email</td>
-                    </tr>
-                    <tr>
-                        <td>Failed Requests</td>
-                        <td>&gt; 10/minute</td>
-                        <td>Email + PagerDuty</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3>3. Enable Diagnostic Logs</h3>
-            <div class="code-block">
-az webapp log config \
-  --resource-group rg-perf-simulator \
-  --name your-app-name \
-  --application-logging filesystem \
-  --detailed-error-messages <span class="keyword">true</span> \
-  --failed-request-tracing <span class="keyword">true</span> \
-  --web-server-logging filesystem
-            </div>
-        </section>
-
-        <!-- Best Practices Section -->
-        <section id="best-practices" class="doc-section">
-            <h2>📈 Best Practices</h2>
-            
-            <div class="best-practices">
-                <div class="do-list">
-                    <h4>DO:</h4>
-                    <ul>
-                        <li>Use Application Insights for production apps</li>
-                        <li>Set up alerts before issues occur</li>
-                        <li>Enable diagnostic logging proactively</li>
-                        <li>Monitor thread pool metrics</li>
-                        <li>Use async/await properly throughout</li>
-                    </ul>
-                </div>
-                <div class="dont-list">
-                    <h4>DON'T:</h4>
-                    <ul>
-                        <li>Use <code>.Wait()</code> or <code>.Result</code> on async methods</li>
-                        <li>Block thread pool threads</li>
-                        <li>Allocate large pinned arrays without releasing</li>
-                        <li>Use spin loops for delays</li>
-                        <li>Ignore memory growth over time</li>
-                    </ul>
-                </div>
-            </div>
-        </section>
-
         <!-- Additional Resources Section -->
         <section id="resources" class="doc-section">
             <h2>🔗 Additional Resources</h2>
@@ -1437,18 +1273,7 @@ az webapp log config \
                             <a href="#failedrequests"><span class="toc-icon">❌</span>Failed Requests</a>
                         </li>
                         <li class="doc-toc-divider-item" aria-hidden="true"></li>
-                        <li class="doc-toc-section-item">Tools</li>
-                        <li class="doc-toc-item">
-                            <a href="#latency"><span class="toc-icon">⏱️</span>Latency Monitor</a>
-                        </li>
-                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
                         <li class="doc-toc-section-item">Reference</li>
-                        <li class="doc-toc-item">
-                            <a href="#setup"><span class="toc-icon">⚙️</span>Setup</a>
-                        </li>
-                        <li class="doc-toc-item">
-                            <a href="#best-practices"><span class="toc-icon">✅</span>Best Practices</a>
-                        </li>
                         <li class="doc-toc-item">
                             <a href="#resources"><span class="toc-icon">📚</span>Resources</a>
                         </li>

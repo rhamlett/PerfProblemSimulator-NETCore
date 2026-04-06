@@ -629,7 +629,7 @@ function initializeCharts() {
                     fill: true,
                     pointRadius: 0, // Hide points for performance with many data points
                     pointHoverRadius: 0, // Disable hover circles to prevent visual artifacts
-                    borderWidth: 1.5
+                    borderWidth: 1
                 }
             ]
         },

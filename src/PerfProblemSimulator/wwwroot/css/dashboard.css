@@ -121,8 +121,8 @@ body.page-secondary {
 }
 
 .indicator.connected {
-    background: var(--color-success);
-    box-shadow: 0 0 8px var(--color-success);
+    background: #2ecc40;
+    box-shadow: 0 0 8px #2ecc40;
 }
 
 .indicator.disconnected {
@@ -1139,6 +1139,7 @@ body.page-secondary {
     color: white;
     width: 32px;
     height: 32px;
+    padding: 0.625rem 1.25rem;
     border-radius: 50%;
     cursor: pointer;
     font-size: 1rem;
