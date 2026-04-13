@@ -311,11 +311,19 @@ public partial class TranslationService(
     }
 
     /// <summary>
-    /// Wraps no-translate terms in a string with notranslate spans.
+    /// Wraps no-translate terms and {placeholder} tokens in notranslate spans.
     /// Terms are processed longest-first to avoid partial matches.
+    /// Placeholders like {probeRate} are wrapped so the translator treats them as
+    /// opaque tokens and translates the surrounding natural-language text.
     /// </summary>
     private static string WrapNoTranslateTerms(string text, List<string> terms)
     {
+        // Wrap {placeholder} tokens first so the translator doesn't confuse them with
+        // translatable content. Without this, strings like "Dashboard initialized
+        // (probe rate: {probeRate}ms, idle timeout: {idleTimeout}m)" are treated as
+        // code/template content and returned untranslated.
+        text = PlaceholderRegex.Replace(text, "<span class=\"notranslate\">$0</span>");
+
         if (terms.Count == 0) return text;
 
         foreach (var term in terms)
@@ -328,6 +336,11 @@ public partial class TranslationService(
 
         return text;
     }
+
+    /// <summary>Matches {placeholder} tokens used by the i18n system.</summary>
+    private static readonly Regex PlaceholderRegex = new(
+        @"\{[a-zA-Z_][a-zA-Z0-9_]*\}",
+        RegexOptions.Compiled);
 
     /// <summary>
     /// Strips notranslate span tags from translated text.
