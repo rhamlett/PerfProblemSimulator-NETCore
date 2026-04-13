@@ -74,7 +74,8 @@ public class ConfigController(IOptions<ProblemSimulatorOptions> options, IIdleSt
             PageFooter = pageFooter,
             GitHubRepoUrl = githubRepoUrl,
             LatencyProbeIntervalMs = _options.LatencyProbeIntervalMs,
-            IdleTimeoutMinutes = _idleStateService.IdleTimeoutMinutes
+            IdleTimeoutMinutes = _idleStateService.IdleTimeoutMinutes,
+            UiLanguage = _options.UiLanguage
         });
     }
 }
@@ -104,4 +105,9 @@ public class ClientConfig
     /// How long until the app goes idle (stops probing) in minutes.
     /// </summary>
     public int IdleTimeoutMinutes { get; init; } = 20;
+
+    /// <summary>
+    /// Active UI language (ISO 639-1 code). The client uses this to load the correct locale file.
+    /// </summary>
+    public string UiLanguage { get; init; } = "en";
 }

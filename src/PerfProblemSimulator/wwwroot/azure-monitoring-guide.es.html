@@ -1,0 +1,1347 @@
+<!-- source_hash:7177d622b68f2870 lang:es generated:2026-04-13T18:37:04.0780103Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Guía de Diagnóstico - Simulador de Problemas de Rendimiento</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Documentation-specific styles */
+        .doc-container {
+            max-width: 900px;
+        }
+
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .doc-section {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 80px;
+        }
+
+        .doc-section h2 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-section h3 {
+            color: var(--color-text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .doc-section h4 {
+            color: var(--color-text);
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section ul, .doc-section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--color-danger);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .command { color: #dcdcaa; }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.15) 0%, rgba(0, 120, 212, 0.05) 100%);
+            border-left: 4px solid var(--color-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 1.5rem 0;
+        }
+
+        .info-box h4 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .info-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .latency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .latency-table th, .latency-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .latency-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .latency-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .best-practices {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .do-list, .dont-list {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+        }
+
+        .do-list h4 {
+            color: var(--color-success);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        .dont-list h4 {
+            color: var(--color-danger);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        .do-list li, .dont-list li {
+            list-style: none;
+            margin-left: 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .do-list li::before {
+            content: '✅';
+            position: absolute;
+            left: 0;
+        }
+
+        .dont-list li::before {
+            content: '❌';
+            position: absolute;
+            left: 0;
+        }
+
+        .alert-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .alert-table th, .alert-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .alert-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .api-table.compact {
+            font-size: 0.85rem;
+        }
+
+        .api-table.compact th, .api-table.compact td {
+            padding: 0.5rem 0.5rem;
+        }
+
+        .api-table.compact th {
+            white-space: normal;
+        }
+
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+            white-space: nowrap;
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .resource-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .resource-links a {
+            display: block;
+            background: var(--color-bg);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--color-primary);
+            transition: all var(--transition-fast);
+        }
+
+        .resource-links a:hover {
+            background: rgba(0, 120, 212, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            .best-practices {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Warning/Note callout box */
+        .note-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 16px 0;
+        }
+
+        /* Reference table styles */
+        .reference-table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        .reference-table th,
+        .reference-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .reference-table thead tr {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>Simulador de problemas de rendimiento - .NET 10 en Windows</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU: Cargando...</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 Salpicadero</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Aplicación</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Salpicadero<span class="nav-desc">Métricas y controles en tiempo real</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Documentación</div>
+            <a href="/documentation.html" class="sidebar-nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Documentación<span class="nav-desc">API Referencia y guías</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item active">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure Diagnóstico<span class="nav-desc">Diagnosticar problemas en App Service</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure Pruebas de carga<span class="nav-desc">Endpoint y parámetros de la prueba de carga</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">Desplegar a Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC configuración</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Externo</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub Repositorio<span class="nav-desc">Código fuente y problemas</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API documentación</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">Construcción: <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <div class="doc-container">
+        <div class="deploy-header">
+            <h1>☁️ Azure Guía de diagnóstico</h1>
+            <p>Aprende a diagnosticar problemas de rendimiento usando herramientas de diagnóstico Azure App Service</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+            <h2>📊 Resumen</h2>
+            <p>Esta guía explica cómo utilizar Azure herramientas de diagnóstico para diagnosticar los problemas de rendimiento generados por el Simulador de Problemas de Rendimiento.</p>
+            
+            <p>El simulador genera cuatro tipos de problemas:</p>
+            <ol>
+                <li><strong>Alto CPU</strong> - Bucles de espín paralelos que consumen todos los núcleos</li>
+                <li><strong>Presión de memoria</strong> - Asignaciones fijadas en el Gran Montón de Objetos</li>
+                <li><strong>Escaseza de pozas de hilo</strong> - Patrones de bloqueo sincronizados sobre asíncronos</li>
+                <li><strong>Solicitudes lentas</strong> - Solicitudes de análisis de <span class="notranslate">CLR Profiler</span> de larga duración</li>
+            </ol>
+            <p>Cada problema puede diagnosticarse utilizando herramientas y técnicas Azure específicas.</p>
+        </section>
+
+        <!-- Simulation ID Correlation Section -->
+        <section id="simulation-ids" class="doc-section">
+            <h2>🔗 Correlación ID de simulación</h2>
+            <p>A cada instancia de simulación se le asigna una única <strong>ID de simulación</strong> (GUID) que permite una correlación extrema a extrema entre la interfaz del panel de control y los diagnósticos Azure .</p>
+            
+            <h3>Encontrar identificadores de simulación</h3>
+            <p><strong>En el panel de control:</strong> Pasa el cursor sobre cualquier mensaje relacionado con la simulación en el Registro de Eventos (marcado con un <span class="sim-msg">subrayado punteado</span>) para ver el ID completo de la simulación en una descripción emergente.</p>
+            <p><strong>En Azure:</strong> El mismo ID de simulación se emite en los registros del lado del servidor y puede encontrarse en:</p>
+            <ul>
+                <li><strong>Application Insights</strong> - Trazas de búsqueda y eventos personalizados por ID de simulación</li>
+                <li><strong>Análisis de registros</strong> - Registros de consulta usando el ID como filtro</li>
+                <li><strong>Contenedor/App Service troncos</strong> - Filtrar stdout/stderr por el GUID</li>
+            </ul>
+
+            <h3>Consultas de correlación</h3>
+            <p>Utiliza estas consultas KQL en Log Analytics para correlacionar eventos del panel con la telemetría del servidor:</p>
+            
+            <div class="note-warning">
+                <strong>⚠️ Diferencias en los nombres de las tablas:</strong> Los espacios de trabajo de Log Analytics utilizan nombres de tablas y columnas diferentes a los Application Insightsclásicos. Si ves errores como <em>"El nombre 'traces' no se refiere a ninguna tabla conocida"</em>, utiliza los nombres de Log Analytics que aparecen a continuación:                <table class="reference-table">
+                    <thead>
+                        <tr>
+                            <th>Clásico Application Insights</th>
+                            <th>Espacio de trabajo de Análisis de Registros</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>traces</code></td><td><code>AppTraces</code></td></tr>
+                        <tr><td><code>customEvents</code></td><td><code>AppEvents</code></td></tr>
+                        <tr><td><code>requests</code></td><td><code>AppRequests</code></td></tr>
+                        <tr><td><code>exceptions</code></td><td><code>AppExceptions</code></td></tr>
+                        <tr><td><code>dependencies</code></td><td><code>AppDependencies</code></td></tr>
+                        <tr><td><code>message</code></td><td><code>Message</code></td></tr>
+                        <tr><td><code>timestamp</code></td><td><code>TimeGenerated</code></td></tr>
+                        <tr><td><code>customDimensions</code></td><td><code>Properties</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-block">
+<span class="comment">Encontrar eventos de inicio y fin de simulación por ID de simulación</span>AppEvents
+| <span class="keyword">donde</span> Nombre <span class="keyword">en</span> (<span class="string">"Simulación iniciada"</span>, <span class="string">"SimulaciónFinalizada"</span>)
+| <span class="keyword">donde</span> Propiedades[<span class="string">"SimulationId"</span>] == <span class="string">"TU-SIMULACIÓN-ID-AQUÍ"</span>| <span class="keyword">proyecto</span> TimeGenerated, Nombre, Propiedades
+| <span class="keyword">Ordenar por</span> TimeGenerated <span class="keyword">ASC</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">Encuentra todas las peticiones durante una ventana temporal de simulación</span>
+<span class="keyword">Sea</span> simStart = toscalar(
+    AppEvents 
+    | <span class="keyword">donde</span> Nombre == <span class="string">"Simulación iniciada"</span> <span class="keyword">y</span> Propiedades[<span class="string">"SimulationId"</span>] == <span class="string">"TU-SIMULACIÓN-ID-AQUÍ"</span>| <span class="keyword">proyecto</span> TimeGenerated);<span class="keyword">Sea</span> simEnd = toscalar(
+    AppEvents 
+    | <span class="keyword">donde</span> Nombre == <span class="string">"SimulaciónFinalizada"</span> <span class="keyword">y</span> Propiedades[<span class="string">"SimulationId"</span>] == <span class="string">"TU-SIMULACIÓN-ID-AQUÍ"</span>| <span class="keyword">proyecto</span> TimeGenerated);
+AppRequests
+| <span class="keyword">donde</span> TimeGenerated <span class="keyword">entre</span> (simStart... simEnd)
+| <span class="keyword">Ordenar por</span> TimeGenerated <span class="keyword">ASC</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">Encontrar solicitudes fallidas durante una simulación</span>
+<span class="keyword">Sea</span> simId = <span class="string">"TU-SIMULACIÓN-ID-AQUÍ"</span>;<span class="keyword">Sea</span> simEvents = AppEvents | <span class="keyword">donde</span> Propiedades[<span class="string">"SimulationId"</span>] == simId;<span class="keyword">Sea</span> simStart = toscalar(simEvents | <span class="keyword">donde</span> Nombre == <span class="string">"Simulación iniciada"</span> | <span class="keyword">proyecto</span> TimeGenerated);<span class="keyword">Sea</span> simEnd = toscalar(simEvents| <span class="keyword">donde</span> Nombre == <span class="string">"SimulaciónFinalizada"</span> | <span class="keyword">proyecto</span> TimeGenerated);
+AppRequests
+| <span class="keyword">donde</span> TimeGenerated <span class="keyword">entre</span> (simStart... simEnd)
+| <span class="keyword">donde</span> Éxito == <span class="keyword">falso</span>| <span class="keyword">proyecto</span> TimeGenerated, Name, ResultCode, DurationMs, Url
+| <span class="keyword">Ordenar por</span> TimeGenerated <span class="keyword">ASC</span>
+            </div>
+
+            <h3>Flujo de trabajo de resolución de problemas</h3>
+            <ol>
+                <li>Inicia una simulación desde el panel de control</li>
+                <li>Pasa el cursor sobre el mensaje de inicio en el Registro de Eventos para copiar el ID de Simulación</li>
+                <li>Portal abierto Azure → Application Insights → Registros (o Análisis de Registros)</li>
+                <li>Consulta los registros usando el ID de simulación para ver toda la actividad relacionada del lado del servidor</li>
+                <li>Correlacionar las marcas de tiempo entre eventos del panel de control y métricas del servidor</li>
+            </ol>
+            <p><strong>Propina:</strong> El ID de Simulación ayuda a aislar la telemetría al ejecutar múltiples simulaciones simultáneas o cuando el panel de control es utilizado por varios usuarios.</p>
+        </section>
+
+        <!-- Diagnosing High CPU Section -->
+        <section id="cpu" class="doc-section">
+            <h2>🔥 Diagnóstico de CPU</h2>
+            
+            <h3>Síntomas</h3>
+            <ul>
+                <li>La aplicación deja de responder</li>
+                <li>Aumento de los tiempos de espera de las solicitudes</li>
+                <li>CPU métrica muestra un uso sostenido alto (&gt;80%)</li>
+            </ul>
+
+            <h3>Azure Herramientas para Utilizar</h3>
+
+            <h4>1. App Service Diagnosticar y Resolver Problemas</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Clic <strong>Diagnosticar y resolver problemas</strong> En el menú izquierdo</li>
+                <li>Seleccionar <strong>Disponibilidad y rendimiento</strong> &gt; <strong>Análisis de CPU</strong></li>
+                <li>Revisa el calendario y el desglose del proceso</li>
+            </ol>
+
+            <h4>2. Application Insights Métricas en Tiempo Real</h4>
+            <ol>
+                <li>Abre Application Insights para tu aplicación</li>
+                <li>Ir a <strong>Métricas en vivo</strong></li>
+                <li>Observa el grafo CPU en tiempo real</li>
+                <li>Observa la correlación con las solicitudes entrantes</li>
+            </ol>
+
+            <h4>3. CPU Perfilado (Avanzado)</h4>
+            <ol>
+                <li>En App Service, ve a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Busca "CPU Perfilado"</li>
+                <li>Clic <strong>Recoger Rastreo de perfilador</strong></li>
+                <li>Activa la simulación de CPU</li>
+                <li>Espera a que termine la recogida</li>
+                <li>Descarga y analiza el <code>.diagsession</code> archivo</li>
+            </ol>
+
+            <h3>Qué buscar</h3>
+            <div class="code-block">
+<span class="comment">En el rastreo del perfilador, verás:</span>- Hilos dedicados ejecutando un bucle while
+- Alto tiempo de autonomía en CpuStressService
+- Nombres de hilos como CpuStress-*            </div>
+
+            <h3>Patrón de código (Qué pasa)</h3>
+            <div class="code-block">
+<span class="comment">El servicio utiliza hilos dedicados para evitar que el Pool de Hilos esté sin recursos,</span>
+<span class="comment">asegurando que el panel de control siga siendo reactivo incluso bajo carga del 100%.</span>
+<span class="keyword">var</span> hilos = <span class="keyword">Nuevo</span> Hilo[Entorno.Conteoprocesador];<span class="keyword">para</span> (<span class="keyword">int</span> i = <span class="keyword">0</span>; He &lt; hilos. Longitud; i++)
+{
+    hilos[i] = <span class="keyword">Nuevo</span> Thread(() =>
+    {        <span class="comment">Bucle de giro cerrado para consumir el 100% de un núcleo</span>
+        <span class="keyword">mientras</span> (Cronómetro.ConseguirMarcatiempo() &lt; fin del tiempo)
+        {             <span class="comment">Girar</span>}
+    });
+    hilos[i]. Inicio();
+}            </div>
+        </section>
+
+        <!-- Diagnosing Memory Pressure Section -->
+        <section id="memory" class="doc-section">
+            <h2>📊 Diagnóstico de la presión de memoria</h2>
+            
+            <h3>Síntomas</h3>
+            <ul>
+                <li>Aumento del uso de memoria con el tiempo</li>
+                <li>GC frecuencia de recogida aumenta</li>
+                <li>La aplicación puede volverse más lenta debido a GC pausas</li>
+                <li>Eventualmente, OutOfMemoryException</li>
+            </ul>
+
+            <h3>Azure Herramientas para Utilizar</h3>
+
+            <h4>1. App Service Métricas</h4>
+            <ol>
+                <li>Navega hacia tu App Service</li>
+                <li>Ir a <strong>Métricas</strong></li>
+                <li>Añadir métricas: <strong>Conjunto de trabajo de memoria</strong>, <strong>Bytes privados</strong></li>
+                <li>Ajusta la granularidad del tiempo a 1 minuto</li>
+                <li>Observa el crecimiento de la memoria durante la simulación</li>
+            </ol>
+
+            <h4>2. Análisis de volcado de memoria</h4>
+            <ol>
+                <li>Ir a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Busca "Memory Dump"</li>
+                <li>Clic <strong>Recoger Memoria Dump</strong></li>
+                <li>Elige "Volcado completo" para un análisis detallado</li>
+                <li>Descárgalo y ábrelo en Visual Studio o WinDbg</li>
+            </ol>
+
+            <h4>3. Application Insights</h4>
+            <ol>
+                <li>Abierto Application Insights</li>
+                <li>Ir a <strong>Rendimiento</strong> &gt; <strong>Dependencias</strong></li>
+                <li>Busca patrones lentos relacionados con GC</li>
+            </ol>
+
+            <h3>Qué buscar</h3>
+            <div class="code-block">
+<span class="comment">En un volcado de memoria, busca:</span>- Matrices de bytes grandes[] en el Gran Montón de Objetos (LOH)
+- GCHandle.Alloc objetos clavados
+- Objetos que no se recogen debido a la fijación            </div>
+
+            <h3>Patrón de código (Qué pasa)</h3>
+            <div class="code-block">
+<span class="comment">Este es el código "malo" intencionado en MemoryPressureService:</span>
+<span class="keyword">var</span> datos = <span class="keyword">Nuevo</span> <span class="keyword">Byte</span>[tamañoMegabytes* <span class="keyword">1024</span> * <span class="keyword">1024</span>];<span class="keyword">var</span> pinnedHandle = GCHandle.Alloc(data, GCHandleType.Pinned);<span class="comment">La asignación fijada:</span>
+<span class="comment">// 1. Va directamente al Gran Montón de Objetos (LOH) desde > 85KB</span>
+<span class="comment">// 2. No puede ser movido por GC, causando fragmentación</span>
+<span class="comment">// 3. Permanece en la memoria hasta su publicación explícita</span>
+            </div>
+        </section>
+
+        <!-- Diagnosing Thread Pool Starvation Section -->
+        <section id="threads" class="doc-section">
+            <h2>🧵 Diagnóstico de la falta de pool de hilos</h2>
+            
+            <h3>Síntomas</h3>
+            <ul>
+                <li>Las solicitudes se ponen en cola y se agotan</li>
+                <li>La latencia aumenta incluso para peticiones simples</li>
+                <li>Avisos de agotamiento de la piscina de rosca en los registros</li>
+                <li>Los chequeos médicos pueden fallar</li>
+            </ul>
+
+            <h3>Azure Herramientas para Utilizar</h3>
+
+            <h4>1. Application Insights Dependencias</h4>
+            <ol>
+                <li>Abierto Application Insights</li>
+                <li>Ir a <strong>Mapa de aplicaciones</strong></li>
+                <li>Busca alta latencia en las llamadas salientes</li>
+                <li>Fíjate en el patrón de "espera hilo"</li>
+            </ol>
+
+            <h4>2. App Service Diagnóstico</h4>
+            <ol>
+                <li>Ir a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Buscar "Threading"</li>
+                <li>Revisar el número de hilos y las métricas de contención</li>
+            </ol>
+
+            <h4>3. Contadores de rendimiento</h4>
+            <p>Vigila estos contadores:</p>
+            <ul>
+                <li><code>.NET CLR Thread Pool / # of Threads</code></li>
+                <li><code>.NET CLR Thread Pool / Queue Length</code></li>
+                <li><code>Process / Thread Count</code></li>
+            </ul>
+
+            <h3>Qué buscar</h3>
+            <div class="code-block">
+<span class="comment">Señales de falta de charcos de hilo:</span>- El número de hilos aumenta de forma constante
+- Longitud de la cola que crece
+- Largas duraciones de las solicitudes
+- Tiempos de espera en operaciones simples            </div>
+
+            <h3>Patrón de código (Qué pasa)</h3>
+            <div class="code-block">
+<span class="comment">Este es el código "malo" intencionado en ThreadBlockService:</span>Task.Run(<span class="keyword">asíncrono</span> () =>
+{    <span class="comment">MALO: ¡Bloqueando un hilo de pool de hilos con espera síncrona!</span>
+    <span class="comment">Este es el "sync-over-async" anti-patrón.</span>Task.Delay(delayMs, cancellationToken). Espera();    <span class="comment">Problema: Cada llamada a . Wait() bloquea un hilo de pool de hilos</span>
+    <span class="comment">hasta que termine el retraso. Con suficientes solicitudes concurrentes,</span>
+    <span class="comment">El pool de hilos se agota y las nuevas solicitudes deben esperar.</span>});            </div>
+        </section>
+
+        <!-- Diagnosing Slow Requests Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 Diagnosticar solicitudes lentas con <span class="notranslate">CLR Profiler</span></h2>
+            
+            <p>El Simulador de Peticiones Lentas genera peticiones de larga duración (~25 segundos cada una) utilizando patrones de sync-over-async diseñados específicamente para ser fácilmente identificables en <span class="notranslate">CLR Profiler</span> trazas.</p>
+
+            <h3>Propósito</h3>
+            <p>Esta simulación está diseñada para <strong>Formar a los desarrolladores para identificar llamadas bloqueantes</strong> en rastros de perfiladores. A diferencia de la simulación de Starvation del Pool de Hilos (que causa muchos bloques cortos), esta crea solicitudes largas individuales que son claramente visibles en las pilas de llamadas.</p>
+
+            <h3>Azure Herramientas para Utilizar</h3>
+
+            <h4>1. Azure Curación Automática con Disparador de Petición Lenta</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Busca "Auto-Curación"</li>
+                <li>Configurar el disparador de peticiones lentas (por ejemplo, peticiones > 20 segundos)</li>
+            </ol>
+
+            <h4>2. <span class="notranslate">CLR Profiler</span> / Azure Perfilador</h4>
+            <ol>
+                <li>En el panel, establece el tiempo de ejecución lo suficientemente largo para que la simulación total supere fácilmente los 60 segundos (por ejemplo, 25 segundos de ejecución, intervalo de 10 segundos, 6 solicitudes máximas)</li>
+                <li>Clic <strong>🐌 Iniciar solicitudes lentas</strong> para comenzar la simulación</li>
+                <li>Espera a que aparezca la primera petición lenta en el registro de eventos: esto confirma que la tasa de sondeo de salud se ha reducido</li>
+                <li>En App Service, ve a <strong>Diagnosticar y resolver problemas</strong> → busca "Perfilador"</li>
+                <li>Inicia una <strong>CPU Perfilador</strong> Trace (recomendados 60-120 segundos)</li>
+                <li>Espera a que termine el rastreo, luego descarga y analiza</li>
+            </ol>
+            <p><strong>¿Por qué empezar la simulación primero?</strong> La app ralentiza automáticamente las sondas de salud mientras las simulaciones de peticiones lentas están activas. Iniciar la simulación antes del perfilador mantiene el ruido de la sonda de salud fuera del rastreo, dándote un perfil más limpio enfocado en los patrones de bloqueo.</p>
+
+            <h3>Qué buscar en <span class="notranslate">CLR Profiler</span></h3>
+            <p>El servicio utiliza tres patrones de sync-over-async diferentes con <strong>nombres de métodos intencionadamente descriptivos</strong>:</p>
+
+            <h4>Escenario 1: Bloqueo simple</h4>
+            <p>Busca métodos: <code>FetchDataSync_BLOCKING_HERE</code>, <code>ProcessDataSync_BLOCKING_HERE</code>, <code>SaveDataSync_BLOCKING_HERE</code></p>
+            <div class="code-block">En el perfilador, verás el tiempo dedicado a:
+  → SlowRequestService.FetchDataSync_BLOCKING_HERE
+    → Thread.Sleep            </div>
+
+            <h4>Escenario 2: Métodos de sincronización anidados</h4>
+            <p>Busca métodos que terminen en: <code>_BLOCKS_INTERNALLY</code></p>
+            <div class="code-block">Estos son métodos síncronos que bloquean internamente usando Thread.Sleep:
+  → ValidateOrderSync_BLOCKS_INTERNALLY
+  → CheckInventorySync_BLOCKS_INTERNALLY  
+  → ProcessPaymentSync_BLOCKS_INTERNALLY
+  → SendConfirmationSync_BLOCKS_INTERNALLY            </div>
+
+            <h4>Escenario 3: Base de datos/Patrón deHTTP</h4>
+            <p>Busca métodos que terminen en: <code>Sync_SYNC_BLOCK</code></p>
+            <div class="code-block">Bases de datos simuladas y HTTP bloqueando llamadas:
+  → GetCustomerFromDatabaseSync_SYNC_BLOCK
+  → GetOrderHistoryFromDatabaseSync_SYNC_BLOCK
+  → CheckInventoryServiceSync_SYNC_BLOCK
+  → GetRecommendationsFromMLServiceSync_SYNC_BLOCK
+  → BuildResponseSync_SYNC_BLOCK            </div>
+
+            <h3>Ajustes recomendados para <span class="notranslate">CLR Profiler</span> (trazado de los años 60)</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Ambientación</th>
+                        <th>Valor</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Duración de la solicitud</td>
+                        <td>25</td>
+                        <td>Lo suficiente para dejar huella</td>
+                    </tr>
+                    <tr>
+                        <td>Intervalo</td>
+                        <td>Años 10</td>
+                        <td>Múltiples solicitudes durante el trazado de los 60</td>
+                    </tr>
+                    <tr>
+                        <td>Solicitudes Máximas</td>
+                        <td>6</td>
+                        <td>Suficientes muestras sin abrumar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Patrón de código (Qué pasa)</h3>
+            <div class="code-block">
+<span class="comment">ESCENARIO 1: Sincronización sobre Asincronismo (Simple)</span>
+<span class="keyword">Vacío público</span> ProcesoSolicitud()
+{    <span class="comment">FALLO FATAL: Llamando. ¡Espera() en una tarea bloquea el hilo!</span>
+    <span class="comment">Este es el clásico anti-patrón "Sync Over Async".</span>Tarea. Retraso(<span class="keyword">25000</span>). Espera();
+}<span class="comment">ESCENARIO 2: Bloqueo oculto dentro de los métodos de sincronización</span>
+<span class="keyword">Vacío público</span> ValidateOrderSync_BLOCKS_INTERNALLY()
+{    <span class="comment">Cada método bloquea internamente usando Task.Delay(). Espera()</span>ValidateOrderAsync_BLOCKS(). Espera();
+}            </div>
+
+            <div class="info-box">
+                <h4>💡 Información clave: Tiempo de cola frente a tiempo de ejecución</h4>
+                <p>Si ves un gran hueco donde aparece "No se emiten eventos" antes de que empiece la solicitud:</p>
+                <ul>
+                    <li><strong>Tiempo de espera:</strong> El Pool de Hilos está vacío, así que tu solicitud se quedó en la cola esperando un hilo (por ejemplo, 20+ segundos).</li>
+                    <li><strong>Tiempo de ejecución:</strong> Una vez asignado un hilo, el método finalmente se ejecutaba.</li>
+                </ul>
+                <p><strong>Ejemplo:</strong> El usuario espera 47 segundos, pero el registro muestra solo 25 segundos de duración. ¡Los 22 que faltaban se gastaron en la cola!</p>
+            </div>
+
+            <div class="info-box">
+                <h4>💡 Latidos de ETW</h4>
+                <p>El simulador registra "Generando ruido de traza..." cada 500 ms para vaciar los búferes ETW, asegurando que las peticiones largas no se pierdan en las trazas.</p>
+            </div>
+        </section>
+
+        <!-- Diagnosing Application Crashes Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 Diagnóstico de fallos de aplicaciones</h2>
+            
+            <h3>Síntomas</h3>
+            <ul>
+                <li>La solicitud de repente deja de estar disponible</li>
+                <li>HTTP errores 502/503 devueltos a los clientes</li>
+                <li>Azure reinicia automáticamente la aplicación</li>
+                <li>Los registros de eventos muestran la terminación del proceso</li>
+            </ul>
+
+            <h3>Azure Monitorización de fallos</h3>
+            <p>Azure App Service incluye Monitorización de Fallos integrada que puede capturar automáticamente los volcados de memoria cuando tu aplicación se bloquea.</p>
+
+            <h4>Activación de la monitorización de fallos</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Busca "Monitorización de fallos"</li>
+                <li>Habilitar la recogida de volcado accidental</li>
+            </ol>
+
+            <div class="info-box">
+                <h4>⚠️ Importante: Restricciones de la cuenta de almacenamiento</h4>
+                <p>En algunos entornos Azure , la monitorización de fallos puede no funcionar debido a restricciones de seguridad en las cuentas de almacenamiento. Si no puedes usar Monitoreamiento de Fallos, puedes recoger manualmente los volcados de memoria usando <strong>ProcDump</strong> desde la consola Kudu.</p>
+            </div>
+
+            <h3>Uso de ProcDump para la recogida manual de volcado</h3>
+            <p><a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump" target="_blank" rel="noopener">ProcDump</a> es una utilidad de línea de comandos de Sysinternals que puede monitorizar aplicaciones y generar volcados de fallo. Está disponible en Azure App Service a través de la consola Kudu.</p>
+
+            <h4>Acceso a la consola Kudu</h4>
+            <ol>
+                <li>Navega hacia tu App Service</li>
+                <li>Ir a <strong>Herramientas de desarrollo</strong> &gt; <strong>Herramientas avanzadas</strong></li>
+                <li>Clic <strong>Ve</strong> abrir Kudu</li>
+                <li>Seleccionar <strong>Consola de depuración</strong> &gt; <strong>CMD</strong> o <strong>PowerShell</strong></li>
+            </ol>
+
+            <h4>Comandos comunes de ProcDump</h4>
+            <div class="code-block">
+<span class="comment"># Escribe un volcado completo de memoria de un proceso por nombre</span>procdump -ma w3wp.exe<span class="comment"># Escribe un volcado completo cuando ocurre una excepción no gestionada</span>procdump -ma -e w3wp.exe<span class="comment"># Escribe un volcado completo sobre la excepción de primera o segunda oportunidad</span>procdump -ma -e 1 w3wp.exe<span class="comment"># Escribe hasta 10 volcados, uno por excepción</span>procdump -ma -n 10 -e 1 w3wp.exe<span class="comment"># Escribe un volcado cuando CPU supere el 80% durante 10 segundos</span>procdump -ma -c 80 -s 10 w3wp.exe<span class="comment"># Escribe un volcado cuando la memoria supere 1GB</span>procdump -ma -m 1024 w3wp.exe<span class="comment"># Escribe un volcado cuando detectan una ventana colgada</span>procdump -ma -h w3wp.exe            </div>
+
+            <h4>Referencia de opciones de ProcDump</h4>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Opción</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>-ma</code></td>
+                        <td>Volcado completo (toda la memoria)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mm</code></td>
+                        <td>Mini volcado (por defecto, tamaño más pequeño)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mp</code></td>
+                        <td>Dump del MiniPlus (detallado pero un 10-75% más pequeño que el completo)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-e</code></td>
+                        <td>Volcado en una excepción no gestionada (añadir <code>1</code> para la primera oportunidad)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-c</code></td>
+                        <td>CPU porcentaje umbral</td>
+                    </tr>
+                    <tr>
+                        <td><code>-m</code></td>
+                        <td>Umbral de compromiso de memoria en MB</td>
+                    </tr>
+                    <tr>
+                        <td><code>-n</code></td>
+                        <td>Número de volcados por escribir antes de salir</td>
+                    </tr>
+                    <tr>
+                        <td><code>-s</code></td>
+                        <td>Segundos consecutivos antes del volcado (por defecto 10)</td>
+                    </tr>
+                    <tr>
+                        <td><code>-h</code></td>
+                        <td>Vaciar en la ventana colgada</td>
+                    </tr>
+                    <tr>
+                        <td><code>-t</code></td>
+                        <td>Volcado al terminar el proceso</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Descargando el archivo de volcado</h4>
+            <ol>
+                <li>En Kudu, navega hasta la carpeta donde se creó el volcado</li>
+                <li>Haz clic en el icono de descarga junto a <code>.dmp</code> archivo</li>
+                <li>Abre el volcado en Visual Studio, WinDbg u otro depurador</li>
+            </ol>
+        </section>
+
+        <!-- Diagnosing Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ Diagnóstico de solicitudes fallidas (HTTP 5xx)</h2>
+            <p>HTTP 500 errores son uno de los problemas más comunes que afectan a la disponibilidad de aplicaciones. Esta simulación genera excepciones aleatorias para practicar el diagnóstico de solicitudes fallidas en Azure.</p>
+
+            <h3>Qué simular</h3>
+            <ol>
+                <li>En el panel de control, haz clic <strong>❌ Iniciar solicitudes fallidas</strong></li>
+                <li>Esperar a que se completen las solicitudes (cada una tarda ~1,5 segundos)</li>
+                <li>Observar los tipos de excepciones en el Registro de Eventos (entradas marrones)</li>
+            </ol>
+
+            <h3>Diagnóstico de AppLens</h3>
+            <ol>
+                <li>En Azure Portal, ve a tu App Service</li>
+                <li>Navegar a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Búsqueda de <strong>"Errores de aplicación"</strong> o <strong>"HTTP 500"</strong></li>
+                <li>AppLens mostrará:                    <ul>
+                        <li>Tasa de error a lo largo del tiempo</li>
+                        <li>Tipos de excepción más comunes</li>
+                        <li>Trazas de pila para cada fallo</li>
+                        <li>Correlación con otros síntomas</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Diagnóstico de Application Insights</h3>
+            <ol>
+                <li>En Azure Portal, ve a tu recurso Application Insights</li>
+                <li>Clic <strong>Fracasos</strong> En el menú izquierdo</li>
+                <li>Revisa la cronología de fallos y el desglose de las excepciones</li>
+                <li>Haz clic en excepciones individuales para ver:                    <ul>
+                        <li>Traza de pila de excepciones completas</li>
+                        <li>Detalles de la solicitud (URL, duración, código de respuesta)</li>
+                        <li>Propiedades personalizadas y telemetría</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Tipos de excepciones comunes que verás</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Excepción</th>
+                        <th>Causa real</th>
+                        <th>Cómo arreglar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>Acceso a la propiedad del objeto nulo</td>
+                        <td>Añadir comprobaciones nulas, usar tipos de referencia anulables</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>Dependencia externa demasiado lenta</td>
+                        <td>Aumenta el tiempo de espera, añade un interruptor automático</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>Objeto en estado incorrecto para la operación</td>
+                        <td>Revisa las precondiciones, valida el estado</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>Llamada de API externa fallida</td>
+                        <td>Añadir lógica de reintentos, comprobar la conectividad</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>Falta una clave de configuración o caché</td>
+                        <td>Usa TryGetValue, comprueba primero la existencia</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <h4>💡 Consejo profesional: Crear alertas de tasa de error</h4>
+                <p>Configura una alerta de Azure Monitor para avisarte cuando la tasa de error de HTTP 5xx supere un umbral:</p>
+                <ol>
+                    <li>Ve a tu App Service → <strong>Alertas</strong> → <strong>Crear regla de alerta</strong></li>
+                    <li>Señal: <strong>Errores en el servidor HTTP</strong></li>
+                    <li>Umbral: Dinámico o estático (por ejemplo, > 5 por minuto)</li>
+                    <li>Acción: Notificación por correo electrónico, SMS o webhook</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Additional Resources Section -->
+        <section id="resources" class="doc-section">
+            <h2>🔗 Recursos adicionales</h2>
+            <p>Para más información, consulta estos recursos oficiales de Microsoft:</p>
+            
+            <div class="resource-links">
+                <a href="https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-performance-issues" target="_blank" rel="noopener">📘 Solucionar problemas de rendimiento - Azure App Service
+                </a>
+                <a href="https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/" target="_blank" rel="noopener">📘 .NET gestión de memoria                </a>
+                <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming" target="_blank" rel="noopener">📘 Mejores prácticas de Async/Await                </a>
+                <a href="https://docs.microsoft.com/en-us/archive/blogs/vancem/diagnosing-net-core-threadpool-starvation-with-perfview-why-my-service-is-not-saturating-all-cores-or-seems-to-stall" target="_blank" rel="noopener">📘 Diagnóstico de falta de pool de hilos                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Performance Problem Simulator — Herramienta educativa para Azure App Service Diagnósticos</p>
+            <p id="pageFooterContent"></p>
+            <p>Construcción: <span id="buildTime">--</span></p>
+        </footer>
+        </div><!-- /.doc-container -->
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">En esta página</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">📊</span>Resumen</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#simulation-ids"><span class="toc-icon">🔗</span>IDs de simulación</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Diagnóstico</li>
+                        <li class="doc-toc-item">
+                            <a href="#cpu"><span class="toc-icon">🔥</span>Alto CPU</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#memory"><span class="toc-icon">📊</span>Presión de memoria</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#threads"><span class="toc-icon">🧵</span>Pool de Hilos</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#slowrequest"><span class="toc-icon">🐌</span>Solicitudes lentas</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#crash"><span class="toc-icon">💥</span>Accidentes</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>Solicitudes fallidas</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Referencia</li>
+                        <li class="doc-toc-item">
+                            <a href="#resources"><span class="toc-icon">📚</span>Recursos</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.doc-section');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

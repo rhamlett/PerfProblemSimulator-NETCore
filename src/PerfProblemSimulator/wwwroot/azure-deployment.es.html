@@ -1,0 +1,1118 @@
+<!-- source_hash:18c52514089ee258 lang:es generated:2026-04-13T18:43:37.9162593Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Guía de despliegue - Simulador de problemas de rendimiento</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Azure Deployment Page Styles */
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .deploy-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            scroll-margin-top: 80px;
+        }
+
+        .card h2 {
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-bg);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: var(--color-text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card h4 {
+            color: var(--color-text-muted);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p, .card li {
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .card ul, .card ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+
+        .card li {
+            margin-bottom: 0.25rem;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        code {
+            background: rgba(0,0,0,0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9em;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            color: var(--color-danger);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid var(--color-bg);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .info-box {
+            background: rgba(0, 120, 212, 0.1);
+            border-left: 4px solid var(--color-primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: var(--color-text);
+        }
+
+        .warning-box {
+            background: rgba(255, 185, 0, 0.15);
+            border-left: 4px solid var(--color-warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: var(--color-text);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .secrets-table td:first-child {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>Simulador de Problemas de Rendimiento</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU: Cargando...</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 Salpicadero</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Aplicación</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Salpicadero<span class="nav-desc">Métricas y controles en tiempo real</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Documentación</div>
+            <a href="/documentation.html" class="sidebar-nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Documentación<span class="nav-desc">API Referencia y guías</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure Diagnóstico<span class="nav-desc">Diagnosticar problemas en App Service</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure Pruebas de carga<span class="nav-desc">Endpoint y parámetros de la prueba de carga</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item active">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">Desplegar a Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC configuración</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Externo</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub Repositorio<span class="nav-desc">Código fuente y problemas</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API documentación</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">Construcción: <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <main class="deploy-container">
+        <div class="deploy-header">
+            <h1>🚀 Azure Guía de despliegue</h1>
+            <p>Despliega Performance Problem Simulator para Azure App Service usando <span class="notranslate">GitHub Actions</span> con autenticación OIDC</p>
+        </div>
+
+        <section id="overview" class="card">
+            <h2>Resumen</h2>
+            <p>Esta guía te guía en cómo desplegar el Performance Problem Simulator para Azure App Service usando <span class="notranslate">GitHub Actions</span> con autenticación OpenID Connect (OIDC). OIDC elimina la necesidad de almacenar credenciales como secretos.</p>
+            
+            <h3>Requisitos previos</h3>
+            <ul>
+                <li>Azure suscripción con permisos para crear recursos</li>
+                <li>Azure permisos AD/Entra ID para crear registros de aplicaciones</li>
+                <li>GitHub cuenta</li>
+                <li>Azure CLIs instalados (opcional, para el método CLI)</li>
+            </ul>
+
+            <h3>Lo que vas a crear</h3>
+            <table>
+                <tr><th>Recurso</th><th>Propósito</th></tr>
+                <tr><td>Azure App Service</td><td>Aloja la aplicación Performance Problem Simulator</td></tr>
+                <tr><td>Azure Registro en la aplicación AD</td><td>Identidad para <span class="notranslate">GitHub Actions</span> OIDC</td></tr>
+                <tr><td>Credencial Federada</td><td>Enlaces GitHub repositorio a Azure AD</td></tr>
+                <tr><td>Asignación de roles</td><td>Concede permisos de despliegue</td></tr>
+            </table>
+        </section>
+
+        <section id="app-service" class="card">
+            <h2><span class="step-number">1</span> Crea Azure App Service</h2>
+            
+            <h3>Opción A: Azure Portal</h3>
+            <ol>
+                <li><strong>Navegar a los Servicios de Aplicaciones</strong>
+                    <ul>
+                        <li>Ir a <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure Portal</a></li>
+                        <li>Busca "App Services" y selecciónalo</li>
+                        <li>Clic <strong>+ Create</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Configurar lo básico</strong>
+                    <table>
+                        <tr><th>Ambientación</th><th>Valor</th></tr>
+                        <tr><td>Suscripción</td><td>Tu suscripción</td></tr>
+                        <tr><td>Grupo de Recursos</td><td>Crear nuevos o usar ya existentes</td></tr>
+                        <tr><td>Nombre</td><td><code>your-app-name</code> (debe ser única a nivel global)</td></tr>
+                        <tr><td>Publicar</td><td>Código</td></tr>
+                        <tr><td>Pila de tiempo de ejecución</td><td>Selecciona el tiempo de ejecución de tu aplicación</td></tr>
+                        <tr><td>Sistema operativo</td><td>Windows o Linux (según corresponda a tu entorno de ejecución)</td></tr>
+                        <tr><td>Región</td><td>Tu región preferida</td></tr>
+                    </table>
+                </li>
+                <li><strong>Configurar App Service plan</strong>
+                    <table>
+                        <tr><th>Ambientación</th><th>Recomendación</th></tr>
+                        <tr><td>SKU</td><td><strong>B1 básico</strong> o superior</td></tr>
+                    </table>
+                    <div class="warning-box">
+                        <p><strong>⚠️ Importante:</strong> La categoría Free (F1) no soporta WebSockets, que son necesarios para actualizaciones en tiempo real de SignalR paneles.</p>
+                    </div>
+                </li>
+                <li><strong>Revisar y crear</strong> - Haz clic para crear el recurso</li>
+            </ol>
+
+            <h3>Opción B: Azure CLI</h3>
+            <pre><code># Login to Azure
+az login
+
+# Set variables
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
+LOCATION="eastus"
+APP_SERVICE_PLAN="your-app-plan"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
+
+# Create resource group
+az group create --name $RESOURCE_GROUP --location $LOCATION
+
+# Create App Service Plan (B1 for WebSocket support)
+az appservice plan create \
+  --name $APP_SERVICE_PLAN \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku B1
+
+# Create Web App with your runtime
+az webapp create \
+  --name $APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --plan $APP_SERVICE_PLAN \
+  --runtime $RUNTIME</code></pre>
+
+            <h3>Habilitar WebSockets</h3>
+            <p>Tras la creación, activa WebSockets para SignalR comunicación en tiempo real:</p>
+            <ol>
+                <li>Ve a tu App Service → <strong>Configuración</strong> → <strong>Configuraciones generales</strong></li>
+                <li>Set <strong>Sockets web</strong> a <strong>On</strong></li>
+                <li>Clic <strong>Salvar</strong></li>
+            </ol>
+            <p>O a través de CLI:</p>
+            <pre><code>az webapp config set \
+  --name $APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --web-sockets-enabled true</code></pre>
+        </section>
+
+        <section id="app-registration" class="card">
+            <h2><span class="step-number">2</span> Crear Azure Registro de la App de AD</h2>
+            <p><span class="notranslate">GitHub Actions</span> utiliza OpenID Connect (OIDC) para autenticarse con Azure sin almacenar credenciales.</p>
+
+            <h3>Crear el registro de la app</h3>
+            <ol>
+                <li><strong>Navegar a Registros de Aplicaciones</strong>
+                    <ul>
+                        <li>Ir a <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure Portal</a></li>
+                        <li>Busca "Registros de aplicaciones" y selecciona</li>
+                        <li>Clic <strong>+ Nueva matrícula</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Configurar registro</strong>
+                    <table>
+                        <tr><th>Ambientación</th><th>Valor</th></tr>
+                        <tr><td>Nombre</td><td><code>github-your-app-deploy</code> (nombre descriptivo para tu identidad de despliegue)</td></tr>
+                        <tr><td>Tipos de cuentas soportados</td><td>Cuentas en este directorio organizativo solo</td></tr>
+                        <tr><td>URI de redirección</td><td>Deja vacío</td></tr>
+                    </table>
+                </li>
+                <li><strong>Haz clic en Registrarse</strong></li>
+            </ol>
+
+            <h3>Anota las identificaciones</h3>
+            <p>De la <strong>Resumen</strong> página, copia estos valores (los necesitarás para GitHub secretos):</p>
+            <table class="secrets-table">
+                <tr><th>Valor</th><th>GitHub Nombre secreto</th></tr>
+                <tr><td>ID de aplicación (cliente)</td><td><code>AZURE_CLIENT_ID</code></td></tr>
+                <tr><td>ID de directorio (inquilino)</td><td><code>AZURE_TENANT_ID</code></td></tr>
+            </table>
+
+            <h3>Obtén ID de suscripción</h3>
+            <ol>
+                <li>Ir a <strong>Suscripciones</strong> en el Azure Portal</li>
+                <li>Selecciona tu suscripción</li>
+                <li>Copiar el <strong>ID de suscripción</strong> → Esto es <code>AZURE_SUBSCRIPTION_ID</code></li>
+            </ol>
+        </section>
+
+        <section id="federated-credentials" class="card">
+            <h2><span class="step-number">3</span> Configurar credenciales federadas</h2>
+            <p>Las credenciales federadas permiten <span class="notranslate">GitHub Actions</span> autenticarse sin almacenar secretos.</p>
+
+            <ol>
+                <li><strong>Accede a tu Registro de la Aplicación</strong>
+                    <ul>
+                        <li>Ir a <strong>Certificados y secretos</strong></li>
+                        <li>Seleccionar <strong>Credenciales federadas</strong> pestaña</li>
+                        <li>Clic <strong>+ Añadir credencial</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Configurar la credencial</strong>
+                    <table>
+                        <tr><th>Ambientación</th><th>Valor</th></tr>
+                        <tr><td>Escenario de credenciales federadas</td><td><strong><span class="notranslate">GitHub Actions</span> desplegando recursos Azure</strong></td></tr>
+                        <tr><td>Organización</td><td>Tu GitHub nombre de usuario u organización</td></tr>
+                        <tr><td>Repositorio</td><td>Nombre de tu repositorio</td></tr>
+                        <tr><td>Tipo de entidad</td><td><strong>Rama</strong></td></tr>
+                        <tr><td>GitHub nombre de la rama</td><td><code>main</code></td></tr>
+                        <tr><td>Nombre</td><td><code>github-main-branch</code></td></tr>
+                    </table>
+                </li>
+                <li><strong>Haz clic en Añadir</strong></li>
+            </ol>
+
+            <div class="info-box">
+                <p><strong>💡 Nota:</strong> Si también quieres desplegar desde pull requests u otras ramas, añade credenciales federadas adicionales con el tipo de entidad correspondiente.</p>
+            </div>
+        </section>
+
+        <section id="permissions" class="card">
+            <h2><span class="step-number">4</span>Conceder permisos Azure</h2>
+            <p>El Registro de la App necesita permiso para desplegarse en tu App Service.</p>
+
+            <h3>Asignar rol de colaborador</h3>
+            <ol>
+                <li><strong>Navega hacia tu App Service</strong>
+                    <ul>
+                        <li>Ir a <strong>Control de acceso (IAM)</strong></li>
+                        <li>Clic <strong>+ Añadir</strong> → <strong>Añadir asignación de roles</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Configurar asignación de roles</strong>
+                    <table>
+                        <tr><th>Ambientación</th><th>Valor</th></tr>
+                        <tr><td>Función</td><td><strong>Colaborador</strong></td></tr>
+                        <tr><td>Asignar acceso a</td><td>Usuario, grupo o principal de servicio</td></tr>
+                        <tr><td>Miembros</td><td>Busca tu nombre de registro de la app</td></tr>
+                    </table>
+                </li>
+                <li><strong>Haz clic en Revisar + asignar</strong></li>
+            </ol>
+        </section>
+
+        <section id="github-secrets" class="card">
+            <h2><span class="step-number">5</span> Configurar GitHub Secretos</h2>
+
+            <h3>Clonar el repositorio</h3>
+            <ol>
+                <li><strong>Clonar el repositorio</strong>
+                    <ul>
+                        <li>Ve al repositorio Performance Problem Simulator para tu pila</li>
+                        <li>Clic <strong>Código</strong>y clonarlo en tu propia cuenta GitHub</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>Añadir GitHub Secretos</h3>
+            <ol>
+                <li><strong>Navega a Configuración del repositorio</strong>
+                    <ul>
+                        <li>Ve a tu repositorio en GitHub</li>
+                        <li>Clic <strong>Escenarios</strong> → <strong>Secretos y variables</strong> → <strong>Acciones</strong></li>
+                        <li>Clic <strong>Nuevo secreto de repositorio</strong></li>
+                    </ul>
+                </li>
+                <li><strong>Añadir los siguientes secretos</strong>
+                    <table class="secrets-table">
+                        <tr><th>Nombre secreto</th><th>Valor</th><th>Descripción</th></tr>
+                        <tr><td>AZURE_CLIENT_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>ID de cliente de registro de aplicaciones</td></tr>
+                        <tr><td>AZURE_TENANT_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>Azure Directorio/ID de inquilino de AD</td></tr>
+                        <tr><td>AZURE_SUBSCRIPTION_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>Azure ID de suscripción</td></tr>
+                    </table>
+                </li>
+            </ol>
+
+            <div class="info-box">
+                <p><strong>💡 No se necesita secreto del cliente:</strong>OIDC credenciales federadas eliminan la necesidad de almacenar un secreto del cliente. Las tres identificaciones anteriores son suficientes.</p>
+            </div>
+
+            <h3>Actualizar el flujo de trabajo (si es necesario)</h3>
+            <p>Actualización <code>.github/workflows/deploy.yml</code> Con tu nombre App Service y versión en tiempo de ejecución:</p>
+            <pre><code>env:
+  AZURE_WEBAPP_NAME: your-app-service-name  # Your App Service name
+  # Add any runtime-specific version variables as needed</code></pre>
+        </section>
+
+        <section id="deploy" class="card">
+            <h2><span class="step-number">6</span> Despliegue</h2>
+
+            <h3>Despliegue automático</h3>
+            <p>El despliegue se activa automáticamente cuando presionas en el <code>main</code> Sucursal:</p>
+            <pre><code>git add .
+git commit -m "Your changes"
+git push origin main</code></pre>
+
+            <h3>Despliegue manual</h3>
+            <ol>
+                <li>Ve a tu repositorio en GitHub</li>
+                <li>Clic <strong>Acciones</strong> pestaña</li>
+                <li>Seleccionar <strong>Desplegarse a Azure App Service</strong></li>
+                <li>Clic <strong>Ejecutar flujo de trabajo</strong> → <strong>Ejecutar flujo de trabajo</strong></li>
+            </ol>
+
+            <h3>Verificar despliegue</h3>
+            <ol>
+                <li><strong>Abrir la URL de la aplicación</strong>: <code>https://&lt;your-app-name&gt;.azurewebsites.net</code></li>
+                <li><strong>Panel de control de Verify</strong>: Las métricas en tiempo real deberían actualizarse mediante SignalR, el estado debería mostrar "Conectado"</li>
+                <li><strong>Endpoint de salud de la prueba</strong>:                    <pre><code>curl https://&lt;your-app-name&gt;.azurewebsites.net/api/health</code></pre>
+                </li>
+            </ol>
+        </section>
+
+        <section id="optional-config" class="card">
+            <h2>Configuración opcional</h2>
+            <p>Puedes personalizar el comportamiento de la aplicación usando Azure App Service variables de entorno.</p>
+
+            <h3>Tasa de Prueba de Salud</h3>
+            <p>Controla con qué frecuencia el servidor envía sondas de salud para medir la latencia de las solicitudes. Todas las sondas se enrutan a través del frontend Azure para capturar latencias realistas de extremo a extremo.</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>Intervalo de sonda en milisegundos. Mínimo 100ms.</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <pre><code># Slow down probes if CLR profiler shows overlapping requests
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings HEALTH_PROBE_RATE=400</code></pre>
+
+            <h3>Tiempo de espera en reposo</h3>
+            <p>Cuando la aplicación está inactiva (sin conexiones al panel ni solicitudes de pruebas de carga), las sondas de salud se suspenden automáticamente para reducir el tráfico de red innecesario al frontend de Azurey a la telemetría Application Insights .</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>Minutos de inactividad antes de suspender las sondas de salud. La actividad se reanuda automáticamente cuando se abre el panel de control o se recibe cualquier solicitud.</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <pre><code># Extend idle timeout to 30 minutes
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings IDLE_TIMEOUT_MINUTES=30</code></pre>
+
+            <h3>Pie de página personalizado</h3>
+            <p>Establece un mensaje personalizado en el pie de página que aparezca en todas las páginas. El pie de página soporta HTML, lo que permite incluir enlaces.</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>Contenido HTML para la segunda línea del pie de página. Si no está activado, solo se muestra la descripción de la app y la información de la build.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Valor de ejemplo</h4>
+            <pre><code>Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes</code></pre>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <pre><code># Set the footer via Azure CLI
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings 'PAGE_FOOTER=Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes'</code></pre>
+
+            <h4>Ambientación a través de Azure Portal</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Escenarios</strong> → <strong>Variables de entorno</strong></li>
+                <li>Clic <strong>+ Añadir</strong></li>
+                <li>Nombre del conjunto: <code>PAGE_FOOTER</code></li>
+                <li>Valor fijado: Contenido del pie de página HTML</li>
+                <li>Clic <strong>Solicita</strong>, entonces <strong>Confirmar</strong></li>
+            </ol>
+
+            <h3>GitHub Enlace al Repositorio</h3>
+            <p>Opcionalmente, muestra un enlace GitHub Repositorio en el menú de navegación de la barra lateral. El enlace está oculto por defecto. Cuando se proporcionan ambas variables de entorno, el enlace aparecerá en el menú y apuntará a <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>Variables ambientales</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub nombre de usuario o de la organización. Es necesario mostrar el enlace.</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub nombre del repositorio. Es necesario mostrar el enlace.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <pre><code># Set the GitHub link via Azure CLI
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings GITHUB_USER_NAME=your-username GITHUB_REPO_NAME=your-repo-name</code></pre>
+
+            <h4>Ambientación a través de Azure Portal</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Escenarios</strong> → <strong>Variables de entorno</strong></li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>GITHUB_USER_NAME</code>, Valor: tu nombre de usuario u organización GitHub</li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>GITHUB_REPO_NAME</code>, Valor: nombre de tu repositorio</li>
+                <li>Clic <strong>Solicita</strong>, entonces <strong>Confirmar</strong></li>
+            </ol>
+
+        </section>
+
+        <section id="troubleshooting" class="card">
+            <h2>Resolución de problemas</h2>
+
+            <h3>SignalR falla la conexión</h3>
+            <p><strong>Síntomas:</strong> El panel muestra "Desconectado", los gráficos no se actualizan en tiempo real</p>
+            <p><strong>Soluciones:</strong></p>
+            <ul>
+                <li>Asegúrese de que los WebSockets estén habilitados en App Service Configuración</li>
+                <li>Actualizar de nivel Gratuito a Básico o superior</li>
+                <li>Comprueba si la afinidad ARR está activada (Ajustes → Configuración → Configuración General)</li>
+            </ul>
+
+            <h3>OIDC Falla la autenticación</h3>
+            <p><strong>Síntomas:</strong><span class="notranslate">GitHub Actions</span> falla en el paso "Iniciar sesión en Azure"</p>
+            <p><strong>Comprobar:</strong></p>
+            <ul>
+                <li>Verifica que los tres secretos estén correctamente configurados</li>
+                <li>Confirma que el tema de la credencial federada coincide con tu repositorio/rama: <code>repo:USERNAME/REPO:ref:refs/heads/main</code></li>
+                <li>Asegúrate de que el registro de aplicaciones tenga un papel de Colaborador en la App Service</li>
+            </ul>
+
+            <h3>La aplicación se bloquea al arrancar</h3>
+            <p><strong>Síntomas:</strong> La app muestra "Error de solicitud" o no responde</p>
+            <p><strong>Comprobar:</strong></p>
+            <ul>
+                <li>Ver flujo de registro en Azure Portal (App Service → Flujo de registro)</li>
+                <li>Activar el registro de aplicaciones en App Service → App Service Registros</li>
+                <li>Verifica que la versión en tiempo de ejecución coincida con los requisitos de tu aplicación</li>
+                <li>Comprobar si faltan variables de configuración o de entorno</li>
+            </ul>
+
+            <h3>Ver registros</h3>
+            <pre><code># Stream live logs
+az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+# View deployment logs
+az webapp log deployment show --name $APP_NAME --resource-group $RESOURCE_GROUP</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>Referencia rápida - Línea de CLI</h2>
+            <p>Script de configuración completo (variables de personalización en la parte superior):</p>
+            <pre><code># Full setup (customize variables at top)
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
+LOCATION="eastus"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
+GITHUB_REPO="YOUR_USERNAME/YOUR_REPO"
+
+# Create resources
+az group create -n $RESOURCE_GROUP -l $LOCATION
+az appservice plan create -n "${APP_NAME}-plan" -g $RESOURCE_GROUP -l $LOCATION --sku B1
+az webapp create -n $APP_NAME -g $RESOURCE_GROUP -p "${APP_NAME}-plan" --runtime $RUNTIME
+az webapp config set -n $APP_NAME -g $RESOURCE_GROUP --web-sockets-enabled true
+
+# Create App Registration and get IDs
+APP_ID=$(az ad app create --display-name "github-${APP_NAME}-deploy" --query appId -o tsv)
+az ad sp create --id $APP_ID
+TENANT_ID=$(az account show --query tenantId -o tsv)
+SUB_ID=$(az account show --query id -o tsv)
+
+# Create federated credential
+az ad app federated-credential create --id $APP_ID --parameters "{
+  \"name\": \"github-main-branch\",
+  \"issuer\": \"https://token.actions.githubusercontent.com\",
+  \"subject\": \"repo:${GITHUB_REPO}:ref:refs/heads/main\",
+  \"audiences\": [\"api://AzureADTokenExchange\"]
+}"
+
+# Assign permissions
+APP_SERVICE_ID=$(az webapp show -n $APP_NAME -g $RESOURCE_GROUP --query id -o tsv)
+az role assignment create --assignee $APP_ID --role Contributor --scope $APP_SERVICE_ID
+
+# Output secrets for GitHub
+echo "AZURE_CLIENT_ID=$APP_ID"
+echo "AZURE_TENANT_ID=$TENANT_ID"
+echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
+        </section>
+    </main>
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">En esta página</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">📋</span>Resumen</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Pasos de preparación</li>
+                        <li class="doc-toc-item">
+                            <a href="#app-service"><span class="toc-icon">1️⃣</span>Crea App Service</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#app-registration"><span class="toc-icon">2️⃣</span>Registro de la Aplicación</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#federated-credentials"><span class="toc-icon">3️⃣</span>Federated Creds</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#permissions"><span class="toc-icon">4️⃣</span>Permisos</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#github-secrets"><span class="toc-icon">5️⃣</span>GitHub Secretos</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#deploy"><span class="toc-icon">6️⃣</span>Despliegue</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#optional-config"><span class="toc-icon">⚙️</span>Configuración opcional</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Referencia</li>
+                        <li class="doc-toc-item">
+                            <a href="#troubleshooting"><span class="toc-icon">🔧</span>Resolución de problemas</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <footer class="footer">
+        <p>Performance Problem Simulator — Herramienta educativa para Azure App Service Diagnósticos</p>
+        <p id="pageFooterContent"></p>
+        <p>Construcción: <span id="buildTime">--</span></p>
+    </footer>
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer and GitHub repo link
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.card');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (sectionId && scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

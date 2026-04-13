@@ -1,0 +1,1546 @@
+<!-- source_hash:6cde4f883d29011d lang:zh generated:2026-04-13T18:54:26.0163446Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>性能问题模拟器 - 文档</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Documentation-specific styles */
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .doc-section {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 80px;
+        }
+
+        .doc-section h2 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-section h3 {
+            color: var(--color-text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section ul, .doc-section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--color-danger);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .command { color: #dcdcaa; }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 185, 0, 0.15) 0%, rgba(209, 52, 56, 0.1) 100%);
+            border-left: 4px solid var(--color-warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--color-danger);
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box ul {
+            margin-left: 1.5rem;
+        }
+
+        .warning-box li {
+            color: var(--color-text);
+        }
+
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .method-get {
+            background: rgba(16, 124, 16, 0.15);
+            color: var(--color-success);
+        }
+
+        .method-post {
+            background: rgba(0, 120, 212, 0.15);
+            color: var(--color-primary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .feature-item {
+            background: var(--color-bg);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+        }
+
+        .feature-text strong {
+            display: block;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-text span {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .architecture-tree {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.8;
+        }
+
+        .architecture-tree .folder { color: var(--color-primary); font-weight: 600; }
+        .architecture-tree .file { color: var(--color-text-muted); }
+        .architecture-tree .comment { color: var(--color-success); font-style: italic; opacity: 0.8; margin-left: 1rem; }
+
+
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .config-table th, .config-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .config-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            .api-table {
+                font-size: 0.875rem;
+            }
+
+            .api-table th, .api-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>性能问题模拟器 - Windows 版 .NET 10</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU：加载中......</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 仪表盘</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">应用</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">仪表盘<span class="nav-desc">实时指标与控制</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">文献资料</div>
+            <a href="/documentation.html" class="sidebar-nav-item active">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">文献资料<span class="nav-desc">API 参考资料与指南</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure 诊断<span class="nav-desc">诊断App Service问题</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure 负载测试<span class="nav-desc">载荷测试终点及参数</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">部署到 Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC 设置</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">外部</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub 仓库<span class="nav-desc">源代码与问题</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API 文档</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">构建： <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <div class="doc-container">
+        <div class="deploy-header">
+            <h1>📚 文献资料</h1>
+            <p>API 性能问题模拟器的参考、指南和使用示例</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+            <h2>🎯 性能问题模拟器</h2>
+            <p>一个教育 Azure App Service 应用 <strong>故意制造性能问题</strong> 用于学习和演示目的。</p>
+            
+            <h3>目的</h3>
+            <p>该应用程序旨在帮助 Azure App Service 支持工程师和技术顾问：</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-text">
+                        <strong>学习</strong>
+                        <span>如何诊断Azure App Service常见的性能问题</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-text">
+                        <strong>实践</strong>
+                        <span>使用 Azure 诊断和监测工具</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-text">
+                        <strong>演示</strong>
+                        <span>受控环境中的性能反模式</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-text">
+                        <strong>列车</strong>
+                        <span>支持团队识别和解决绩效问题</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ 警告——本应用故意制造性能问题！</h4>
+                <ul>
+                    <li>🔥 <strong>CPU 压力</strong> - 创建专用线程运行自旋环，消耗所有 CPU 核心</li>
+                    <li>📊 <strong>记忆压力</strong> - 分配并钉住内存块以增加工作集</li>
+                    <li>🧵 <strong>线池饥饿</strong> - 使用 sync-over-async 反模式来阻断线程池线程</li>
+                    <li>🐌 <strong>慢速请求</strong> - 生成具有 sync-over-async 模式的长期请求用于 <span class="notranslate">CLR Profiler</span> 分析</li>
+                    <li>💥 <strong>应用程序崩溃</strong> - 触发致命崩溃以进行测试 Azure 崩溃监控和内存转储</li>
+                    <li>❌ <strong>失败的请求</strong> - 产生 HTTP 个5xx错误用于测试 AppLens 和测试 Application Insights</li>
+                </ul>
+                <p class="mt-1 mb-0"><strong>仅在隔离的非生产环境中部署此应用。</strong></p>
+            </div>
+        </section>
+
+        <!-- Optional Configuration Section -->
+        <section id="optional-config" class="doc-section">
+            <h2>⚙️ 可选配置</h2>
+            <p>你可以用 Azure App Service 环境变量自定义应用行为。</p>
+
+            <h3>健康探针率</h3>
+            <p>控制服务器发送健康探针的频率以测量请求延迟。所有探针都经过 Azure 前端，以捕捉真实的端到端延迟。</p>
+            
+            <h4>环境变量</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                        <th>默认</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>探测间隔以毫秒计。至少100毫秒。</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <div class="code-block"><span class="comment"># 如果分析器显示重叠请求 CLR 请减慢探测速度</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --设置 HEALTH_PROBE_RATE=400</div>
+
+            <h3>闲置暂停</h3>
+            <p>当应用程序处于空闲状态（无仪表盘连接或负载测试请求）时，健康探针会自动暂停，以减少不必要的网络流量 Azure前端和 Application Insights 遥测数据。</p>
+            
+            <h4>环境变量</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                        <th>默认</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>暂停健康探针前的几分钟不活动。当仪表盘打开或收到任何请求时，活动会自动恢复。</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <div class="code-block"><span class="comment"># 将闲置暂停延长到30分钟</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --设置 IDLE_TIMEOUT_MINUTES=30</div>
+
+            <h3>自定义页面页脚</h3>
+            <p>设置一个自定义页脚消息，显示在所有页面上。页脚支持 HTML，允许你包含链接。</p>
+            
+            <h4>环境变量</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>页脚第二行的HTML内容。如果没有设置，只显示应用描述和构建信息。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>示例价值</h4>
+            <div class="code-block">由 &lt;a href=“https://yoursite.com”&gt;Your Team&lt;/a&gt; 创建，用于培训目的</div>
+
+            <h4>通过 Azure CLI设置</h4>
+            <div class="code-block"><span class="comment"># 通过 CLI 设置页脚Azure</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings'PAGE_FOOTER=由&lt;a href=“https://yoursite.com”&gt;Your Team&lt;/a&gt;创建，用于训练'</div>
+
+            <h4>通过 Azure 门户设定</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>背景设定</strong> → <strong>环境变量</strong></li>
+                <li>咔哒 <strong>+ 加法</strong></li>
+                <li>套装名称： <code>PAGE_FOOTER</code></li>
+                <li>设置值：你的HTML页脚内容</li>
+                <li>咔哒 <strong>申请</strong>，则 <strong>确认</strong></li>
+            </ol>
+
+            <h3>GitHub 仓库链接</h3>
+            <p>可选地在侧边栏导航菜单中显示 GitHub 仓库链接。链接默认是隐藏的。当这两个环境变量都提供时，链接会出现在菜单中并指向 <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>环境变量</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub 用户名或组织名称。必须展示链接。</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub 仓库名称。必须展示链接。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <div class="code-block"><span class="comment"># 通过Azure CLI设置GitHub链接</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings GITHUB_USER_NAME=your-username GITHUB_REPO_NAME=your-repo-name</div>
+
+            <h4>通过 Azure 门户设定</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>背景设定</strong> → <strong>环境变量</strong></li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>GITHUB_USER_NAME</code>， Value：您的 GitHub 用户名或组织</li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>GITHUB_REPO_NAME</code>， Value：你的仓库名称</li>
+                <li>咔哒 <strong>申请</strong>，则 <strong>确认</strong></li>
+            </ol>
+
+            <h3 id="language-selection">🌐 语言选择（界面翻译）</h3>
+            <p>仪表盘界面可以用以下支持的任何语言显示 <a href="https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support" target="_blank" rel="noopener">Azure 认知服务翻译器</a>.翻译在启动时由AI自动生成，并缓存以供后续请求使用。</p>
+
+            <div class="callout callout-warning">
+                <strong>⚠️ AI翻译通知：</strong> 翻译由 Azure 认知服务翻译器（机器翻译）生成，可能不完全准确。技术术语（例如， CPU、 SignalR、 ThreadPool）在英语中被有意保留。            </div>
+
+            <h4>工作原理</h4>
+            <ol>
+                <li>设置 <code>UI_LANGUAGE</code> 环境变量 <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank" rel="noopener">ISO 639-1 语言代码</a> （例如， <code>es</code> 西班牙语， <code>fr</code> 对于法语， <code>ja</code> 用于日语）</li>
+                <li>启动时，应用会检查该语言是否存在翻译过的本地文件</li>
+                <li>如果没有（或者英文源字符串发生了变化），它会调用 Azure Translator 生成一个</li>
+                <li>翻译后的文件被缓存——后续启动时使用缓存时，转换成本为零</li>
+                <li>仪表盘加载翻译后的字符串并应用到界面上</li>
+            </ol>
+
+            <h4>环境变量</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                        <th>默认</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>UI_LANGUAGE</code></td>
+                        <td>仪表盘界面的 ISO 639-1 语言代码。设置为 <code>en</code> 英文版（无需翻译）。</td>
+                        <td><code>en</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_API_KEY</code></td>
+                        <td>Azure 认知服务翻译器订阅密钥。非英语语言必修。</td>
+                        <td><em>（未设定）</em></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_ENDPOINT</code></td>
+                        <td>翻译器 API 端点URL。</td>
+                        <td><code>https://api.cognitive.microsofttranslator.com</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_REGION</code></td>
+                        <td>Azure 翻译资源的区域。</td>
+                        <td><code>eastus</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通用语言代码</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>语言</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>en</code></td><td>英文（默认，无翻译）</td></tr>
+                    <tr><td><code>es</code></td><td>西班牙语</td></tr>
+                    <tr><td><code>fr</code></td><td>法语</td></tr>
+                    <tr><td><code>de</code></td><td>德语</td></tr>
+                    <tr><td><code>ja</code></td><td>日本</td></tr>
+                    <tr><td><code>zh</code></td><td>中文（简体）</td></tr>
+                    <tr><td><code>ko</code></td><td>朝鲜语</td></tr>
+                    <tr><td><code>pt</code></td><td>葡萄牙语</td></tr>
+                    <tr><td><code>ar</code></td><td>阿拉伯语</td></tr>
+                    <tr><td><code>hi</code></td><td>印地语</td></tr>
+                </tbody>
+            </table>
+            <p>有关支持的语言代码的完整列表，请参见 <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank" rel="noopener">ISO 639-1 代码列表</a> 或 <a href="https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support" target="_blank" rel="noopener">Azure 翻译语言支持</a>.</p>
+
+            <h4>通过 Azure CLI设置</h4>
+            <div class="code-block"><span class="comment"># 把用户界面设为西班牙语</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings UI_LANGUAGE=es TRANSLATOR_API_KEY=your-key TRANSLATOR_REGION=eastus</div>
+
+            <h4>通过 Azure 门户设定</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>背景设定</strong> → <strong>环境变量</strong></li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>UI_LANGUAGE</code>， 值：你的语言代码（例如， <code>es</code>)</li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>TRANSLATOR_API_KEY</code>， 值：你的 Azure 翻译键</li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>TRANSLATOR_REGION</code>， 值：你的翻译资源区域</li>
+                <li>咔哒 <strong>申请</strong>，则 <strong>确认</strong> （需要重启）</li>
+            </ol>
+
+            <h4>定制受保护条款</h4>
+            <p>以下列出了绝不应被翻译的专业术语 <code>wwwroot/locales/no-translate.json</code>.编辑此文件以添加或删除相关术语。翻译过程中，术语在英文中会自动保留。</p>
+
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="doc-section">
+            <h2>📊 仪表盘</h2>
+            <p>该应用在根URL处包含一个实时仪表盘，显示：</p>
+            <ul>
+                <li><strong>CPU 用法</strong> - 当前处理器利用率</li>
+                <li><strong>记忆</strong> - 工作集和 GC 堆大小</li>
+                <li><strong>线程池</strong> - 活跃线程和队列长度</li>
+                <li><strong>请求延迟</strong> - 实时探针响应时间（显示线程池饥饿的影响）</li>
+                <li><strong>主动仿真</strong> - 目前正在运行问题模拟</li>
+            </ul>
+            <p>仪表盘使用 SignalR 进行实时更新，并包含触发每种模拟类型的控件。</p>
+
+            <h3>公制颜色指示器</h3>
+            <p>CPU和内存度量图块使用动态颜色编码来表示资源利用率水平：</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>颜色</th>
+                        <th>利用情况</th>
+                        <th>现状</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>黑色（默认）</td>
+                        <td>0-60%</td>
+                        <td>正常——资源在可接受范围内</td>
+                    </tr>
+                    <tr>
+                        <td class="text-warning">黄色</td>
+                        <td>60-80%</td>
+                        <td>警告——使用率升高，接近令人担忧的水平</td>
+                    </tr>
+                    <tr>
+                        <td class="text-danger">红色</td>
+                        <td>&gt;80%</td>
+                        <td>危险——高使用率，潜在资源枯竭</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>注：</strong> 内存阈值是基于服务器报告的实际总可用内存动态计算的，而非硬编码值。这确保了无论机器内存配置如何都能准确发出警告。</p>
+
+            <h3>事件日志与仿真ID</h3>
+            <p>仪表盘底部的事件日志记录所有仿真活动，并以颜色编码的条目对应各仿真类型。与特定仿真实例相关的消息会用 <span class="sim-msg">虚线下划线</span>.</p>
+            <p><strong>观看模拟ID：</strong> 将鼠标悬停在任何下划线的消息上即可显示完整内容 <strong>仿真ID</strong> （GUID）在提示里。该ID唯一标识每个仿真实例。</p>
+            <p><strong>使用仿真ID进行故障排除：</strong></p>
+            <ul>
+                <li>同一仿真ID在服务器端记录，并出现在 Azure Application Insights 和Log Analytics中</li>
+                <li>在分析性能问题时，利用该ID将仪表盘事件与服务器日志关联起来</li>
+                <li>通过模拟ID过滤 Azure 日志，以将遥测数据与特定仿真运行隔离开来</li>
+                <li>参见 <a href="azure-monitoring-guide.html#simulation-ids">Azure 监测指南</a> 详细的相关技术</li>
+            </ul>
+        </section>
+
+        <!-- Request Latency Monitor Section -->
+        <section id="latency" class="doc-section">
+            <h2>⏱️ 请求延迟监控器</h2>
+            <p>仪表盘包含一个 <strong>请求延迟监控器</strong> 这展示了线程池饥饿如何影响现实世界的请求处理。显示的延迟值包括 <strong>队列时间和处理时间</strong>.</p>
+            
+            <h3>工作原理</h3>
+            <ul>
+                <li>一个专用的后台线程（非线程池中线程）持续探测 <code>/api/health/probe</code></li>
+                <li>延迟是端到端测量的：请求发送→响应</li>
+                <li>结果通过 SignalR 实时广播到仪表盘</li>
+            </ul>
+
+            <h3>你将观察到的内容</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>剧情</th>
+                        <th>延迟（总计）</th>
+                        <th>现状</th>
+                        <th>解释</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>正常运行</td>
+                        <td>&lt; 150毫秒</td>
+                        <td>🟢 很好</td>
+                        <td>可用的线程池线程</td>
+                    </tr>
+                    <tr>
+                        <td>轻度饥饿</td>
+                        <td>150毫秒 - 1秒</td>
+                        <td>🟡 退化</td>
+                        <td>等待线程的请求排队</td>
+                    </tr>
+                    <tr>
+                        <td>严重饥饿</td>
+                        <td>&gt; 1</td>
+                        <td>🔴 严重</td>
+                        <td>显著的排队延迟</td>
+                    </tr>
+                    <tr>
+                        <td>暂停</td>
+                        <td>30多岁</td>
+                        <td>🔴 批判</td>
+                        <td>超时内没有线程出现</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>为什么这很重要</h3>
+            <p>在线程池饥饿期，显 CPU 和内存指标通常正常，但用户会经历严重的延迟。延迟监控器让这个问题变得隐形 <strong>可见</strong> ——当触发 sync-over-async 模拟时，响应时间会从毫秒激增到几秒。</p>
+
+            <div class="info-box">
+                <h4>关键见解</h4>
+                <p>探测器运行在 <strong>专用讨论串</strong> （不是线程池），所以它总是可以发送请求。然而，ASP.NET 核心服务器使用线程池来处理来的请求。饥饿期间：</p>
+                <ol>
+                    <li>探测请求立即发送</li>
+                    <li>请求会停留在 ASP.NET 核心队列中</li>
+                    <li>它会等待线程池线程的可用</li>
+                    <li>延迟 = 等待时间 + 处理时间</li>
+                </ol>
+                <p>这直接展示了 sync-over-async 反模式如何影响终端用户的响应时间。</p>
+            </div>
+
+            <h3>与 Azure 指标的相关性</h3>
+            <p>将仪表盘的延迟图表与以下内容进行比较：</p>
+            <ul>
+                <li><strong>Application Insights</strong> &gt; 实时指标&gt;请求时长</li>
+                <li><strong>App Service 指标</strong> &gt;响应时间</li>
+                <li><strong>线程池</strong> 显示阻塞线程的部分</li>
+            </ul>
+        </section>
+
+        <!-- CPU Stress Section -->
+        <section id="cpu" class="doc-section">
+            <h2>🔥 CPU 应力模拟</h2>
+            <p>CPU应力仿真通过并行自旋环路产生高CPU使用率，使所有可用CPU磁芯在指定时间内饱和。</p>
+
+            <h3>工作原理</h3>
+            <p>仿真每个核心生成一个线程 CPU ，每个线程运行一个忙等待自旋环（在紧密 <code>while(true)</code> 循环）。这会消耗所有核心的100% CPU 容量。</p>
+
+            <h3>仪表盘控制</h3>
+            <ul>
+                <li><strong>持续时间：</strong> 压力测试需要多长时间（默认30秒）</li>
+                <li><strong>启动/停止：</strong> 开始或取消模拟</li>
+            </ul>
+
+            <h3>你将观察到的内容</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>度规</th>
+                        <th>模拟过程中</th>
+                        <th>解释</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU %</td>
+                        <td>~100%</td>
+                        <td>所有磁芯都被自旋环饱和</td>
+                    </tr>
+                    <tr>
+                        <td>记忆</td>
+                        <td>未变</td>
+                        <td>自旋环不分配内存</td>
+                    </tr>
+                    <tr>
+                        <td>延迟</td>
+                        <td>可能会增加</td>
+                        <td>请求处理的可用 CPU 减少</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>现实世界的 CPU 问题</h3>
+            <p>生产 CPU 高通常由以下原因引起：</p>
+            <ul>
+                <li>低效算法（当O（n）可能时为O（n²）</li>
+                <li>由于bug导致的无限循环</li>
+                <li>过度正则表达式回溯</li>
+                <li>未优化的LINQ查询处理大数据集</li>
+                <li>忙等待代替异步/等待</li>
+            </ul>
+
+            <h3>诊断工具</h3>
+            <ul>
+                <li><code>dotnet-counters monitor -p {PID} --counters System.Runtime</code></li>
+                <li><code>dotnet-trace collect -p {PID}</code> 用于 CPU 画像</li>
+                <li>Azure App Service → 诊断和解决使用→ CPU 问题</li>
+                <li>Application Insights 性能刀</li>
+            </ul>
+        </section>
+
+        <!-- Memory Pressure Section -->
+        <section id="memory" class="doc-section">
+            <h2>💾 内存压力仿真</h2>
+            <p>内存压力模拟分配并保存大字节数组，以展示内存消耗模式和垃圾回收行为。</p>
+
+            <h3>工作原理</h3>
+            <p>大字节数组（默认100MB）分配方式如下 <code>GC.AllocateArray&lt;byte&gt;(pinned: true)</code>.钉置分配防止垃圾回收器移动内存，模拟有问题的分配模式。</p>
+
+            <h3>仪表盘控制</h3>
+            <ul>
+                <li><strong>尺寸（MB）：</strong> 需分配的内存量</li>
+                <li><strong>分配：</strong> 新增一个内存块</li>
+                <li><strong>全部发布：</strong> 释放所有分配的方块和触发器 GC</li>
+            </ul>
+
+            <h3>你将观察到的内容</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>度规</th>
+                        <th>分配后</th>
+                        <th>解释</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>内存（MB）</td>
+                        <td>按分配规模增加</td>
+                        <td>图表反映了工作集的增加情况</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>短暂的峰值</td>
+                        <td>内存分配与归零</td>
+                    </tr>
+                    <tr>
+                        <td>发行后</td>
+                        <td>内存丢失</td>
+                        <td>GC。Collect（） 回收内存</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>大型对象堆（LOH）</h3>
+            <p>大于85KB的对象分配到大型对象堆上：</p>
+            <ul>
+                <li>LOH的收集频率较低（仅限第二代收藏）</li>
+                <li>钉置配置防止内存压缩</li>
+                <li>随着时间推移，可能导致记忆碎片化</li>
+                <li>我们的分配（10MB+）总是分配给LOH</li>
+            </ul>
+
+            <h3>现实世界的记忆问题</h3>
+            <ul>
+                <li>静态集合，可以无限积累数据</li>
+                <li>事件处理程序未取消订阅</li>
+                <li>不当的ID可分割实现</li>
+                <li>无大小限制或无过期的缓存</li>
+                <li>对大型对象的引用保持比必要的时间更长</li>
+            </ul>
+
+            <h3>诊断工具</h3>
+            <ul>
+                <li><code>dotnet-dump collect -p {PID}</code> 用于内存转储</li>
+                <li><code>dotnet-gcdump collect -p {PID}</code> 对于 GC 堆分析</li>
+                <li>Visual Studio 内存分析器</li>
+                <li>Azure App Service → 记忆工作组刀片</li>
+            </ul>
+        </section>
+
+        <!-- Thread Pool Starvation Section -->
+        <section id="threadpool" class="doc-section">
+            <h2>🧵 线池饥饿</h2>
+            <p>线程池饥饿模拟展示了危险的“sync-over-async”反模式，即同步代码块等待异步操作完成。</p>
+
+            <h3>工作原理</h3>
+            <p>仿真会生成多个并行任务（默认：2× CPU 个核心），每个任务调用这些任务 <code>Task.Delay().Wait()</code>.这会阻断线程池线程，导致：</p>
+            <ol>
+                <li>线程池线程变成阻塞等待</li>
+                <li>.NET 缓慢添加新线程（~每秒1条）</li>
+                <li>收到的请求排队等待线程</li>
+                <li>请求延迟会大幅增加</li>
+            </ol>
+
+            <h3>仪表盘控制</h3>
+            <ul>
+                <li><strong>持续时间：</strong> 每次阻挡行动持续多久（默认15秒）</li>
+                <li><strong>讨论串：</strong> 需要生成的阻塞线程数量</li>
+                <li><strong>启动/停止：</strong> 开始或取消模拟</li>
+            </ul>
+
+            <h3>同步过非同步反模式</h3>
+            <p>这些图案会阻断线头，应避免：</p>
+            <pre><code>// ❌ BAD - Blocks thread waiting for Task
+var result = SomeAsyncMethod().Result;
+var result = SomeAsyncMethod().GetAwaiter().GetResult();
+SomeAsyncMethod().Wait();
+
+// ✅ GOOD - Properly awaits the Task
+var result = await SomeAsyncMethod();</code></pre>
+
+            <h3>你将观察到的内容</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>度规</th>
+                        <th>饥荒时期</th>
+                        <th>解释</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU</td>
+                        <td>低</td>
+                        <td>线程在等待，但无法正常工作</td>
+                    </tr>
+                    <tr>
+                        <td>记忆</td>
+                        <td>普通</td>
+                        <td>没有发生内存泄漏</td>
+                    </tr>
+                    <tr>
+                        <td>线数</td>
+                        <td>缓慢攀升</td>
+                        <td>.NET 每秒增加~1个线程</td>
+                    </tr>
+                    <tr>
+                        <td>延迟</td>
+                        <td>🔴 秒数激增</td>
+                        <td>等待线程的请求排队</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>为什么 CPU 低而延迟高</h3>
+            <p>这就是线池饥饿的特征。 CPU 无法工作，因为所有线程都被屏蔽等待。新请求无法启动，因为没有可用的线程。看起来应用处于空闲状态，但用户会遇到超时。</p>
+
+            <h3>现实世界的原因</h3>
+            <ul>
+                <li>从同步代码调用异步库： <code>httpClient.GetAsync(url).Result</code></li>
+                <li>构造函数中的同步与异步混合</li>
+                <li>使用 <code>.Result</code> 在性质中</li>
+                <li>调用Dispose（）</li>
+                <li>内部阻挡的第三方库</li>
+            </ul>
+
+            <h3>如何修复</h3>
+            <ul>
+                <li>用途 <code>await</code> 呼叫堆栈的最高端（“全速不同步”）</li>
+                <li>避免 <code>.Result</code>, <code>.Wait()</code>， 和 <code>.GetAwaiter().GetResult()</code></li>
+                <li>用途 <code>ConfigureAwait(false)</code> 在图书馆代码中</li>
+                <li>考虑 <code>IAsyncEnumerable</code> 用于流媒体数据</li>
+            </ul>
+
+            <h3>诊断工具</h3>
+            <ul>
+                <li><code>dotnet-counters</code>观看“ThreadPool 线数”和“ThreadPool 队列长度”</li>
+                <li>所有端点的响应时间同时激增</li>
+                <li>Azure App Service → →线程数诊断和解决问题</li>
+            </ul>
+        </section>
+
+        <!-- Slow Request Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 慢速请求模拟器</h2>
+            <p>慢速请求模拟器生成长时间运行的请求（每个请求约25秒），使用专门设计的 sync-over-async 模式 <strong><span class="notranslate">CLR Profiler</span> 培训</strong>.</p>
+
+            <h3>目的</h3>
+            <p>与线程池饥饿模拟（导致许多短块）不同，这会创建单个长请求，这些请求在分析器调用栈中清晰可见。方法名称有意描述性，以便识别阻塞模式。</p>
+
+            <h3>三种同步跨异步场景</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>剧情</th>
+                        <th>方法模式</th>
+                        <th>注意点</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>很简单</strong></td>
+                        <td><code>_BLOCKING_HERE</code></td>
+                        <td><code>Task.Delay().Wait()</code> 导致阻塞</td>
+                    </tr>
+                    <tr>
+                        <td><strong>嵌套</strong></td>
+                        <td><code>_BLOCKS_INTERNALLY</code></td>
+                        <td>内部阻挡的同步方法</td>
+                    </tr>
+                    <tr>
+                        <td><strong>数据库</strong></td>
+                        <td><code>_SYNC_BLOCK</code></td>
+                        <td><code>GetAwaiter().GetResult()</code> 图案</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>推荐设置</h3>
+            <p>对于60秒的 <span class="notranslate">CLR Profiler</span> 迹：</p>
+            <ul>
+                <li><strong>请求执行时间：</strong> 25秒（仅处理时间，不包括排队时间）</li>
+                <li><strong>中场休息：</strong> 10秒（多采样）</li>
+                <li><strong>最大请求：</strong> 6（不会让人感到压力过大）</li>
+            </ul>
+
+            <p><strong>排队时间说明：</strong> 如果线程池缺粮，你可能会在请求开始前看到走线中出现较大的空隙。这是“队列时间”（等待线程）与“执行时间”（运行代码）。</p>
+
+            <h3>与<span class="notranslate">CLR Profiler</span>一起使用</h3>
+            <ol>
+                <li>将请求执行时间设定足够长，使总仿真轻松超过60秒（例如，25秒执行，10秒间隔，最大6次请求）</li>
+                <li>咔哒 <strong>🐌 开始慢速请求</strong> 在仪表盘中</li>
+                <li>等待事件日志中出现第一个慢速请求——这确认模拟正在运行且健康探测速率已被降低</li>
+                <li>开始 CPU 分析器追踪（60-120秒）</li>
+                <li>等待追踪完成</li>
+                <li>下载并分析——寻找描述性方法名称</li>
+            </ol>
+            <p><strong>为什么要先开始模拟？</strong> 应用会自动在慢速请求模拟启动时减慢健康探针。在画像器启动前启动模拟，可以避免血迹中的生命探针噪声，从而让你获得更清晰的轮廓，专注于阻挡模式。</p>
+
+            <p>参见 <a href="/azure-monitoring-guide.html#slowrequest">Azure 诊断指南</a> 详细的剖面分析说明。</p>
+        </section>
+
+        <!-- Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ 失败请求模拟</h2>
+            <p>仪表盘包含一个 <strong>未完成的请求</strong> 用于生成 HTTP 个5xx错误，用于测试 Azure 诊断工具如 AppLens 和 Application Insights。</p>
+
+            <h3>目的</h3>
+            <p>该模拟生成 HTTP 500个内部服务器错误响应，具体表现为：</p>
+            <ul>
+                <li><strong>AppLens</strong> - Azure 门户 → 诊断和解决问题</li>
+                <li><strong>Application Insights</strong> - 失效刀片</li>
+                <li><strong>Azure 监视器</strong> - 错误率警报</li>
+            </ul>
+
+            <h3>工作原理</h3>
+            <ol>
+                <li>生成一个后台线程以生成请求</li>
+                <li>每个请求调用 <code>/api/loadtest</code> 错误概率为100%</li>
+                <li>负载测试端点会抛出一个随机的异常类型</li>
+                <li>每个请求需要~1.5秒的延迟可见性</li>
+            </ol>
+
+            <h3>例外类型</h3>
+            <p>模拟每次请求随机抛出以下一种例外类型：</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>例外类型</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>对象引用未设置为实例</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>操作超时</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>当前状态下不适用的操作</td>
+                    </tr>
+                    <tr>
+                        <td><code>ArgumentException</code></td>
+                        <td>值超出预期范围</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>发送请求 HTTP 错误</td>
+                    </tr>
+                    <tr>
+                        <td><code>DivideByZeroException</code></td>
+                        <td>尝试除以零</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>词典中没有密钥</td>
+                    </tr>
+                    <tr>
+                        <td><code>IndexOutOfRangeException</code></td>
+                        <td>指数数组边界外</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>仪表盘事件日志</h3>
+            <p>每个失败请求会在事件日志中显示：</p>
+            <ul>
+                <li><strong>棕色</strong> - 独特造型以提高可见度</li>
+                <li><strong>❌ 图标</strong> - 请求失败指示器</li>
+                <li><strong>例外类型</strong> - 被抛出的特定例外情况</li>
+                <li><strong>延迟</strong> - 请求时长（毫秒）</li>
+            </ul>
+
+            <p>参见 <a href="/azure-monitoring-guide.html#failedrequests">Azure 诊断指南</a> 详细 AppLens 分析说明。</p>
+        </section>
+
+        <!-- Crash Simulation Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 撞车模拟</h2>
+            <p>仪表盘包含一个 <strong>撞车模拟</strong> 用于测试 Azure 崩溃监控和内存转储收集的功能。</p>
+
+            <div class="warning-box">
+                <h4>⚠️ 警告——这将终止申请！</h4>
+                <p>碰撞模拟会立即终止该进程。 Azure App Service 会在崩溃后自动重启应用。在触发崩溃前，确保你已启用 Azure 崩溃监控。</p>
+            </div>
+
+            <h3>可用的撞击类型</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>描述</th>
+                        <th>最佳</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FailFast</strong></td>
+                        <td>叫声 <code>Environment.FailFast()</code> 但该报告立即以Windows错误报告结束</td>
+                        <td>一般碰撞测试（推荐）</td>
+                    </tr>
+                    <tr>
+                        <td><strong>StackOverflow</strong></td>
+                        <td>无限递归导致堆栈溢出——无法捕捉</td>
+                        <td>栈迹分析实践</td>
+                    </tr>
+                    <tr>
+                        <td><strong>未处理异常</strong></td>
+                        <td>在后台线程中抛出未处理的异常</td>
+                        <td>例外处理教育</td>
+                    </tr>
+                    <tr>
+                        <td><strong>访问违规</strong></td>
+                        <td>写入无效内存（空指针）</td>
+                        <td>原生/不安全代码调试</td>
+                    </tr>
+                    <tr>
+                        <td><strong>记忆之外</strong></td>
+                        <td>分配内存直到进程崩溃</td>
+                        <td>内存转储分析</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Azure 崩溃监控设置</h3>
+            <ol>
+                <li>在 Azure 门户，前往你的 App Service</li>
+                <li>导航至此 <strong>诊断和解决问题</strong></li>
+                <li>搜索 <strong>“碰撞监测”</strong></li>
+                <li>启用碰撞监控 <strong>“收集内存翻储”</strong></li>
+                <li>通过仪表盘或API触发崩溃</li>
+                <li>从 Azure 门户下载崩溃转储文件</li>
+                <li>用Visual Studio或WinDbg分析</li>
+            </ol>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="doc-section">
+            <h2>📐 建筑</h2>
+            <div class="architecture-tree"><span class="folder">src/PerfProblemSimulator/</span>├── <span class="file">Program.cs</span>                <span class="comment"># 应用入口</span>├── <span class="file">appsettings.json</span>          <span class="comment"># 配置</span>│
+├── <span class="folder">控制器/</span>              <span class="comment"># API 终点</span>│   ├── <span class="file">AdminController.cs</span>│   ├── <span class="file">ConfigController.cs</span>       <span class="comment"># 应用配置端点</span>│   ├── <span class="file">CpuController.cs</span>│   ├── <span class="file">CrashController.cs</span>│   ├── <span class="file">FailedRequestController.cs</span>│   ├── <span class="file">HealthController.cs</span>│   ├── <span class="file">LoadTestController.cs</span>     <span class="comment"># Azure 负载测试端点</span>│   ├── <span class="file">MemoryController.cs</span>│   ├── <span class="file">MetricsController.cs</span>│   ├── <span class="file">SlowRequestController.cs</span>│   └── <span class="file">ThreadBlockController.cs</span>│
+├── <span class="folder">服务/</span>                 <span class="comment"># 商业逻辑</span>│   ├── <span class="file">CpuStressService.cs</span>│   ├── <span class="file">CrashService.cs</span>│   ├── <span class="file">FailedRequestService.cs</span>│   ├── <span class="file">IdleStateService.cs</span>       <span class="comment"># 空闲时自动暂停健康探针</span>│   ├── <span class="file">LatencyProbeService.cs</span>│   ├── <span class="file">LoadTestService.cs</span>        <span class="comment"># 带软极限衰减的负载测试</span>│   ├── <span class="file">MemoryPressureService.cs</span>│   ├── <span class="file">MetricsBroadcastService.cs</span>│   ├── <span class="file">MetricsCollector.cs</span>│   ├── <span class="file">SimulationTracker.cs</span>│   ├── <span class="file">SlowRequestService.cs</span>│   ├── <span class="file">ThreadBlockService.cs</span>│   └── <span class="folder">接口/</span>│       ├── <span class="file">ICpuStressService.cs</span>│       ├── <span class="file">ICrashService.cs</span>│       ├── <span class="file">IFailedRequestService.cs</span>│       ├── <span class="file">IIdleStateService.cs</span>│       ├── <span class="file">ILoadTestService.cs</span>│       ├── <span class="file">IMemoryPressureService.cs</span>│       ├── <span class="file">IMetricsCollector.cs</span>│       ├── <span class="file">ISlowRequestService.cs</span>│       └── <span class="file">IThreadBlockService.cs</span>│
+├── <span class="folder">老公/</span>                     <span class="comment"># SignalR 用于实时更新</span>│   ├── <span class="file">MetricsHub.cs</span>│   └── <span class="file">IMetricsClient.cs</span>│
+├── <span class="folder">型号/</span>                   <span class="comment"># 数据传输对象</span>│   ├── <span class="file">AllocatedMemoryBlock.cs</span>│   ├── <span class="file">CpuStressRequest.cs</span>│   ├── <span class="file">CrashRequest.cs</span>│   ├── <span class="file">DetailedMetrics.cs</span>│   ├── <span class="file">ErrorResponse.cs</span>│   ├── <span class="file">LoadTestRequest.cs</span>│   ├── <span class="file">LoadTestResult.cs</span>│   ├── <span class="file">MemoryAllocationRequest.cs</span>│   ├── <span class="file">MemoryReleaseResult.cs</span>│   ├── <span class="file">MetricsSnapshot.cs</span>│   ├── <span class="file">ProblemSimulatorOptions.cs</span>│   ├── <span class="file">SimulationResult.cs</span>│   ├── <span class="file">SimulationType.cs</span>│   ├── <span class="file">SlowRequestRequest.cs</span>│   └── <span class="file">ThreadBlockRequest.cs</span>│
+└── <span class="folder">wwwroot/</span>                  <span class="comment"># SPA 仪表盘与文档</span>├── <span class="file">index.html</span>               <span class="comment"># 带实时指标的仪表盘</span>├── <span class="file">documentation.html</span>├── <span class="file">azure-deployment.html</span>    <span class="comment"># 部署指南</span>├── <span class="file">azure-load-testing.html</span>  <span class="comment"># 负载测试指南</span>├── <span class="file">azure-monitoring-guide.html</span>├── <span class="file">favicon.svg</span>├── <span class="folder">CSS/</span>│   └── <span class="file">dashboard.css</span>└── <span class="folder">js/</span>└── <span class="file">dashboard.js</span></div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>性能问题模拟器—— Azure App Service 诊断的教育工具</p>
+            <p id="pageFooterContent"></p>
+            <p>构建： <span id="buildTime">--</span></p>
+        </footer>
+        </div><!-- /.doc-container -->
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">本页内容</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">🎯</span>概述</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#optional-config"><span class="toc-icon">⚙️</span>可选配置</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#language-selection"><span class="toc-icon">🌐</span>语言选择</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">特色</li>
+                        <li class="doc-toc-item">
+                            <a href="#dashboard"><span class="toc-icon">🎮</span>仪表盘</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#latency"><span class="toc-icon">⏱️</span>延迟监测器</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#cpu"><span class="toc-icon">🔥</span>CPU 压力</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#memory"><span class="toc-icon">💾</span>记忆压力</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#threadpool"><span class="toc-icon">🧵</span>线池饥饿</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#slowrequest"><span class="toc-icon">🐌</span>慢速请求</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>未完成的请求</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#crash"><span class="toc-icon">💥</span>撞车模拟</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">参考文献</li>
+                        <li class="doc-toc-item">
+                            <a href="#architecture"><span class="toc-icon">🏗️</span>建筑</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.doc-section');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

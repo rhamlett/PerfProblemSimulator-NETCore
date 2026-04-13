@@ -56,6 +56,9 @@ packages/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# C# Language Server cache (VS Code C# Dev Kit / Roslyn)
+*.lscache
+
 # =============================================================================
 # Testing
 # =============================================================================

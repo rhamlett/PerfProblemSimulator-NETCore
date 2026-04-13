@@ -1,0 +1,40 @@
+{
+  "_meta": {
+    "description": "Terms that should never be translated. The translation service wraps these in <span class='notranslate'> tags before sending to Azure Translator. Edit this file to add or remove terms."
+  },
+  "terms": [
+    "SignalR",
+    "Application Insights",
+    "AppLens",
+    "Azure",
+    "App Service",
+    "ThreadPool",
+    "CPU",
+    "API",
+    "JSON",
+    "WebSocket",
+    "HTTP",
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "Swagger",
+    "OpenAPI",
+    "CLR",
+    "CLR Profiler",
+    "GC",
+    ".NET",
+    "Kestrel",
+    "IIS",
+    "OIDC",
+    "GitHub",
+    "GitHub Actions",
+    "PerfSim",
+    "SKU",
+    "OOM",
+    "StackOverflow",
+    "FailFast",
+    "sync-over-async",
+    "GUID"
+  ]
+}

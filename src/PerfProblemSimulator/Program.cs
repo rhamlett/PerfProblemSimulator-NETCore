@@ -76,6 +76,33 @@ builder.Services.PostConfigure<ProblemSimulatorOptions>(options =>
     {
         options.LatencyProbeIntervalMs = rateMs;
     }
+
+    // Support UI_LANGUAGE environment variable override
+    var uiLanguage = Environment.GetEnvironmentVariable("UI_LANGUAGE");
+    if (!string.IsNullOrEmpty(uiLanguage))
+    {
+        options.UiLanguage = uiLanguage.Trim().ToLowerInvariant();
+    }
+
+    // Support TRANSLATOR_* environment variable overrides
+    var translatorKey = Environment.GetEnvironmentVariable("TRANSLATOR_API_KEY");
+    if (!string.IsNullOrEmpty(translatorKey))
+    {
+        options.TranslatorApiKey = translatorKey.Trim();
+    }
+
+    var translatorEndpoint = Environment.GetEnvironmentVariable("TRANSLATOR_ENDPOINT");
+    if (!string.IsNullOrEmpty(translatorEndpoint))
+    {
+        options.TranslatorEndpoint = translatorEndpoint.Trim();
+    }
+
+    var translatorRegion = Environment.GetEnvironmentVariable("TRANSLATOR_REGION");
+    if (!string.IsNullOrEmpty(translatorRegion))
+    {
+        options.TranslatorRegion = translatorRegion.Trim();
+    }
+
 });
 
 // -----------------------------------------------------------------------------
@@ -221,6 +248,15 @@ builder.Services.AddSingleton<IFailedRequestService, FailedRequestService>();
 // This is critical for FR-013 - health endpoints must work under stress.
 builder.Services.AddSingleton<IMetricsCollector, MetricsCollector>();
 
+// TranslationService - Translates UI strings using Azure Cognitive Services Translator
+// Educational Note: When UI_LANGUAGE is set to a non-English ISO 639-1 code, this service
+// calls Azure Translator to generate a translated locale JSON file. The translation runs
+// once at startup and is cached until the English source strings change.
+// Registered BEFORE other hosted services so translations complete before health probes begin.
+builder.Services.AddHttpClient("Translator");
+builder.Services.AddSingleton<ITranslationService, TranslationService>();
+builder.Services.AddHostedService<TranslationStartupService>();
+
 // MetricsBroadcastService - Hosted service that broadcasts metrics to SignalR clients
 // Educational Note: IHostedService provides proper startup/shutdown lifecycle management.
 // This bridges the MetricsCollector (which fires events) with SignalR (which pushes to clients).
@@ -341,6 +377,9 @@ app.UseCors();
 app.UseRequestTimeouts();
 
 // Serve static files from wwwroot (for the SPA dashboard)
+// Translated HTML middleware must run before UseStaticFiles so it can rewrite
+// requests like "documentation.html" to "documentation.es.html" when available.
+app.UseMiddleware<TranslatedHtmlMiddleware>();
 app.UseDefaultFiles(); // Enables default document (index.html)
 app.UseStaticFiles();
 

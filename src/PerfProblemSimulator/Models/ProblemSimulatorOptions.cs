@@ -66,4 +66,48 @@ public class ProblemSimulatorOptions
     /// </para>
     /// </remarks>
     public int LatencyProbeIntervalMs { get; set; } = 200;
+
+    /// <summary>
+    /// ISO 639-1 language code for the dashboard UI.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default: "en" (English). When set to a different language code (e.g., "es", "fr", "ja"),
+    /// the application translates the UI strings from English to the target language on startup
+    /// using Azure Cognitive Services Translator.
+    /// </para>
+    /// <para>
+    /// Requires TRANSLATOR_API_KEY, TRANSLATOR_ENDPOINT, and TRANSLATOR_REGION environment
+    /// variables to be configured for non-English languages.
+    /// </para>
+    /// <para>
+    /// Can be configured via environment variable: <c>UI_LANGUAGE</c>
+    /// </para>
+    /// </remarks>
+    public string UiLanguage { get; set; } = "en";
+
+    /// <summary>
+    /// Azure Cognitive Services Translator subscription key.
+    /// Required for non-English UI languages.
+    /// </summary>
+    /// <remarks>
+    /// Can be configured via environment variable: <c>TRANSLATOR_API_KEY</c>
+    /// </remarks>
+    public string TranslatorApiKey { get; set; } = "";
+
+    /// <summary>
+    /// Azure Cognitive Services Translator endpoint URL.
+    /// </summary>
+    /// <remarks>
+    /// Can be configured via environment variable: <c>TRANSLATOR_ENDPOINT</c>
+    /// </remarks>
+    public string TranslatorEndpoint { get; set; } = "https://api.cognitive.microsofttranslator.com";
+
+    /// <summary>
+    /// Azure region of the Translator resource.
+    /// </summary>
+    /// <remarks>
+    /// Can be configured via environment variable: <c>TRANSLATOR_REGION</c>
+    /// </remarks>
+    public string TranslatorRegion { get; set; } = "eastus";
 }

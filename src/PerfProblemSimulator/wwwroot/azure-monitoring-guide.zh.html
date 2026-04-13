@@ -1,0 +1,1347 @@
+<!-- source_hash:7177d622b68f2870 lang:zh generated:2026-04-13T18:59:55.6078428Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure 诊断指南 - 性能问题模拟器</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Documentation-specific styles */
+        .doc-container {
+            max-width: 900px;
+        }
+
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .doc-section {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 80px;
+        }
+
+        .doc-section h2 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-section h3 {
+            color: var(--color-text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .doc-section h4 {
+            color: var(--color-text);
+            margin: 1.25rem 0 0.75rem;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section ul, .doc-section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--color-danger);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .command { color: #dcdcaa; }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(0, 120, 212, 0.15) 0%, rgba(0, 120, 212, 0.05) 100%);
+            border-left: 4px solid var(--color-primary);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 1.5rem 0;
+        }
+
+        .info-box h4 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        .info-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        .latency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .latency-table th, .latency-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .latency-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .latency-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .best-practices {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .do-list, .dont-list {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+        }
+
+        .do-list h4 {
+            color: var(--color-success);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        .dont-list h4 {
+            color: var(--color-danger);
+            margin-bottom: 1rem;
+            margin-top: 0;
+        }
+
+        .do-list li, .dont-list li {
+            list-style: none;
+            margin-left: 0;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .do-list li::before {
+            content: '✅';
+            position: absolute;
+            left: 0;
+        }
+
+        .dont-list li::before {
+            content: '❌';
+            position: absolute;
+            left: 0;
+        }
+
+        .alert-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .alert-table th, .alert-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .alert-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .api-table.compact {
+            font-size: 0.85rem;
+        }
+
+        .api-table.compact th, .api-table.compact td {
+            padding: 0.5rem 0.5rem;
+        }
+
+        .api-table.compact th {
+            white-space: normal;
+        }
+
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+            white-space: nowrap;
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .resource-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .resource-links a {
+            display: block;
+            background: var(--color-bg);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--color-primary);
+            transition: all var(--transition-fast);
+        }
+
+        .resource-links a:hover {
+            background: rgba(0, 120, 212, 0.1);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            .best-practices {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Warning/Note callout box */
+        .note-warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 16px 0;
+        }
+
+        /* Reference table styles */
+        .reference-table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        .reference-table th,
+        .reference-table td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .reference-table thead tr {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>性能问题模拟器 - Windows 版 .NET 10</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU：加载中......</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 仪表盘</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">应用</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">仪表盘<span class="nav-desc">实时指标与控制</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">文献资料</div>
+            <a href="/documentation.html" class="sidebar-nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">文献资料<span class="nav-desc">API 参考资料与指南</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item active">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure 诊断<span class="nav-desc">诊断App Service问题</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure 负载测试<span class="nav-desc">载荷测试终点及参数</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">部署到 Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC 设置</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">外部</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub 仓库<span class="nav-desc">源代码与问题</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API 文档</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">构建： <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <div class="doc-container">
+        <div class="deploy-header">
+            <h1>☁️ Azure 诊断指南</h1>
+            <p>了解如何使用 Azure App Service 诊断工具诊断性能问题</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+            <h2>📊 概述</h2>
+            <p>本指南将解释如何使用 Azure 诊断工具来诊断性能问题模拟器产生的性能问题。</p>
+            
+            <p>模拟器会产生四种类型的问题：</p>
+            <ol>
+                <li><strong>高 CPU</strong> - 并行自旋环路消耗所有磁芯</li>
+                <li><strong>记忆压力</strong> - 大对象堆上的固定分配</li>
+                <li><strong>线池饥饿</strong> - 同步通过异步的分断模式</li>
+                <li><strong>慢速请求</strong> - 长期请求 <span class="notranslate">CLR Profiler</span> 分析</li>
+            </ol>
+            <p>每个问题都可以通过特定的 Azure 工具和技术进行诊断。</p>
+        </section>
+
+        <!-- Simulation ID Correlation Section -->
+        <section id="simulation-ids" class="doc-section">
+            <h2>🔗 仿真ID相关性</h2>
+            <p>每个仿真实例都被赋予唯一 <strong>仿真ID</strong> （GUID）实现仪表盘界面与 Azure 诊断之间的端到端关联。</p>
+            
+            <h3>寻找仿真ID</h3>
+            <p><strong>在仪表盘中：</strong> 将鼠标悬停在事件日志中任何与仿真相关的消息（标记为 <span class="sim-msg">虚线下划线</span>）以便在提示中查看完整的模拟ID。</p>
+            <p><strong>Azure：</strong> 相同的仿真ID也出现在服务器端日志中，并可在以下格式中找到：</p>
+            <ul>
+                <li><strong>Application Insights</strong> - 通过仿真ID搜索跟踪和自定义事件</li>
+                <li><strong>日志分析</strong> - 使用ID作为过滤器的查询日志</li>
+                <li><strong>容器/App Service 日志</strong>- 按 标准/标准GUID 过滤</li>
+            </ul>
+
+            <h3>相关性查询</h3>
+            <p>在Log Analytics中使用这些KQL查询，将仪表盘事件与服务器遥测数据关联起来：</p>
+            
+            <div class="note-warning">
+                <strong>⚠️ 表格名称差异：</strong> Log Analytics 工作区使用与经典 Application Insights不同的表和列名。如果你看到像这样的错误 <em>“'traces'这个名称并不指任何已知的表格”</em>，请使用下面的Log Analytics名称：                <table class="reference-table">
+                    <thead>
+                        <tr>
+                            <th>经典 Application Insights</th>
+                            <th>日志分析工作区</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>traces</code></td><td><code>AppTraces</code></td></tr>
+                        <tr><td><code>customEvents</code></td><td><code>AppEvents</code></td></tr>
+                        <tr><td><code>requests</code></td><td><code>AppRequests</code></td></tr>
+                        <tr><td><code>exceptions</code></td><td><code>AppExceptions</code></td></tr>
+                        <tr><td><code>dependencies</code></td><td><code>AppDependencies</code></td></tr>
+                        <tr><td><code>message</code></td><td><code>Message</code></td></tr>
+                        <tr><td><code>timestamp</code></td><td><code>TimeGenerated</code></td></tr>
+                        <tr><td><code>customDimensions</code></td><td><code>Properties</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="code-block">
+<span class="comment">通过仿真ID查找模拟的开始/结束事件</span>应用活动
+| <span class="keyword">其中</span> 名称 <span class="keyword">在</span> (<span class="string">“模拟开始”</span>, <span class="string">“模拟结束”</span>)
+| <span class="keyword">其中</span> 性质[<span class="string">“SimulationId”</span>] == <span class="string">“你的模拟身份——在这里”</span>| <span class="keyword">项目</span> 时间生成、名称、属性
+| <span class="keyword">顺序为</span> 时间生成 <span class="keyword">ASC</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">在模拟时间窗口内查找所有请求</span>
+<span class="keyword">设</span> simStart = toscalar（
+    应用活动
+    | <span class="keyword">其中</span> 姓名 == <span class="string">“模拟开始”</span> <span class="keyword">以及</span> 性质[<span class="string">“SimulationId”</span>] == <span class="string">“你的模拟身份——在这里”</span>| <span class="keyword">项目</span> TimeGenerated）;<span class="keyword">设</span> simEnd = toscalar（
+    应用活动
+    | <span class="keyword">其中</span> 姓名 == <span class="string">“模拟结束”</span> <span class="keyword">以及</span> 性质[<span class="string">“SimulationId”</span>] == <span class="string">“你的模拟身份——在这里”</span>| <span class="keyword">项目</span> TimeGenerated）;
+应用请求
+| <span class="keyword">其中</span> 时间生成 <span class="keyword">介于</span> （simStart .. simEnd）
+| <span class="keyword">顺序为</span> 时间生成 <span class="keyword">ASC</span>
+            </div>
+
+            <div class="code-block">
+<span class="comment">在模拟中查找失败请求</span>
+<span class="keyword">设</span> simId = <span class="string">“你的模拟身份——在这里”</span>;<span class="keyword">设</span> simEvents = AppEvents | <span class="keyword">其中</span> 性质[<span class="string">“SimulationId”</span>] == simId;<span class="keyword">设</span> simStart = toscalar（simEvents | <span class="keyword">其中</span> 姓名 == <span class="string">“模拟开始”</span> | <span class="keyword">项目</span> TimeGenerated）;<span class="keyword">设</span> simEnd = toscalar（simEvents | <span class="keyword">其中</span> 姓名 == <span class="string">“模拟结束”</span> | <span class="keyword">项目</span> TimeGenerated）;
+应用请求
+| <span class="keyword">其中</span> 时间生成 <span class="keyword">介于</span> （simStart .. simEnd）
+| <span class="keyword">其中</span> 成功 == <span class="keyword">错误</span>| <span class="keyword">项目</span> TimeGenerated、名称、结果代码、durrationMs、URL
+| <span class="keyword">顺序为</span> 时间生成 <span class="keyword">ASC</span>
+            </div>
+
+            <h3>故障排除工作流程</h3>
+            <ol>
+                <li>从仪表盘开始模拟</li>
+                <li>将鼠标悬停在事件日志中的开始消息上，复制模拟ID</li>
+                <li>打开 Azure 门户→ Application Insights →日志（或日志分析）</li>
+                <li>使用仿真ID查询日志，查看所有相关的服务器端活动</li>
+                <li>将仪表盘事件与服务器指标的时间戳关联起来</li>
+            </ol>
+            <p><strong>提示：</strong> 当多个并发模拟运行或仪表盘被多个用户使用时，模拟ID有助于隔离遥测数据。</p>
+        </section>
+
+        <!-- Diagnosing High CPU Section -->
+        <section id="cpu" class="doc-section">
+            <h2>🔥 诊断高发性 CPU</h2>
+            
+            <h3>症状</h3>
+            <ul>
+                <li>应用程序变得无响应</li>
+                <li>请求超时次数增加</li>
+                <li>CPU 指标显示持续高使用率（&gt;80%）</li>
+            </ul>
+
+            <h3>Azure 可用的工具</h3>
+
+            <h4>1. App Service 诊断和解决问题</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>咔哒 <strong>诊断和解决问题</strong> 在左侧菜单中</li>
+                <li>精选 <strong>可用性与性能</strong> &gt; <strong>高 CPU 分析</strong></li>
+                <li>回顾时间线和流程分解</li>
+            </ol>
+
+            <h4>2. Application Insights 实时指标</h4>
+            <ol>
+                <li>为你的应用打开Application Insights</li>
+                <li>前往 <strong>实时指标</strong></li>
+                <li>实时观察 CPU 图</li>
+                <li>注意与输入请求的相关性</li>
+            </ol>
+
+            <h4>3. CPU 画像（高级）</h4>
+            <ol>
+                <li>App Service，前往<strong>诊断和解决问题</strong></li>
+                <li>搜索“CPU 画像”</li>
+                <li>咔哒 <strong>收集分析器追踪</strong></li>
+                <li>触发 CPU 模拟</li>
+                <li>等待收款完成</li>
+                <li>下载并分析 <code>.diagsession</code> 文件</li>
+            </ol>
+
+            <h3>注意点</h3>
+            <div class="code-block">
+<span class="comment">在分析器追踪中，你会看到：</span>- 运行 while 循环的专用线程
+- CpuStressService 中的高自有时间
+- 线程名称如 CpuStress-*            </div>
+
+            <h3>代码模式（出了什么问题）</h3>
+            <div class="code-block">
+<span class="comment">该服务使用专用线程以避免线程池的饥饿，</span>
+<span class="comment">确保仪表盘即使在100%负载下也能保持响应。</span>
+<span class="keyword">VAR</span> 线程 = <span class="keyword">新</span> 线程[Environment.ProcessorCount];<span class="keyword">对于</span> (<span class="keyword">智力</span> I = <span class="keyword">0</span>;我会用这些线&lt;。长度;i++）
+{
+    线程[i] = <span class="keyword">新</span> 线程（（） =>
+    {        <span class="comment">紧密旋转循环以消耗100%的核心</span>
+        <span class="keyword">虽然</span> （秒表。获取时间戳&lt; endTime）
+        {             <span class="comment">旋转</span>}
+    });
+    线索[i]。Start（）;
+}            </div>
+        </section>
+
+        <!-- Diagnosing Memory Pressure Section -->
+        <section id="memory" class="doc-section">
+            <h2>📊 诊断记忆压力</h2>
+            
+            <h3>症状</h3>
+            <ul>
+                <li>内存使用随时间增加</li>
+                <li>GC 收集频率增加</li>
+                <li>由于 GC 暂停，应用速度可能会变慢</li>
+                <li>最终，OutOfMemoryException</li>
+            </ul>
+
+            <h3>Azure 可用的工具</h3>
+
+            <h4>1. App Service 指标</h4>
+            <ol>
+                <li>导航到你的 App Service</li>
+                <li>前往 <strong>指标</strong></li>
+                <li>添加指标： <strong>记忆工作集</strong>, <strong>私有字节</strong></li>
+                <li>将时间粒度设置为1分钟</li>
+                <li>观察模拟过程中的记忆增长</li>
+            </ol>
+
+            <h4>2. 内存转储分析</h4>
+            <ol>
+                <li>前往 <strong>诊断和解决问题</strong></li>
+                <li>搜索“内存倾倒”</li>
+                <li>咔哒 <strong>收集内存转储</strong></li>
+                <li>选择“完整数据”以获得详细分析</li>
+                <li>下载后在Visual Studio或WinDbg中打开</li>
+            </ol>
+
+            <h4>3. Application Insights</h4>
+            <ol>
+                <li>开放 Application Insights</li>
+                <li>前往 <strong>性能</strong> &gt; <strong>依赖关系</strong></li>
+                <li>寻找与 GC相关的慢节奏模式</li>
+            </ol>
+
+            <h3>注意点</h3>
+            <div class="code-block">
+<span class="comment">在内存转储中，寻找：</span>- 大对象堆（LOH）中的大字节[]数组
+- GCHandle.Alloc 固定对象
+- 因钉顶而未被收集的物品            </div>
+
+            <h3>代码模式（出了什么问题）</h3>
+            <div class="code-block">
+<span class="comment">这是MemoryPressureService中有意设计的“坏”代码：</span>
+<span class="keyword">VAR</span> 数据 = <span class="keyword">新</span> <span class="keyword">字节</span>[大小 Megabytes * <span class="keyword">1024</span> * <span class="keyword">1024</span>];<span class="keyword">VAR</span> pinnedHandle = GCHandle.Alloc（data， GCHandleType.Pinned）;<span class="comment">固定配置：</span>
+<span class="comment">// 1.自 85KB >起直接进入大型对象堆（LOH）</span>
+<span class="comment">// 2.无法被 GC移动，导致碎片化</span>
+<span class="comment">// 3.在明确发布前，仍会被记忆保存</span>
+            </div>
+        </section>
+
+        <!-- Diagnosing Thread Pool Starvation Section -->
+        <section id="threads" class="doc-section">
+            <h2>🧵 诊断线程池饥饿</h2>
+            
+            <h3>症状</h3>
+            <ul>
+                <li>请求排队并超时</li>
+                <li>即使是简单的请求也会延迟飙升</li>
+                <li>日志中的线程池耗尽警告</li>
+                <li>健康检查可能失败</li>
+            </ul>
+
+            <h3>Azure 可用的工具</h3>
+
+            <h4>1. Application Insights 依赖关系</h4>
+            <ol>
+                <li>开放 Application Insights</li>
+                <li>前往 <strong>应用地图</strong></li>
+                <li>注意外拨电话延迟较高的情况</li>
+                <li>注意“等待线程”的模式</li>
+            </ol>
+
+            <h4>2. App Service 诊断</h4>
+            <ol>
+                <li>前往 <strong>诊断和解决问题</strong></li>
+                <li>搜索“Threading”</li>
+                <li>复习线程数和争用指标</li>
+            </ol>
+
+            <h4>3. 绩效计数器</h4>
+            <p>请监控这些计数器：</p>
+            <ul>
+                <li><code>.NET CLR Thread Pool / # of Threads</code></li>
+                <li><code>.NET CLR Thread Pool / Queue Length</code></li>
+                <li><code>Process / Thread Count</code></li>
+            </ul>
+
+            <h3>注意点</h3>
+            <div class="code-block">
+<span class="comment">线池缺失的迹象：</span>- 线数稳步增加
+- 队列长度增长
+- 请求时长
+- 简单操作的超时            </div>
+
+            <h3>代码模式（出了什么问题）</h3>
+            <div class="code-block">
+<span class="comment">这是ThreadBlockService中有意设计的“坏”代码：</span>任务.运行（<span class="keyword">异步</span> () =>
+{    <span class="comment">坏处：用同步等待阻挡线程池线程！</span>
+    <span class="comment">这就是“sync-over-async”反模式。</span>Task.Delay（delayMs， cancellationToken）。等待（）;    <span class="comment">问题：每次调用 。Wait（） 阻塞线程池线程</span>
+    <span class="comment">直到延迟结束。同时收到足够多的请求，</span>
+    <span class="comment">线程池会耗尽，新的请求必须等待。</span>});            </div>
+        </section>
+
+        <!-- Diagnosing Slow Requests Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 诊断<span class="notranslate">CLR Profiler</span>慢请求</h2>
+            
+            <p>慢速请求模拟器使用专门设计为易于识别<span class="notranslate">CLR Profiler</span>迹的sync-over-async模式，生成长时间运行请求（每个请求约25秒）。</p>
+
+            <h3>目的</h3>
+            <p>该模拟设计用于 <strong>培训开发人员识别阻塞电话</strong> 在画像师的痕迹中。与线程池饥饿模拟（导致许多短块）不同，这会创建单个长请求，这些请求在调用栈中清晰可见。</p>
+
+            <h3>Azure 可用的工具</h3>
+
+            <h4>1. Azure 自动治疗，触发缓慢请求</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>诊断和解决问题</strong></li>
+                <li>搜索“自动治疗”</li>
+                <li>配置慢速请求触发（例如，请求>20秒）</li>
+            </ol>
+
+            <h4>2. <span class="notranslate">CLR Profiler</span> / Azure 画像师</h4>
+            <ol>
+                <li>在仪表盘中，将执行时间设定足够长，使总仿真轻松超过60秒（例如，25秒执行，10秒间隔，最大6次请求）</li>
+                <li>咔哒 <strong>🐌 开始慢速请求</strong> 开始模拟</li>
+                <li>等待事件日志中出现第一个慢速请求——这确认健康探针速率已被降低</li>
+                <li>App Service，前往<strong>诊断和解决问题</strong> →搜索“画像师”</li>
+                <li>开始一个 <strong>CPU 画像师</strong> 追踪（建议60-120秒）</li>
+                <li>等待追踪完成，然后下载并分析</li>
+            </ol>
+            <p><strong>为什么要先开始模拟？</strong> 应用会自动在慢速请求模拟启动时减慢健康探针。在画像器启动前启动模拟，可以避免血迹中的生命探针噪声，从而让你获得更清晰的轮廓，专注于阻挡模式。</p>
+
+            <h3><span class="notranslate">CLR Profiler</span>中应注意什么</h3>
+            <p>该服务使用三种不同的 sync-over-async 模式，分别为 <strong>有意描述的方法名称</strong>:</p>
+
+            <h4>情景一：简单阻挡</h4>
+            <p>寻找方法： <code>FetchDataSync_BLOCKING_HERE</code>, <code>ProcessDataSync_BLOCKING_HERE</code>, <code>SaveDataSync_BLOCKING_HERE</code></p>
+            <div class="code-block">在分析器中，你会看到花费时间：
+  → SlowRequestService.FetchDataSync_BLOCKING_HERE
+    →线索。睡眠            </div>
+
+            <h4>场景二：嵌套同步方法</h4>
+            <p>寻找以下结尾的方法： <code>_BLOCKS_INTERNALLY</code></p>
+            <div class="code-block">这些是通过 Thread.Sleep 内部阻断的同步方法：
+  → ValidateOrderSync_BLOCKS_INTERNALLY
+  → CheckInventorySync_BLOCKS_INTERNALLY 
+  → ProcessPaymentSync_BLOCKS_INTERNALLY
+  → SendConfirmationSync_BLOCKS_INTERNALLY            </div>
+
+            <h4>情景三：数据库/HTTP 模式</h4>
+            <p>寻找以下结尾的方法： <code>Sync_SYNC_BLOCK</code></p>
+            <div class="code-block">模拟数据库和 HTTP 阻断呼叫：
+  → GetCustomerFromDatabaseSync_SYNC_BLOCK
+  → GetOrderHistoryFromDatabaseSync_SYNC_BLOCK
+  → CheckInventoryServiceSync_SYNC_BLOCK
+  → GetRecommendationsFromMLServiceSync_SYNC_BLOCK
+  → BuildResponseSync_SYNC_BLOCK            </div>
+
+            <h3>推荐 <span class="notranslate">CLR Profiler</span> 设置（60年代痕迹）</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>背景设定</th>
+                        <th>价值</th>
+                        <th>原因</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>请求时长</td>
+                        <td>25秒</td>
+                        <td>足够长以捕捉痕迹</td>
+                    </tr>
+                    <tr>
+                        <td>间隔</td>
+                        <td>10分</td>
+                        <td>60秒追踪期间的多次请求</td>
+                    </tr>
+                    <tr>
+                        <td>最大请求</td>
+                        <td>6</td>
+                        <td>采样足够多，但不会让人感到压力</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>代码模式（出了什么问题）</h3>
+            <div class="code-block">
+<span class="comment">场景1：同步通过非同步（简单）</span>
+<span class="keyword">公共空洞</span> ProcessRequest（）
+{    <span class="comment">致命缺陷：呼叫。任务上的等待（）会阻塞线程！</span>
+    <span class="comment">这就是经典的“同步过于异步”反模式。</span>Task.Delay（<span class="keyword">25000</span>).等待（）;
+}<span class="comment">情景二：同步方法中的隐藏阻塞</span>
+<span class="keyword">公共空洞</span> ValidateOrderSync_BLOCKS_INTERNALLY（）
+{    <span class="comment">每个方法内部都使用 Task.Delay（） 进行阻断。等等（）</span>ValidateOrderAsync_BLOCKS（）。等待（）;
+}            </div>
+
+            <div class="info-box">
+                <h4>💡 关键洞察：排队时间与执行时间</h4>
+                <p>如果你在请求开始前看到“无事件发出”的较大空白：</p>
+                <ul>
+                    <li><strong>排队时间：</strong> 线程池处于缺电状态，所以你的请求会在队列中等待线程（例如，20+秒）。</li>
+                    <li><strong>执行时间：</strong> 一旦分配了线程，方法才会最终运行。</li>
+                </ul>
+                <p><strong>示例：</strong> 用户等待47秒，但日志显示只有25秒。缺失的22元卡都在排队里花光了！</p>
+            </div>
+
+            <div class="info-box">
+                <h4>💡 ETW心跳</h4>
+                <p>模拟器日志显示“产生迹迹噪声......”每隔500毫秒清除ETW缓冲区，确保长请求不会在跟踪中丢失。</p>
+            </div>
+        </section>
+
+        <!-- Diagnosing Application Crashes Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 诊断应用程序崩溃</h2>
+            
+            <h3>症状</h3>
+            <ul>
+                <li>应用突然变得不可用</li>
+                <li>HTTP 502/503 错误返回给客户端</li>
+                <li>Azure 自动重启应用程序</li>
+                <li>事件日志显示进程终止</li>
+            </ul>
+
+            <h3>Azure 碰撞监测</h3>
+            <p>Azure App Service 内置了崩溃监控功能，可以在应用崩溃时自动捕捉内存转储。</p>
+
+            <h4>启用碰撞监控</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>诊断和解决问题</strong></li>
+                <li>搜索“Crash Monitoring”</li>
+                <li>启用崩溃转储收集</li>
+            </ol>
+
+            <div class="info-box">
+                <h4>⚠️ 重要提示：存储账户限制</h4>
+                <p>在某些 Azure 环境中，由于存储账户的安全限制，崩溃监控可能无法正常工作。如果你不能使用崩溃监控，也可以手动收集内存转储，使用 <strong>程序转储</strong> 来自Kudu控制台。</p>
+            </div>
+
+            <h3>使用 ProcDump 进行手动转储收集</h3>
+            <p><a href="https://learn.microsoft.com/en-us/sysinternals/downloads/procdump" target="_blank" rel="noopener">程序转储</a> 是 Sysinternals 的一个命令行工具，可以监控应用程序并生成崩溃转储。它可以通过Kudu控制台在 Azure App Service 上购买。</p>
+
+            <h4>访问Kudu控制台</h4>
+            <ol>
+                <li>导航到你的 App Service</li>
+                <li>前往 <strong>开发工具</strong> &gt; <strong>高级工具</strong></li>
+                <li>咔哒 <strong>走</strong> 开启库杜</li>
+                <li>精选 <strong>调试控制台</strong> &gt; <strong>CMD</strong> 或 <strong>PowerShell</strong></li>
+            </ol>
+
+            <h4>常见的 ProcDump 命令</h4>
+            <div class="code-block">
+<span class="comment"># 按名称写入进程的完整内存转储</span>procdump -马 w3wp.exe<span class="comment"># 当发生未处理异常时，写入完整转储</span>procdump -马 -e w3wp.exe<span class="comment"># 在第一次或第二次机会例外时写一个完整的倾倒</span>procdump -马 -e 1 w3wp.exe<span class="comment"># 最多写10个dump，每个例外一个</span>procdump -马 -n 10 -e 1 w3wp.exe<span class="comment"># 当 CPU 超过80%持续10秒时写一个dump</span>procdump -马 -c 80 -s 10 w3wp.exe<span class="comment"># 当内存超过1GB时写入转储</span>procdump -马 -M 1024 w3wp.exe<span class="comment"># 当检测到悬挂窗口时写一则废料</span>procdump -马 -h w3wp.exe            </div>
+
+            <h4>ProcDump 选项参考</h4>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>选项</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>-ma</code></td>
+                        <td>全内存转储（Full dump）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mm</code></td>
+                        <td>迷你倾倒（默认，体积较小）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-mp</code></td>
+                        <td>MiniPlus的转储（细节丰富，但比全尺寸小10-75%）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-e</code></td>
+                        <td>在未处理异常时转储（add <code>1</code> 第一次机会）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-c</code></td>
+                        <td>CPU 阈值百分比</td>
+                    </tr>
+                    <tr>
+                        <td><code>-m</code></td>
+                        <td>内存提交阈值（MB）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-n</code></td>
+                        <td>退出前需要写入的转储数量</td>
+                    </tr>
+                    <tr>
+                        <td><code>-s</code></td>
+                        <td>倾倒前连续秒数（默认10秒）</td>
+                    </tr>
+                    <tr>
+                        <td><code>-h</code></td>
+                        <td>挂窗上的倾倒</td>
+                    </tr>
+                    <tr>
+                        <td><code>-t</code></td>
+                        <td>进程终止时的倾倒</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>下载转储文件</h4>
+            <ol>
+                <li>在Kudu中，导航到导出文件创建的文件夹</li>
+                <li>点击旁边的下载图标 <code>.dmp</code> 文件</li>
+                <li>在Visual Studio、WinDbg或其他调试器中打开转储文件</li>
+            </ol>
+        </section>
+
+        <!-- Diagnosing Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ 诊断失败请求（HTTP 5xx）</h2>
+            <p>HTTP 500错误是影响应用可用性的最常见问题之一。该模拟生成随机异常，用于练习在 Azure中诊断失败请求。</p>
+
+            <h3>要模拟什么</h3>
+            <ol>
+                <li>在仪表盘中，点击 <strong>❌ 启动失败请求</strong></li>
+                <li>等待请求完成（每个请求需时~1.5秒）</li>
+                <li>在事件日志中观察异常类型（棕色条目）</li>
+            </ol>
+
+            <h3>诊断 AppLens</h3>
+            <ol>
+                <li>在 Azure 门户，前往你的 App Service</li>
+                <li>导航至此 <strong>诊断和解决问题</strong></li>
+                <li>搜索 <strong>“应用错误”</strong> 或 <strong>“HTTP 500”</strong></li>
+                <li>AppLens 将展示：                    <ul>
+                        <li>误差率随时间变化</li>
+                        <li>最常见的例外类型</li>
+                        <li>每次故障的栈道跟踪</li>
+                        <li>与其他症状的相关性</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>诊断 Application Insights</h3>
+            <ol>
+                <li>在 Azure 门户中，访问你的 Application Insights 资源</li>
+                <li>咔哒 <strong>故障</strong> 在左侧菜单中</li>
+                <li>请审查故障时间线和例外情况</li>
+                <li>点击个别例外查看：                    <ul>
+                        <li>全异常栈跟踪</li>
+                        <li>请求详情（URL、时长、响应代码）</li>
+                        <li>自定义属性与遥测</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>常见的例外类型</h3>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>例外</th>
+                        <th>现实事业</th>
+                        <th>如何修复</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>访问空对象的性质</td>
+                        <td>添加空检查，使用可空引用类型</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>外部依赖太慢了</td>
+                        <td>增加超时，添加断路器</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>处于错误状态的物体无法操作</td>
+                        <td>检查前提条件，验证状态</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>外部 API 呼叫失败</td>
+                        <td>添加重试逻辑，检查连接性</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>缺少配置或缓存密钥</td>
+                        <td>使用TryGetValue，先检查存在性</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="info-box">
+                <h4>💡 专业提示：创建错误率提醒</h4>
+                <p>设置一个 Azure 监控提醒，当 HTTP 5xx错误率超过阈值时通知你：</p>
+                <ol>
+                    <li>去你的 App Service → <strong>警报</strong> → <strong>创建警报规则</strong></li>
+                    <li>信号： <strong>HTTP 服务器错误</strong></li>
+                    <li>阈值：动态或静态（例如每分钟>5个）</li>
+                    <li>操作：发送邮件、短信或网页挂钩通知</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Additional Resources Section -->
+        <section id="resources" class="doc-section">
+            <h2>🔗 附加资源</h2>
+            <p>欲了解更多信息，请参阅这些官方Microsoft资源：</p>
+            
+            <div class="resource-links">
+                <a href="https://docs.microsoft.com/en-us/azure/app-service/troubleshoot-performance-issues" target="_blank" rel="noopener">📘 排查性能问题 - Azure App Service
+                </a>
+                <a href="https://docs.microsoft.com/en-us/dotnet/standard/garbage-collection/" target="_blank" rel="noopener">📘 .NET 内存管理                </a>
+                <a href="https://docs.microsoft.com/en-us/archive/msdn-magazine/2013/march/async-await-best-practices-in-asynchronous-programming" target="_blank" rel="noopener">📘 异步/等待最佳实践                </a>
+                <a href="https://docs.microsoft.com/en-us/archive/blogs/vancem/diagnosing-net-core-threadpool-starvation-with-perfview-why-my-service-is-not-saturating-all-cores-or-seems-to-stall" target="_blank" rel="noopener">📘 线程池缺氧诊断                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>性能问题模拟器—— Azure App Service 诊断的教育工具</p>
+            <p id="pageFooterContent"></p>
+            <p>构建： <span id="buildTime">--</span></p>
+        </footer>
+        </div><!-- /.doc-container -->
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">本页内容</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">📊</span>概述</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#simulation-ids"><span class="toc-icon">🔗</span>仿真ID</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">诊断</li>
+                        <li class="doc-toc-item">
+                            <a href="#cpu"><span class="toc-icon">🔥</span>高 CPU</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#memory"><span class="toc-icon">📊</span>记忆压力</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#threads"><span class="toc-icon">🧵</span>线程池</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#slowrequest"><span class="toc-icon">🐌</span>慢速请求</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#crash"><span class="toc-icon">💥</span>坠机事件</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>未完成的请求</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">参考文献</li>
+                        <li class="doc-toc-item">
+                            <a href="#resources"><span class="toc-icon">📚</span>资源</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.doc-section');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1118 @@
+<!-- source_hash:18c52514089ee258 lang:zh generated:2026-04-13T19:00:12.5010977Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure 部署指南 - 性能问题模拟器</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Azure Deployment Page Styles */
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .deploy-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            scroll-margin-top: 80px;
+        }
+
+        .card h2 {
+            color: var(--color-primary);
+            border-bottom: 2px solid var(--color-bg);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            color: var(--color-text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card h4 {
+            color: var(--color-text-muted);
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card p, .card li {
+            line-height: 1.6;
+            color: var(--color-text-muted);
+        }
+
+        .card ul, .card ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+        }
+
+        .card li {
+            margin-bottom: 0.25rem;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        code {
+            background: rgba(0,0,0,0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.9em;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            color: var(--color-danger);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            border: 1px solid var(--color-bg);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .info-box {
+            background: rgba(0, 120, 212, 0.1);
+            border-left: 4px solid var(--color-primary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: var(--color-text);
+        }
+
+        .warning-box {
+            background: rgba(255, 185, 0, 0.15);
+            border-left: 4px solid var(--color-warning);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: var(--color-text);
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+
+        .secrets-table td:first-child {
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>性能问题模拟器</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU：加载中......</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 仪表盘</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">应用</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">仪表盘<span class="nav-desc">实时指标与控制</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">文献资料</div>
+            <a href="/documentation.html" class="sidebar-nav-item">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">文献资料<span class="nav-desc">API 参考资料与指南</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure 诊断<span class="nav-desc">诊断App Service问题</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure 负载测试<span class="nav-desc">载荷测试终点及参数</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item active">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">部署到 Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC 设置</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">外部</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub 仓库<span class="nav-desc">源代码与问题</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API 文档</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">构建： <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <main class="deploy-container">
+        <div class="deploy-header">
+            <h1>🚀 Azure 部署指南</h1>
+            <p>部署性能问题模拟器以 Azure App Service 使用 <span class="notranslate">GitHub Actions</span> 并 OIDC 认证</p>
+        </div>
+
+        <section id="overview" class="card">
+            <h2>概述</h2>
+            <p>本指南将带你了解如何使用<span class="notranslate">GitHub Actions</span> with OpenID Connect（OIDC）认证部署性能问题模拟器到Azure App Service。OIDC消除了将凭证作为秘密存储的需求。</p>
+            
+            <h3>前提条件</h3>
+            <ul>
+                <li>Azure 订阅，允许创建资源</li>
+                <li>Azure AD/Entra ID 创建应用注册权限</li>
+                <li>GitHub 账号</li>
+                <li>Azure CLI安装（可选，适用于CLI方法）</li>
+            </ul>
+
+            <h3>你将创造的东西</h3>
+            <table>
+                <tr><th>资源</th><th>目的</th></tr>
+                <tr><td>Azure App Service</td><td>托管性能问题模拟器应用程序</td></tr>
+                <tr><td>Azure AD 应用注册</td><td><span class="notranslate">GitHub Actions</span> OIDC身份</td></tr>
+                <tr><td>联邦证书</td><td>GitHub仓库链接至Azure AD</td></tr>
+                <tr><td>角色分配</td><td>授予部署权限</td></tr>
+            </table>
+        </section>
+
+        <section id="app-service" class="card">
+            <h2><span class="step-number">1</span> 创造 Azure App Service</h2>
+            
+            <h3>选项A： Azure 门户</h3>
+            <ol>
+                <li><strong>导航至应用服务</strong>
+                    <ul>
+                        <li>前往 <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure 门户</a></li>
+                        <li>搜索“App Services”并选择它</li>
+                        <li>咔哒 <strong>+ 创作</strong></li>
+                    </ul>
+                </li>
+                <li><strong>配置基础</strong>
+                    <table>
+                        <tr><th>背景设定</th><th>价值</th></tr>
+                        <tr><td>订阅</td><td>您的订阅</td></tr>
+                        <tr><td>资源组</td><td>创建新内容或使用现有内容</td></tr>
+                        <tr><td>名称</td><td><code>your-app-name</code> （必须是全局唯一的）</td></tr>
+                        <tr><td>发布</td><td>代码</td></tr>
+                        <tr><td>运行时栈</td><td>选择你的应用程序运行时间</td></tr>
+                        <tr><td>操作系统</td><td>Windows或Linux（根据你的运行时情况）</td></tr>
+                        <tr><td>地区</td><td>你偏好的地区</td></tr>
+                    </table>
+                </li>
+                <li><strong>配置 App Service 计划</strong>
+                    <table>
+                        <tr><th>背景设定</th><th>推荐</th></tr>
+                        <tr><td>SKU</td><td><strong>基础B1</strong> 或更高</td></tr>
+                    </table>
+                    <div class="warning-box">
+                        <p><strong>⚠️ 重要提示：</strong> 免费（F1）层不支持WebSockets，而WebSockets是实时 SignalR 仪表盘更新所必需的。</p>
+                    </div>
+                </li>
+                <li><strong>审核与创作</strong> - 点击创建资源</li>
+            </ol>
+
+            <h3>选项B：使用命令行Azure</h3>
+            <pre><code># Login to Azure
+az login
+
+# Set variables
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
+LOCATION="eastus"
+APP_SERVICE_PLAN="your-app-plan"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
+
+# Create resource group
+az group create --name $RESOURCE_GROUP --location $LOCATION
+
+# Create App Service Plan (B1 for WebSocket support)
+az appservice plan create \
+  --name $APP_SERVICE_PLAN \
+  --resource-group $RESOURCE_GROUP \
+  --location $LOCATION \
+  --sku B1
+
+# Create Web App with your runtime
+az webapp create \
+  --name $APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --plan $APP_SERVICE_PLAN \
+  --runtime $RUNTIME</code></pre>
+
+            <h3>启用WebSockets</h3>
+            <p>创建后，启用 WebSockets 以实现 SignalR 实时通信：</p>
+            <ol>
+                <li>去你的 App Service → <strong>配置</strong> → <strong>一般设定</strong></li>
+                <li>赛场 <strong>网页套接字</strong> 到 <strong>关于</strong></li>
+                <li>咔哒 <strong>保存</strong></li>
+            </ol>
+            <p>或者通过CLI：</p>
+            <pre><code>az webapp config set \
+  --name $APP_NAME \
+  --resource-group $RESOURCE_GROUP \
+  --web-sockets-enabled true</code></pre>
+        </section>
+
+        <section id="app-registration" class="card">
+            <h2><span class="step-number">2</span> 创建 Azure AD 应用注册</h2>
+            <p><span class="notranslate">GitHub Actions</span> 使用 OpenID Connect（OIDC）与 Azure 进行身份验证，无需存储凭据。</p>
+
+            <h3>创建应用注册</h3>
+            <ol>
+                <li><strong>导航至应用注册</strong>
+                    <ul>
+                        <li>前往 <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure 门户</a></li>
+                        <li>搜索“应用注册”并选择它</li>
+                        <li>咔哒 <strong>+ 新注册</strong></li>
+                    </ul>
+                </li>
+                <li><strong>配置注册</strong>
+                    <table>
+                        <tr><th>背景设定</th><th>价值</th></tr>
+                        <tr><td>名称</td><td><code>github-your-app-deploy</code> （你部署身份的描述性名称）</td></tr>
+                        <tr><td>支持的账户类型</td><td>仅限本组织目录中的账户</td></tr>
+                        <tr><td>重定向URI</td><td>空着</td></tr>
+                    </table>
+                </li>
+                <li><strong>点击注册</strong></li>
+            </ol>
+
+            <h3>记录身份证</h3>
+            <p>来自 <strong>概述</strong> 页面，复制这些值（你需要它们来做 GitHub 秘密）：</p>
+            <table class="secrets-table">
+                <tr><th>价值</th><th>GitHub 秘密名字</th></tr>
+                <tr><td>应用（客户端）ID</td><td><code>AZURE_CLIENT_ID</code></td></tr>
+                <tr><td>目录（租户）ID</td><td><code>AZURE_TENANT_ID</code></td></tr>
+            </table>
+
+            <h3>获取订阅ID</h3>
+            <ol>
+                <li>前往 <strong>订阅</strong> 在 Azure 门户中</li>
+                <li>选择您的订阅</li>
+                <li>复制 <strong>订阅ID</strong> → 这是 <code>AZURE_SUBSCRIPTION_ID</code></li>
+            </ol>
+        </section>
+
+        <section id="federated-credentials" class="card">
+            <h2><span class="step-number">3</span> 配置联合凭据</h2>
+            <p>联合凭证允许 <span class="notranslate">GitHub Actions</span> 在不存储秘密的情况下进行身份验证。</p>
+
+            <ol>
+                <li><strong>进入您的应用注册页面</strong>
+                    <ul>
+                        <li>前往 <strong>证书与秘密</strong></li>
+                        <li>精选 <strong>联邦资历</strong> 标签页</li>
+                        <li>咔哒 <strong>+ 添加凭证</strong></li>
+                    </ul>
+                </li>
+                <li><strong>配置凭证</strong>
+                    <table>
+                        <tr><th>背景设定</th><th>价值</th></tr>
+                        <tr><td>联合凭证情景</td><td><strong><span class="notranslate">GitHub Actions</span> 部署 Azure 资源</strong></td></tr>
+                        <tr><td>组织结构</td><td>你的 GitHub 用户名或组织</td></tr>
+                        <tr><td>存储库</td><td>你的仓库名称</td></tr>
+                        <tr><td>实体类型</td><td><strong>分支</strong></td></tr>
+                        <tr><td>GitHub 分支名称</td><td><code>main</code></td></tr>
+                        <tr><td>名称</td><td><code>github-main-branch</code></td></tr>
+                    </table>
+                </li>
+                <li><strong>点击添加</strong></li>
+            </ol>
+
+            <div class="info-box">
+                <p><strong>💡 注：</strong> 如果你也想从拉取请求或其他分支部署，可以添加带有相应实体类型的联邦凭证。</p>
+            </div>
+        </section>
+
+        <section id="permissions" class="card">
+            <h2><span class="step-number">4</span> 授予 Azure 权限</h2>
+            <p>应用注册需要权限才能部署到你的 App Service。</p>
+
+            <h3>分配贡献者角色</h3>
+            <ol>
+                <li><strong>导航到你的 App Service</strong>
+                    <ul>
+                        <li>前往 <strong>访问控制（IAM）</strong></li>
+                        <li>咔哒 <strong>+ 加法</strong> → <strong>添加角色分配</strong></li>
+                    </ul>
+                </li>
+                <li><strong>配置角色分配</strong>
+                    <table>
+                        <tr><th>背景设定</th><th>价值</th></tr>
+                        <tr><td>职责</td><td><strong>撰稿人</strong></td></tr>
+                        <tr><td>分配访问权限</td><td>用户、组或服务主体</td></tr>
+                        <tr><td>成员</td><td>搜索您的应用注册名称</td></tr>
+                    </table>
+                </li>
+                <li><strong>点击审核 + 分配</strong></li>
+            </ol>
+        </section>
+
+        <section id="github-secrets" class="card">
+            <h2><span class="step-number">5</span> 配置 GitHub 秘密</h2>
+
+            <h3>克隆仓库</h3>
+            <ol>
+                <li><strong>克隆仓库</strong>
+                    <ul>
+                        <li>访问你的技术栈的性能问题模拟器仓库</li>
+                        <li>咔哒 <strong>代码</strong> 然后把它克隆到你自己的 GitHub 账号上</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <h3>添加 GitHub 秘密</h3>
+            <ol>
+                <li><strong>导航到仓库设置</strong>
+                    <ul>
+                        <li>访问你的仓库 GitHub</li>
+                        <li>咔哒 <strong>背景设定</strong> → <strong>秘密与变量</strong> → <strong>行动</strong></li>
+                        <li>咔哒 <strong>新仓库秘密</strong></li>
+                    </ul>
+                </li>
+                <li><strong>添加以下秘密</strong>
+                    <table class="secrets-table">
+                        <tr><th>秘密名字</th><th>价值</th><th>描述</th></tr>
+                        <tr><td>AZURE_CLIENT_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>应用注册客户端ID</td></tr>
+                        <tr><td>AZURE_TENANT_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>Azure AD 目录/租户 ID</td></tr>
+                        <tr><td>AZURE_SUBSCRIPTION_ID</td><td><code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></td><td>Azure 订阅ID</td></tr>
+                    </table>
+                </li>
+            </ol>
+
+            <div class="info-box">
+                <p><strong>💡 无需客户秘密：</strong>OIDC联合凭证消除了存储客户端秘密的需求。上述三个身份证就足够了。</p>
+            </div>
+
+            <h3>更新工作流程（如有需要）</h3>
+            <p>更新 <code>.github/workflows/deploy.yml</code> 附上你的 App Service 名称和运行时版本：</p>
+            <pre><code>env:
+  AZURE_WEBAPP_NAME: your-app-service-name  # Your App Service name
+  # Add any runtime-specific version variables as needed</code></pre>
+        </section>
+
+        <section id="deploy" class="card">
+            <h2><span class="step-number">6</span> 部署</h2>
+
+            <h3>自动部署</h3>
+            <p>部署会自动触发，当你推入 <code>main</code> 分支：</p>
+            <pre><code>git add .
+git commit -m "Your changes"
+git push origin main</code></pre>
+
+            <h3>手动部署</h3>
+            <ol>
+                <li>访问你的仓库 GitHub</li>
+                <li>咔哒 <strong>行动</strong> 标签页</li>
+                <li>精选 <strong>部署到 Azure App Service</strong></li>
+                <li>咔哒 <strong>运行工作流程</strong> → <strong>运行工作流程</strong></li>
+            </ol>
+
+            <h3>验证部署</h3>
+            <ol>
+                <li><strong>打开应用网址</strong>: <code>https://&lt;your-app-name&gt;.azurewebsites.net</code></li>
+                <li><strong>Verify Dashboard</strong>：实时指标应通过 SignalR更新，状态应显示“已连接”</li>
+                <li><strong>测试健康终点</strong>:                    <pre><code>curl https://&lt;your-app-name&gt;.azurewebsites.net/api/health</code></pre>
+                </li>
+            </ol>
+        </section>
+
+        <section id="optional-config" class="card">
+            <h2>可选配置</h2>
+            <p>你可以用 Azure App Service 环境变量自定义应用行为。</p>
+
+            <h3>健康探针率</h3>
+            <p>控制服务器发送健康探针的频率以测量请求延迟。所有探针都经过 Azure 前端，以捕捉真实的端到端延迟。</p>
+            
+            <h4>环境变量</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                        <th>默认</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>探测间隔以毫秒计。至少100毫秒。</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <pre><code># Slow down probes if CLR profiler shows overlapping requests
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings HEALTH_PROBE_RATE=400</code></pre>
+
+            <h3>闲置暂停</h3>
+            <p>当应用程序处于空闲状态（无仪表盘连接或负载测试请求）时，健康探针会自动暂停，以减少不必要的网络流量 Azure前端和 Application Insights 遥测数据。</p>
+            
+            <h4>环境变量</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                        <th>默认</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>暂停健康探针前的几分钟不活动。当仪表盘打开或收到任何请求时，活动会自动恢复。</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <pre><code># Extend idle timeout to 30 minutes
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings IDLE_TIMEOUT_MINUTES=30</code></pre>
+
+            <h3>自定义页面页脚</h3>
+            <p>设置一个自定义页脚消息，显示在所有页面上。页脚支持 HTML，允许你包含链接。</p>
+            
+            <h4>环境变量</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>页脚第二行的HTML内容。如果没有设置，只显示应用描述和构建信息。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>示例价值</h4>
+            <pre><code>Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes</code></pre>
+
+            <h4>通过 Azure CLI设置</h4>
+            <pre><code># Set the footer via Azure CLI
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings 'PAGE_FOOTER=Created by &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; for training purposes'</code></pre>
+
+            <h4>通过 Azure 门户设定</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>背景设定</strong> → <strong>环境变量</strong></li>
+                <li>咔哒 <strong>+ 加法</strong></li>
+                <li>套装名称： <code>PAGE_FOOTER</code></li>
+                <li>设置值：你的HTML页脚内容</li>
+                <li>咔哒 <strong>申请</strong>，则 <strong>确认</strong></li>
+            </ol>
+
+            <h3>GitHub 仓库链接</h3>
+            <p>可选地在侧边栏导航菜单中显示 GitHub 仓库链接。链接默认是隐藏的。当这两个环境变量都提供时，链接会出现在菜单中并指向 <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>环境变量</h4>
+            <table class="env-table">
+                <thead>
+                    <tr>
+                        <th>变量名称</th>
+                        <th>描述</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub 用户名或组织名称。必须展示链接。</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub 仓库名称。必须展示链接。</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>通过 Azure CLI设置</h4>
+            <pre><code># Set the GitHub link via Azure CLI
+az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --settings GITHUB_USER_NAME=your-username GITHUB_REPO_NAME=your-repo-name</code></pre>
+
+            <h4>通过 Azure 门户设定</h4>
+            <ol>
+                <li>在Azure门户中导航到你的App Service</li>
+                <li>前往 <strong>背景设定</strong> → <strong>环境变量</strong></li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>GITHUB_USER_NAME</code>， Value：您的 GitHub 用户名或组织</li>
+                <li>咔哒 <strong>+ 加法</strong> 并集合 名称： <code>GITHUB_REPO_NAME</code>， Value：你的仓库名称</li>
+                <li>咔哒 <strong>申请</strong>，则 <strong>确认</strong></li>
+            </ol>
+
+        </section>
+
+        <section id="troubleshooting" class="card">
+            <h2>故障排除</h2>
+
+            <h3>SignalR 连接失败</h3>
+            <p><strong>症状：</strong> 仪表盘显示“断开连接”，图表不会实时更新</p>
+            <p><strong>解决方案：</strong></p>
+            <ul>
+                <li>确保 App Service 配置中启用了WebSockets</li>
+                <li>从免费等级升级到基础级或更高等级</li>
+                <li>检查ARR亲和力是否被启用（设置→配置→通用设置）</li>
+            </ul>
+
+            <h3>OIDC 认证失败</h3>
+            <p><strong>症状：</strong><span class="notranslate">GitHub Actions</span>在“登录到Azure”步骤失败</p>
+            <p><strong>检查：</strong></p>
+            <ul>
+                <li>确认三个秘密都设置正确</li>
+                <li>确认联邦凭证主题与你的仓库/分支机构匹配： <code>repo:USERNAME/REPO:ref:refs/heads/main</code></li>
+                <li>确保应用注册在App Service中扮演贡献者角色</li>
+            </ul>
+
+            <h3>启动时应用崩溃</h3>
+            <p><strong>症状：</strong> 应用显示“应用错误”或没有响应</p>
+            <p><strong>检查：</strong></p>
+            <ul>
+                <li>在 Azure 门户中查看日志流（App Service →日志流）</li>
+                <li>在 App Service → App Service 日志中启用应用日志</li>
+                <li>验证运行时版本是否符合你的应用需求</li>
+                <li>检查缺少配置或环境变量</li>
+            </ul>
+
+            <h3>查看日志</h3>
+            <pre><code># Stream live logs
+az webapp log tail --name $APP_NAME --resource-group $RESOURCE_GROUP
+
+# View deployment logs
+az webapp log deployment show --name $APP_NAME --resource-group $RESOURCE_GROUP</code></pre>
+        </section>
+
+        <section class="card">
+            <h2>快速参考 - CLI 一行</h2>
+            <p>完整的设置脚本（顶部可自定义变量）：</p>
+            <pre><code># Full setup (customize variables at top)
+RESOURCE_GROUP="your-resource-group"
+APP_NAME="your-app-name"
+LOCATION="eastus"
+RUNTIME="your-runtime"  # e.g., "dotnet:8", "node:20-lts", "python:3.11"
+GITHUB_REPO="YOUR_USERNAME/YOUR_REPO"
+
+# Create resources
+az group create -n $RESOURCE_GROUP -l $LOCATION
+az appservice plan create -n "${APP_NAME}-plan" -g $RESOURCE_GROUP -l $LOCATION --sku B1
+az webapp create -n $APP_NAME -g $RESOURCE_GROUP -p "${APP_NAME}-plan" --runtime $RUNTIME
+az webapp config set -n $APP_NAME -g $RESOURCE_GROUP --web-sockets-enabled true
+
+# Create App Registration and get IDs
+APP_ID=$(az ad app create --display-name "github-${APP_NAME}-deploy" --query appId -o tsv)
+az ad sp create --id $APP_ID
+TENANT_ID=$(az account show --query tenantId -o tsv)
+SUB_ID=$(az account show --query id -o tsv)
+
+# Create federated credential
+az ad app federated-credential create --id $APP_ID --parameters "{
+  \"name\": \"github-main-branch\",
+  \"issuer\": \"https://token.actions.githubusercontent.com\",
+  \"subject\": \"repo:${GITHUB_REPO}:ref:refs/heads/main\",
+  \"audiences\": [\"api://AzureADTokenExchange\"]
+}"
+
+# Assign permissions
+APP_SERVICE_ID=$(az webapp show -n $APP_NAME -g $RESOURCE_GROUP --query id -o tsv)
+az role assignment create --assignee $APP_ID --role Contributor --scope $APP_SERVICE_ID
+
+# Output secrets for GitHub
+echo "AZURE_CLIENT_ID=$APP_ID"
+echo "AZURE_TENANT_ID=$TENANT_ID"
+echo "AZURE_SUBSCRIPTION_ID=$SUB_ID"</code></pre>
+        </section>
+    </main>
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">本页内容</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">📋</span>概述</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">设置步骤</li>
+                        <li class="doc-toc-item">
+                            <a href="#app-service"><span class="toc-icon">1️！</span>创造 App Service</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#app-registration"><span class="toc-icon">2️！</span>应用注册</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#federated-credentials"><span class="toc-icon">3️！</span>联邦信用</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#permissions"><span class="toc-icon">4️！</span>权限</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#github-secrets"><span class="toc-icon">5️！</span>GitHub 秘密</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#deploy"><span class="toc-icon">6️！</span>部署</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#optional-config"><span class="toc-icon">⚙️</span>可选配置</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">参考文献</li>
+                        <li class="doc-toc-item">
+                            <a href="#troubleshooting"><span class="toc-icon">🔧</span>故障排除</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <footer class="footer">
+        <p>性能问题模拟器—— Azure App Service 诊断的教育工具</p>
+        <p id="pageFooterContent"></p>
+        <p>构建： <span id="buildTime">--</span></p>
+    </footer>
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer and GitHub repo link
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.card');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (sectionId && scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1546 @@
+<!-- source_hash:6cde4f883d29011d lang:es generated:2026-04-13T18:36:05.0222948Z -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Problem Simulator - Documentación</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="stylesheet" href="css/dashboard.css?v=6">
+</head>
+<body class="page-secondary">
+    <style>
+        /* Documentation-specific styles */
+        .doc-layout {
+            display: flex;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .doc-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-container {
+            max-width: 900px;
+        }
+
+        .doc-toc {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-sticky {
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .doc-toc-card {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 1.25rem;
+        }
+
+        .doc-toc-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .doc-toc ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .doc-toc-item {
+            margin-bottom: 0.25rem;
+        }
+
+        .doc-toc-item a {
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 0.875rem;
+            transition: all var(--transition-fast);
+            border-left: 2px solid transparent;
+        }
+
+        .doc-toc-item a:hover {
+            background: rgba(0, 120, 212, 0.08);
+            color: var(--color-primary);
+            border-left-color: var(--color-primary);
+        }
+
+        .doc-toc-item a.active {
+            background: rgba(0, 120, 212, 0.12);
+            color: var(--color-primary);
+            font-weight: 500;
+            border-left-color: var(--color-primary);
+        }
+
+        .toc-icon {
+            font-size: 1rem;
+            width: 1.25rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .doc-toc-divider {
+            height: 1px;
+            background: var(--color-bg);
+            margin: 0.75rem 0;
+        }
+
+        .doc-toc-section-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--color-text-muted);
+            padding: 0.5rem 0.75rem 0.25rem;
+            opacity: 0.7;
+        }
+
+        .deploy-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .deploy-header h1 {
+            color: var(--color-primary);
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+
+        .deploy-header p {
+            color: var(--color-text-muted);
+            font-size: 1.1rem;
+        }
+
+        .doc-section {
+            background: var(--color-card);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            scroll-margin-top: 80px;
+        }
+
+        .doc-section h2 {
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--color-bg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-section h3 {
+            color: var(--color-text);
+            margin: 1.5rem 0 1rem;
+        }
+
+        .doc-section p {
+            margin-bottom: 1rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section ul, .doc-section ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .doc-section li {
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+        }
+
+        .doc-section code {
+            background: #f6f8fa;
+            padding: 0.2rem 0.4rem;
+            border-radius: var(--radius-sm);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875em;
+            color: var(--color-danger);
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .code-block .comment { color: #6a9955; }
+        .code-block .string { color: #ce9178; }
+        .code-block .keyword { color: #569cd6; }
+        .code-block .command { color: #dcdcaa; }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(255, 185, 0, 0.15) 0%, rgba(209, 52, 56, 0.1) 100%);
+            border-left: 4px solid var(--color-warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin: 1.5rem 0;
+        }
+
+        .warning-box h4 {
+            color: var(--color-danger);
+            margin-bottom: 0.5rem;
+        }
+
+        .warning-box ul {
+            margin-left: 1.5rem;
+        }
+
+        .warning-box li {
+            color: var(--color-text);
+        }
+
+        .api-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .api-table th, .api-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .api-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .api-table tr:hover td {
+            background: rgba(0, 120, 212, 0.05);
+        }
+
+        .method-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .method-get {
+            background: rgba(16, 124, 16, 0.15);
+            color: var(--color-success);
+        }
+
+        .method-post {
+            background: rgba(0, 120, 212, 0.15);
+            color: var(--color-primary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .feature-item {
+            background: var(--color-bg);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+        }
+
+        .feature-text strong {
+            display: block;
+            color: var(--color-text);
+            margin-bottom: 0.25rem;
+        }
+
+        .feature-text span {
+            font-size: 0.875rem;
+            color: var(--color-text-muted);
+        }
+
+        .architecture-tree {
+            background: var(--color-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.8;
+        }
+
+        .architecture-tree .folder { color: var(--color-primary); font-weight: 600; }
+        .architecture-tree .file { color: var(--color-text-muted); }
+        .architecture-tree .comment { color: var(--color-success); font-style: italic; opacity: 0.8; margin-left: 1rem; }
+
+
+
+        .config-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .config-table th, .config-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-bg);
+        }
+
+        .config-table th {
+            background: var(--color-bg);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .doc-layout {
+                flex-direction: column;
+            }
+
+            .doc-toc {
+                width: 100%;
+                order: -1;
+            }
+
+            .doc-toc-sticky {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .doc-toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .doc-toc-item {
+                margin-bottom: 0;
+            }
+
+            .doc-toc-item a {
+                padding: 0.375rem 0.625rem;
+                border-left: none;
+                border-radius: var(--radius-md);
+                background: var(--color-bg);
+            }
+
+            .doc-toc-divider,
+            .doc-toc-section-label {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .doc-layout {
+                padding: 1rem;
+            }
+
+            .api-table {
+                font-size: 0.875rem;
+            }
+
+            .api-table th, .api-table td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button id="hamburger-btn" class="hamburger-btn attention" aria-label="Open navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h1>Simulador de problemas de rendimiento - .NET 10 en Windows</h1>
+        </div>
+        <div id="skuDisplay" class="sku-display">SKU: Cargando...</div>
+        <div class="header-right">
+            <a href="/" class="btn-panel-toggle">🏠 Salpicadero</a>
+        </div>
+    </header>
+
+    <!-- Sidebar Drawer Navigation -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer">
+        <div class="sidebar-header">
+            <svg class="app-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18">
+                <defs>
+                    <radialGradient id="appservices-radial-sb" cx="13428.81" cy="3518.86" r="56.67" gradientTransform="translate(-2005.33 -518.83) scale(0.15)" gradientUnits="userSpaceOnUse">
+                        <stop offset="0.18" stop-color="#5ea0ef"/>
+                        <stop offset="1" stop-color="#0078d4"/>
+                    </radialGradient>
+                    <linearGradient id="appservices-lin1-sb" x1="4.4" y1="11.48" x2="4.37" y2="7.53" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin2-sb" x1="10.13" y1="15.45" x2="10.13" y2="11.9" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                    <linearGradient id="appservices-lin3-sb" x1="14.18" y1="11.15" x2="14.18" y2="7.38" gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stop-color="#ccc"/>
+                        <stop offset="1" stop-color="#fcfcfc"/>
+                    </linearGradient>
+                </defs>
+                <path d="M14.21,15.72A8.5,8.5,0,0,1,3.79,2.28l.09-.06a8.5,8.5,0,0,1,10.33,13.5" fill="url(#appservices-radial-sb)"/>
+                <path d="M6.69,7.23A13,13,0,0,1,15.6,3.65a8.47,8.47,0,0,0-1.49-1.44,14.34,14.34,0,0,0-4.69,1.1A12.54,12.54,0,0,0,5.34,6.13,2.76,2.76,0,0,1,6.69,7.23Z" fill="#fff" opacity="0.6"/>
+                <path d="M2.48,10.65a17.86,17.86,0,0,0-.83,2.62,7.82,7.82,0,0,0,.62.92c.18.23.35.44.55.65A17.94,17.94,0,0,1,3.9,11.37,2.76,2.76,0,0,1,2.48,10.65Z" fill="#fff" opacity="0.6"/>
+                <path d="M3.46,6.11a12,12,0,0,1-.69-2.94,8.15,8.15,0,0,0-1.1,1.45A12.69,12.69,0,0,0,2.24,7,2.69,2.69,0,0,1,3.46,6.11Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="4.38" cy="8.68" r="2.73" fill="url(#appservices-lin1-sb)"/>
+                <path d="M8.36,13.67A1.77,1.77,0,0,1,8.9,12.4a11.88,11.88,0,0,1-2.53-1.86,2.74,2.74,0,0,1-1.49.83,13.1,13.1,0,0,0,1.45,1.28A12.12,12.12,0,0,0,8.38,13.9,1.79,1.79,0,0,1,8.36,13.67Z" fill="#f2f2f2" opacity="0.55"/>
+                <path d="M14.66,13.88a12,12,0,0,1-2.76-.32.41.41,0,0,1,0,.11,1.75,1.75,0,0,1-.51,1.24,13.69,13.69,0,0,0,3.42.24A8.21,8.21,0,0,0,16,13.81,11.5,11.5,0,0,1,14.66,13.88Z" fill="#f2f2f2" opacity="0.55"/>
+                <circle cx="10.13" cy="13.67" r="1.78" fill="url(#appservices-lin2-sb)"/>
+                <path d="M12.32,8.93a1.83,1.83,0,0,1,.61-1A25.5,25.5,0,0,1,8.47,3.79a16.91,16.91,0,0,1-2-2.92,7.64,7.64,0,0,0-1.09.42A18.14,18.14,0,0,0,7.53,4.47,26.44,26.44,0,0,0,12.32,8.93Z" fill="#f2f2f2" opacity="0.7"/>
+                <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
+                <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
+            </svg>
+            <h2>PerfSim .Net 10</h2>
+            <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">×</button>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Aplicación</div>
+            <a href="/" class="sidebar-nav-item">
+                <span class="nav-icon">🎮</span>
+                <span class="nav-label">Salpicadero<span class="nav-desc">Métricas y controles en tiempo real</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Documentación</div>
+            <a href="/documentation.html" class="sidebar-nav-item active">
+                <span class="nav-icon">📚</span>
+                <span class="nav-label">Documentación<span class="nav-desc">API Referencia y guías</span></span>
+            </a>
+            <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-label">Azure Diagnóstico<span class="nav-desc">Diagnosticar problemas en App Service</span></span>
+            </a>
+            <a href="/azure-load-testing.html" class="sidebar-nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-label">Azure Pruebas de carga<span class="nav-desc">Endpoint y parámetros de la prueba de carga</span></span>
+            </a>
+            <a href="/azure-deployment.html" class="sidebar-nav-item">
+                <span class="nav-icon">🚀</span>
+                <span class="nav-label">Desplegar a Azure<span class="nav-desc"><span class="notranslate">GitHub Actions</span> + OIDC configuración</span></span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-section-label">Externo</div>
+            <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
+                <span class="nav-icon">🐙</span>
+                <span class="nav-label">GitHub Repositorio<span class="nav-desc">Código fuente y problemas</span></span>
+            </a>
+            <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
+                <span class="nav-icon swagger-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
+                        <circle cx="12" cy="12" r="11" fill="#85ea2d"/>
+                        <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
+                    </svg>
+                </span>
+                <span class="nav-label">Swagger<span class="nav-desc">API documentación</span></span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">Construcción: <span id="sidebarBuildTime">--</span>
+        </div>
+    </aside>
+
+    <div class="doc-layout">
+        <div class="doc-main">
+        <div class="doc-container">
+        <div class="deploy-header">
+            <h1>📚 Documentación</h1>
+            <p>API referencias, guías y ejemplos de uso para el Performance Problem Simulator</p>
+        </div>
+
+        <!-- Overview Section -->
+        <section id="overview" class="doc-section">
+            <h2>🎯 Simulador de Problemas de Rendimiento</h2>
+            <p>Una Azure App Service educativa que <strong>Crea intencionadamente problemas de rendimiento</strong> para fines de aprendizaje y demostración.</p>
+            
+            <h3>Propósito</h3>
+            <p>Esta aplicación está diseñada para ayudar a Azure App Service Ingenieros de Soporte y Asesores Técnicos:</p>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">📖</div>
+                    <div class="feature-text">
+                        <strong>Aprende</strong>
+                        <span>Cómo diagnosticar problemas comunes de rendimiento en Azure App Service</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔧</div>
+                    <div class="feature-text">
+                        <strong>Práctica</strong>
+                        <span>Uso de Azure herramientas de diagnóstico y monitorización</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎭</div>
+                    <div class="feature-text">
+                        <strong>Demostrar</strong>
+                        <span>Anti-patrones de rendimiento en un entorno controlado</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">👥</div>
+                    <div class="feature-text">
+                        <strong>Tren</strong>
+                        <span>Apoyar a los equipos en la identificación y resolución de problemas de rendimiento</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚠️ Advertencia: ¡Esta aplicación crea intencionadamente problemas de rendimiento!</h4>
+                <ul>
+                    <li>🔥 <strong>CPU estrés</strong> - Crea hilos dedicados que ejecutan bucles de spin para consumir todos CPU núcleos</li>
+                    <li>📊 <strong>Presión de memoria</strong> - Asigna y pina bloques de memoria para aumentar el conjunto de trabajo</li>
+                    <li>🧵 <strong>Escasez de pozas de hilo</strong> - Utiliza sync-over-async anti-patrones para bloquear hilos de pool de hilos</li>
+                    <li>🐌 <strong>Solicitudes lentas</strong>- Genera peticiones de larga duración con patrones de sync-over-async para análisis <span class="notranslate">CLR Profiler</span></li>
+                    <li>💥 <strong>Caídas de aplicaciones</strong> - Provoca fallos mortales para pruebas Azure monitorización de fallos y volcados de memoria</li>
+                    <li>❌ <strong>Solicitudes fallidas</strong> - Genera HTTP errores 5xx para probar AppLens y Application Insights</li>
+                </ul>
+                <p class="mt-1 mb-0"><strong>Solo despliega esta aplicación en entornos aislados y no de producción.</strong></p>
+            </div>
+        </section>
+
+        <!-- Optional Configuration Section -->
+        <section id="optional-config" class="doc-section">
+            <h2>⚙️ Configuración opcional</h2>
+            <p>Puedes personalizar el comportamiento de la aplicación usando Azure App Service variables de entorno.</p>
+
+            <h3>Tasa de Prueba de Salud</h3>
+            <p>Controla con qué frecuencia el servidor envía sondas de salud para medir la latencia de las solicitudes. Todas las sondas se enrutan a través del frontend Azure para capturar latencias realistas de extremo a extremo.</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>HEALTH_PROBE_RATE</code></td>
+                        <td>Intervalo de sonda en milisegundos. Mínimo 100ms.</td>
+                        <td><code>200</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Ralentiza las sondas si CLR perfilador muestra solicitudes superpuestas</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --ajustes HEALTH_PROBE_RATE=400</div>
+
+            <h3>Tiempo de espera en reposo</h3>
+            <p>Cuando la aplicación está inactiva (sin conexiones al panel ni solicitudes de pruebas de carga), las sondas de salud se suspenden automáticamente para reducir el tráfico de red innecesario al frontend de Azurey a la telemetría Application Insights .</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>IDLE_TIMEOUT_MINUTES</code></td>
+                        <td>Minutos de inactividad antes de suspender las sondas de salud. La actividad se reanuda automáticamente cuando se abre el panel de control o se recibe cualquier solicitud.</td>
+                        <td><code>20</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Extiende el tiempo muerto en reposo a 30 minutos</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --ajustes IDLE_TIMEOUT_MINUTES=30</div>
+
+            <h3>Pie de página personalizado</h3>
+            <p>Establece un mensaje personalizado en el pie de página que aparezca en todas las páginas. El pie de página soporta HTML, lo que permite incluir enlaces.</p>
+            
+            <h4>Variable de entorno</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>PAGE_FOOTER</code></td>
+                        <td>Contenido HTML para la segunda línea del pie de página. Si no está activado, solo se muestra la descripción de la app y la información de la build.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Valor de ejemplo</h4>
+            <div class="code-block">Creado por &lt;a href="https://yoursite.com"&gt;Your Team&lt;/a&gt; con fines de entrenamiento</div>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Coloca el pie de página mediante Azure CLI</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --ajustes 'PAGE_FOOTER=Creado por &lt;a href="https://yoursite.com"&gt;Tu equipo&lt;/a&gt; para fines de entrenamiento'</div>
+
+            <h4>Ambientación a través de Azure Portal</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Escenarios</strong> → <strong>Variables de entorno</strong></li>
+                <li>Clic <strong>+ Añadir</strong></li>
+                <li>Nombre del conjunto: <code>PAGE_FOOTER</code></li>
+                <li>Valor fijado: Contenido del pie de página HTML</li>
+                <li>Clic <strong>Solicita</strong>, entonces <strong>Confirmar</strong></li>
+            </ol>
+
+            <h3>GitHub Enlace al Repositorio</h3>
+            <p>Opcionalmente, muestra un enlace GitHub Repositorio en el menú de navegación de la barra lateral. El enlace está oculto por defecto. Cuando se proporcionan ambas variables de entorno, el enlace aparecerá en el menú y apuntará a <code>https://github.com/{GITHUB_USER_NAME}/{GITHUB_REPO_NAME}</code>.</p>
+            
+            <h4>Variables ambientales</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>GITHUB_USER_NAME</code></td>
+                        <td>GitHub nombre de usuario o de la organización. Es necesario mostrar el enlace.</td>
+                    </tr>
+                    <tr>
+                        <td><code>GITHUB_REPO_NAME</code></td>
+                        <td>GitHub nombre del repositorio. Es necesario mostrar el enlace.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Establecer el enlace GitHub vía Azure CLI</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --ajustes GITHUB_USER_NAME=tunombre-de-usuario GITHUB_REPO_NAME=tu-nombre-repositorio</div>
+
+            <h4>Ambientación a través de Azure Portal</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Escenarios</strong> → <strong>Variables de entorno</strong></li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>GITHUB_USER_NAME</code>, Valor: tu nombre de usuario u organización GitHub</li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>GITHUB_REPO_NAME</code>, Valor: nombre de tu repositorio</li>
+                <li>Clic <strong>Solicita</strong>, entonces <strong>Confirmar</strong></li>
+            </ol>
+
+            <h3 id="language-selection">🌐 Selección de idioma (Traducción de la interfaz)</h3>
+            <p>La interfaz del panel de control puede mostrarse en cualquier idioma soportado por <a href="https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support" target="_blank" rel="noopener">Azure Traductor de Servicios Cognitivos</a>. Las traducciones se generan automáticamente al arrancar usando IA y se almacenan en caché para las solicitudes posteriores.</p>
+
+            <div class="callout callout-warning">
+                <strong>⚠️ Aviso de traducción de IA:</strong> Las traducciones son generadas por Azure Traductor de Servicios Cognitivos (traducción automática) y pueden no ser completamente precisas. Los términos técnicos (por ejemplo, CPU, SignalR, ThreadPool) se conservan intencionadamente en inglés.            </div>
+
+            <h4>Cómo funciona</h4>
+            <ol>
+                <li>Establece el <code>UI_LANGUAGE</code> variable de entorno a una <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank" rel="noopener">Código de idioma ISO 639-1</a> (por ejemplo, <code>es</code> para español, <code>fr</code> para el francés, <code>ja</code> para japonés)</li>
+                <li>Al iniciar, la app comprueba si existe un archivo de localización traducido para ese idioma</li>
+                <li>Si no (o si las cadenas fuente en inglés han cambiado), llama a Azure traductor para generar una</li>
+                <li>El archivo traducido se almacena en caché — los arranques posteriores utilizan la caché sin coste de traducción</li>
+                <li>El panel carga las cadenas traducidas y las aplica a la interfaz</li>
+            </ol>
+
+            <h4>Variables ambientales</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de la variable</th>
+                        <th>Descripción</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>UI_LANGUAGE</code></td>
+                        <td>Código de idioma ISO 639-1 para la interfaz del panel de control. A ajustar <code>en</code> para el inglés (no se necesita traducción).</td>
+                        <td><code>en</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_API_KEY</code></td>
+                        <td>Azure clave de suscripción a Cognitive Services Translator. Obligatorio para idiomas que no son inglés.</td>
+                        <td><em>(no fijada)</em></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_ENDPOINT</code></td>
+                        <td>Traductor API URL del endpoint.</td>
+                        <td><code>https://api.cognitive.microsofttranslator.com</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>TRANSLATOR_REGION</code></td>
+                        <td>Azure región del recurso Traductor.</td>
+                        <td><code>eastus</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>Códigos de lenguaje común</h4>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Idioma</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>en</code></td><td>Inglés (por defecto, sin traducción)</td></tr>
+                    <tr><td><code>es</code></td><td>Español</td></tr>
+                    <tr><td><code>fr</code></td><td>Francés</td></tr>
+                    <tr><td><code>de</code></td><td>Alemán</td></tr>
+                    <tr><td><code>ja</code></td><td>Japonés</td></tr>
+                    <tr><td><code>zh</code></td><td>Chino (Simplificado)</td></tr>
+                    <tr><td><code>ko</code></td><td>Coreano</td></tr>
+                    <tr><td><code>pt</code></td><td>Portugués</td></tr>
+                    <tr><td><code>ar</code></td><td>Árabe</td></tr>
+                    <tr><td><code>hi</code></td><td>Hindi</td></tr>
+                </tbody>
+            </table>
+            <p>Para la lista completa de códigos de lenguaje soportados, véase el <a href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes" target="_blank" rel="noopener">Lista de códigos ISO 639-1</a> o <a href="https://learn.microsoft.com/en-us/azure/ai-services/translator/language-support" target="_blank" rel="noopener">Azure Soporte para idiomas traductores</a>.</p>
+
+            <h4>Configuración mediante Azure CLI</h4>
+            <div class="code-block"><span class="comment"># Pon la interfaz en español</span>az webapp config appsettings set --name $APP_NAME --resource-group $RESOURCE_GROUP \
+  --ajustes UI_LANGUAGE=es TRANSLATOR_API_KEY=tu-tecla TRANSLATOR_REGION=eastus</div>
+
+            <h4>Ambientación a través de Azure Portal</h4>
+            <ol>
+                <li>Navega hasta tu App Service en el Portal Azure</li>
+                <li>Ir a <strong>Escenarios</strong> → <strong>Variables de entorno</strong></li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>UI_LANGUAGE</code>, Valor: tu código de lenguaje (por ejemplo, <code>es</code>)</li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>TRANSLATOR_API_KEY</code>, Valor: tu Azure Clave traductora</li>
+                <li>Clic <strong>+ Añadir</strong> y nombre del conjunto: <code>TRANSLATOR_REGION</code>, Valor: tu región de recursos traductora</li>
+                <li>Clic <strong>Solicita</strong>, entonces <strong>Confirmar</strong> (se requiere reinicio)</li>
+            </ol>
+
+            <h4>Personalización de Términos Protegidos</h4>
+            <p>Se enumeran términos técnicos que nunca deberían traducirse en <code>wwwroot/locales/no-translate.json</code>. Edita este archivo para añadir o eliminar términos. Los términos se conservan automáticamente en inglés durante la traducción.</p>
+
+        </section>
+
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="doc-section">
+            <h2>📊 Salpicadero</h2>
+            <p>La aplicación incluye un panel de control en tiempo real en la URL raíz que muestra:</p>
+            <ul>
+                <li><strong>CPU Uso</strong> - Utilización actual del procesador</li>
+                <li><strong>Memoria</strong>- Tamaños de conjunto de trabajo y heap GC</li>
+                <li><strong>Conjunto de hilos</strong> - Hilos activos y longitud de la cola</li>
+                <li><strong>Latencia de petición</strong> - Tiempo de respuesta en tiempo real de la sonda (muestra el impacto de la falta de pool de hilos)</li>
+                <li><strong>Simulaciones activas</strong> - Actualmente ejecutando simulaciones de problemas</li>
+            </ul>
+            <p>El panel utiliza SignalR para actualizaciones en tiempo real e incluye controles para activar cada tipo de simulación.</p>
+
+            <h3>Indicadores métricos de color</h3>
+            <p>Las fichas de métricas de CPU y Memoria utilizan codificación dinámica por colores para indicar los niveles de utilización de recursos:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Color</th>
+                        <th>Utilización</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Negro (por defecto)</td>
+                        <td>0-60%</td>
+                        <td>Normal - los recursos están dentro del rango aceptable</td>
+                    </tr>
+                    <tr>
+                        <td class="text-warning">Amarillo</td>
+                        <td>60-80%</td>
+                        <td>Advertencia: uso elevado, niveles preocupantes</td>
+                    </tr>
+                    <tr>
+                        <td class="text-danger">Rojo</td>
+                        <td>&gt;80%</td>
+                        <td>Peligro: alto uso, posible agotamiento de recursos</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p><strong>Nota:</strong> Los umbrales de memoria se calculan dinámicamente en función de la memoria total disponible real reportada por el servidor, no en un valor codificado en fija. Esto garantiza advertencias precisas independientemente de la configuración de la RAM de la máquina.</p>
+
+            <h3>IDs de registro de eventos y simulación</h3>
+            <p>El Registro de Eventos en la parte inferior del panel registra toda la actividad de simulación con entradas codificadas por colores que coinciden con cada tipo de simulación. Los mensajes relacionados con una instancia de simulación específica se marcan con un <span class="sim-msg">subrayado punteado</span>.</p>
+            <p><strong>Visualización de IDs de simulación:</strong> Pasa el cursor sobre cualquier mensaje subrayado para revelar el mensaje completo <strong>ID de simulación</strong> (GUID) en una descripción emergente. Este ID identifica de forma única cada instancia de simulación.</p>
+            <p><strong>Uso de identificadores de simulación para la resolución de problemas:</strong></p>
+            <ul>
+                <li>El mismo ID de simulación se registra en el lado del servidor y aparece en Azure Application Insights y Log Analytics</li>
+                <li>Utiliza este ID para correlacionar eventos del panel con los registros del servidor al analizar problemas de rendimiento</li>
+                <li>Filtra Azure registros por ID de simulación para aislar la telemetría de una simulación específica</li>
+                <li>Véase el <a href="azure-monitoring-guide.html#simulation-ids">Azure Guía de Monitorización</a> para técnicas detalladas de correlación</li>
+            </ul>
+        </section>
+
+        <!-- Request Latency Monitor Section -->
+        <section id="latency" class="doc-section">
+            <h2>⏱️ Monitor de latencia de solicitudes</h2>
+            <p>El salpicadero incluye un <strong>Monitor de latencia de solicitudes</strong> Eso demuestra cómo la falta de pool de hilos afecta al procesamiento real de peticiones. Los valores de latencia mostrados incluyen <strong>tanto tiempo de cola como tiempo de procesamiento</strong>.</p>
+            
+            <h3>Cómo funciona</h3>
+            <ul>
+                <li>Un hilo dedicado en segundo plano (que no pertenece al pool de hilos) explora continuamente <code>/api/health/probe</code></li>
+                <li>La latencia se mide de extremo a extremo: solicitud enviada → respuesta recibida</li>
+                <li>Los resultados se transmiten vía SignalR al panel de control en tiempo real</li>
+            </ul>
+
+            <h3>Lo que observarás</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Escenario</th>
+                        <th>Latencia (total)</th>
+                        <th>Estado</th>
+                        <th>Explicación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Funcionamiento normal</td>
+                        <td>&lt; 150ms</td>
+                        <td>🟢 Bien</td>
+                        <td>Hilos de pool de hilos disponibles</td>
+                    </tr>
+                    <tr>
+                        <td>Inanición leve</td>
+                        <td>150ms - 1s</td>
+                        <td>🟡 Degradado</td>
+                        <td>Peticiones en cola esperando hilos</td>
+                    </tr>
+                    <tr>
+                        <td>Hambre severa</td>
+                        <td>&gt; 1s</td>
+                        <td>🔴 Severo</td>
+                        <td>Retraso significativo en la cola</td>
+                    </tr>
+                    <tr>
+                        <td>Tiempo muerto</td>
+                        <td>Años 30</td>
+                        <td>🔴 Crítica</td>
+                        <td>No se desbloqueó ningún hilo en el tiempo de espera</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Por qué esto importa</h3>
+            <p>Durante la falta de pool de hilos, las métricas de CPU y memoria suelen parecer normales, pero los usuarios experimentan una latencia severa. El monitor de latencia hace que este problema sea invisible <strong>visible</strong> — puedes ver cómo los tiempos de respuesta aumentan de milisegundos a segundos al activar la simulación sync-over-async .</p>
+
+            <div class="info-box">
+                <h4>Perspectiva clave</h4>
+                <p>La sonda funciona sobre un <strong>Hilo dedicado</strong> (no del grupo de hilos), así que siempre puede enviar solicitudes. Sin embargo, el servidor central de ASP.NET utiliza el pool de hilos para procesar las solicitudes entrantes. Durante la inanición:</p>
+                <ol>
+                    <li>La solicitud de sonda se envía inmediatamente</li>
+                    <li>La solicitud se encuentra en la cola ASP.NET Core</li>
+                    <li>Espera a que un hilo de pool de hilos esté disponible</li>
+                    <li>Latencia = tiempo de espera + tiempo de procesamiento</li>
+                </ol>
+                <p>Esto demuestra directamente cómo sync-over-async anti-patrones afectan a los tiempos de respuesta del usuario final.</p>
+            </div>
+
+            <h3>Correlación con Azure métricas</h3>
+            <p>Compara la tabla de latencias del panel de control con:</p>
+            <ul>
+                <li><strong>Application Insights</strong> &gt; Duración de las Métricas &gt; Solicitudes en Tiempo Real</li>
+                <li><strong>App Service Métricas</strong> &gt; Tiempo de respuesta</li>
+                <li><strong>Pool de Hilos</strong> Sección que muestra hilos bloqueados</li>
+            </ul>
+        </section>
+
+        <!-- CPU Stress Section -->
+        <section id="cpu" class="doc-section">
+            <h2>🔥 CPU Simulación de tensiones</h2>
+            <p>La simulación de CPU Tensiones genera un alto uso de CPU mediante bucles de giro paralelos, saturando todos los núcleos de CPU disponibles durante un periodo determinado.</p>
+
+            <h3>Cómo funciona</h3>
+            <p>La simulación genera un hilo por cada núcleo CPU , cada uno ejecutando un bucle de giro de espera ocupada (incrementando un contador en un formato cerrado <code>while(true)</code> bucle). Esto consume el 100% de CPU capacidad en todos los núcleos.</p>
+
+            <h3>Controles del salpicadero</h3>
+            <ul>
+                <li><strong>Duración:</strong> ¿Cuánto tiempo debe durar la prueba de estrés (por defecto 30 segundos)</li>
+                <li><strong>Inicio/Parada:</strong> Iniciar o cancelar la simulación</li>
+            </ul>
+
+            <h3>Lo que observarás</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Durante la simulación</th>
+                        <th>Explicación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU %</td>
+                        <td>~100%</td>
+                        <td>Todos los núcleos están saturados por bucles de espín</td>
+                    </tr>
+                    <tr>
+                        <td>Memoria</td>
+                        <td>Sin cambios</td>
+                        <td>Los bucles de spin no asignan memoria</td>
+                    </tr>
+                    <tr>
+                        <td>Latencia</td>
+                        <td>Puede aumentar</td>
+                        <td>Menos CPU disponible para el procesamiento de solicitudes</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Problemas CPU en el mundo real</h3>
+            <p>La alta CPU en la producción suele estar causada por:</p>
+            <ul>
+                <li>Algoritmos ineficientes (O(n²) cuando O(n) es posible)</li>
+                <li>Bucles infinitos debido a errores</li>
+                <li>Retroceso excesivo de expresión regular</li>
+                <li>Consultas LINQ no optimizadas con grandes conjuntos de datos</li>
+                <li>Espera ocupada en vez de usar async/await</li>
+            </ul>
+
+            <h3>Herramientas de diagnóstico</h3>
+            <ul>
+                <li><code>dotnet-counters monitor -p {PID} --counters System.Runtime</code></li>
+                <li><code>dotnet-trace collect -p {PID}</code> para CPU perfilado</li>
+                <li>Azure App Service → Diagnosticar y Resolver Problemas → CPU Uso</li>
+                <li>Application Insights Hoja de rendimiento</li>
+            </ul>
+        </section>
+
+        <!-- Memory Pressure Section -->
+        <section id="memory" class="doc-section">
+            <h2>💾 Simulación de presión de memoria</h2>
+            <p>La simulación de Presión de Memoria asigna y mantiene grandes matrices de bytes para demostrar patrones de consumo de memoria y comportamiento de recogida de basura.</p>
+
+            <h3>Cómo funciona</h3>
+            <p>Se asignan grandes arrays de bytes (por defecto 100MB) usando <code>GC.AllocateArray&lt;byte&gt;(pinned: true)</code>. La asignación fijada impide que el recolector de basura mueva la memoria, simulando patrones problemáticos de asignación.</p>
+
+            <h3>Controles del salpicadero</h3>
+            <ul>
+                <li><strong>Tamaño (MB):</strong> Cantidad de memoria a asignar</li>
+                <li><strong>Asignar:</strong> Añade un nuevo bloque de memoria</li>
+                <li><strong>Publicar todo:</strong> Libera todos los bloques y disparos asignados GC</li>
+            </ul>
+
+            <h3>Lo que observarás</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Después de la asignación</th>
+                        <th>Explicación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Memoria (MB)</td>
+                        <td>Aumentos por tamaño de asignación</td>
+                        <td>Los gráficos reflejan el aumento del conjunto de trabajo</td>
+                    </tr>
+                    <tr>
+                        <td>CPU</td>
+                        <td>Breve pico</td>
+                        <td>Asignación de memoria y cero</td>
+                    </tr>
+                    <tr>
+                        <td>Tras el lanzamiento</td>
+                        <td>Caídas de memoria</td>
+                        <td>GC. Collect() recupera la memoria</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Gran Montón de Objetos (LOH)</h3>
+            <p>Los objetos mayores que 85KB se asignan al Gran Montón de Objetos:</p>
+            <ul>
+                <li>LOH se recopila con menos frecuencia (solo colecciones de la Generación 2)</li>
+                <li>Las asignaciones fijas evitan la compactación de memoria</li>
+                <li>Puede provocar fragmentación de la memoria con el tiempo</li>
+                <li>Nuestras asignaciones (10MB+) siempre van a LOH</li>
+            </ul>
+
+            <h3>Problemas de memoria en el mundo real</h3>
+            <ul>
+                <li>Colecciones estáticas que acumulan datos sin límites</li>
+                <li>No se den de baja los gestores de eventos</li>
+                <li>Implementación IDisposable incorrecta</li>
+                <li>Almacenamiento en caché sin límites de tamaño ni caducidad</li>
+                <li>Mantener referencias a objetos grandes más tiempo del necesario</li>
+            </ul>
+
+            <h3>Herramientas de diagnóstico</h3>
+            <ul>
+                <li><code>dotnet-dump collect -p {PID}</code> para volcados de memoria</li>
+                <li><code>dotnet-gcdump collect -p {PID}</code> para GC análisis de heap</li>
+                <li>Visual Studio Memory Profiler</li>
+                <li>Azure App Service → hoja del conjunto de trabajo de memoria</li>
+            </ul>
+        </section>
+
+        <!-- Thread Pool Starvation Section -->
+        <section id="threadpool" class="doc-section">
+            <h2>🧵 Escaseza de pozas de hilo</h2>
+            <p>La simulación de Starvation del Thread Pool demuestra el peligroso anti-patrón "sync-over-async", donde el código síncrono bloquea esperando a que se completen las operaciones asíncronas.</p>
+
+            <h3>Cómo funciona</h3>
+            <p>La simulación genera múltiples tareas paralelas (por defecto: 2× CPU núcleos) que cada una llama <code>Task.Delay().Wait()</code>. Esto bloquea los hilos del grupo de hilos, provocando:</p>
+            <ol>
+                <li>Los hilos del pool de hilos se bloquean esperando</li>
+                <li>.NET añade nuevos hilos poco a poco (~1 por segundo)</li>
+                <li>Las solicitudes entrantes se colocan esperando hilos</li>
+                <li>La latencia de las peticiones aumenta drásticamente</li>
+            </ol>
+
+            <h3>Controles del salpicadero</h3>
+            <ul>
+                <li><strong>Duración:</strong> Cuánto dura cada operación de bloqueo (por defecto 15 segundos)</li>
+                <li><strong>Hilos:</strong> Número de hilos bloqueadores que aparecen</li>
+                <li><strong>Inicio/Parada:</strong> Iniciar o cancelar la simulación</li>
+            </ul>
+
+            <h3>El anti-patrón Sincronización sobre Asíncrona</h3>
+            <p>Estos patrones bloquean los hilos y deben evitarse:</p>
+            <pre><code>// ❌ BAD - Blocks thread waiting for Task
+var result = SomeAsyncMethod().Result;
+var result = SomeAsyncMethod().GetAwaiter().GetResult();
+SomeAsyncMethod().Wait();
+
+// ✅ GOOD - Properly awaits the Task
+var result = await SomeAsyncMethod();</code></pre>
+
+            <h3>Lo que observarás</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Métrica</th>
+                        <th>Durante la inanición</th>
+                        <th>Explicación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>CPU</td>
+                        <td>BAJO</td>
+                        <td>Los hilos están esperando, no funcionan</td>
+                    </tr>
+                    <tr>
+                        <td>Memoria</td>
+                        <td>Normal</td>
+                        <td>No se produce ninguna fuga de memoria</td>
+                    </tr>
+                    <tr>
+                        <td>Recuento de hilos</td>
+                        <td>Ascenso lento</td>
+                        <td>.NET añade ~1 hilo por segundo</td>
+                    </tr>
+                    <tr>
+                        <td>Latencia</td>
+                        <td>🔴 De picos a segundos</td>
+                        <td>Peticiones en cola esperando hilos</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Por qué CPU es baja pero la latencia alta</h3>
+            <p>Esta es la señal de la falta de hilos. El CPU no funciona porque todos los hilos están bloqueados en espera. No pueden iniciar nuevas solicitudes porque no hay hilos disponibles. Parece que la app está inactiva, pero los usuarios experimentan tiempos de espera.</p>
+
+            <h3>Causas reales</h3>
+            <ul>
+                <li>Llamar a bibliotecas asíncronas desde código de sincronización: <code>httpClient.GetAsync(url).Result</code></li>
+                <li>Mezcla de sincronización y asincrónico en constructores</li>
+                <li>Usando <code>.Result</code> en propiedades</li>
+                <li>Llamando a métodos asíncronos desde Dispose()</li>
+                <li>Bibliotecas de terceros que bloquean internamente</li>
+            </ul>
+
+            <h3>Cómo arreglar</h3>
+            <ul>
+                <li>Uso <code>await</code> Hasta arriba en la pila de llamadas ("asíncrono hasta abajo")</li>
+                <li>Evita <code>.Result</code>, <code>.Wait()</code>, y <code>.GetAwaiter().GetResult()</code></li>
+                <li>Uso <code>ConfigureAwait(false)</code> En el código de la biblioteca</li>
+                <li>Considera <code>IAsyncEnumerable</code> para datos en streaming</li>
+            </ul>
+
+            <h3>Herramientas de diagnóstico</h3>
+            <ul>
+                <li><code>dotnet-counters</code>: Mira "ThreadPool Thread Count" y "ThreadPool Queue Length"</li>
+                <li>Los tiempos de respuesta aumentan para TODOS los puntos finales simultáneamente</li>
+                <li>Azure App Service → Diagnosticar y Resolver Problemas → Número de Hilos</li>
+            </ul>
+        </section>
+
+        <!-- Slow Request Section -->
+        <section id="slowrequest" class="doc-section">
+            <h2>🐌 Simulador de Peticiones Lentas</h2>
+            <p>El Simulador de Peticiones Lentas genera peticiones de larga duración (~25 segundos cada una) utilizando patrones de sync-over-async diseñados específicamente para <strong><span class="notranslate">CLR Profiler</span> Formación</strong>.</p>
+
+            <h3>Propósito</h3>
+            <p>A diferencia de la simulación de Starvation del Pool de Hilos (que provoca muchos bloques cortos), esta crea solicitudes largas individuales que son claramente visibles en las pilas de llamadas al perfilador. Los nombres de los métodos son intencionadamente descriptivos para facilitar la identificación de los patrones de bloqueo.</p>
+
+            <h3>Tres escenarios de sincronización sobre asincronismo</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Escenario</th>
+                        <th>Patrón de método</th>
+                        <th>Qué buscar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Sencillo</strong></td>
+                        <td><code>_BLOCKING_HERE</code></td>
+                        <td><code>Task.Delay().Wait()</code> Provocando bloqueo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Anidado</strong></td>
+                        <td><code>_BLOCKS_INTERNALLY</code></td>
+                        <td>Métodos de sincronización que bloquean internamente</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Base de datos</strong></td>
+                        <td><code>_SYNC_BLOCK</code></td>
+                        <td><code>GetAwaiter().GetResult()</code> Patrón</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Configuraciones recomendadas</h3>
+            <p>Para un trazado de <span class="notranslate">CLR Profiler</span> de 60 segundos:</p>
+            <ul>
+                <li><strong>Tiempo de ejecución de la solicitud:</strong> 25 segundos (solo tiempo de procesamiento, excluyendo el tiempo de cola)</li>
+                <li><strong>Intervalo:</strong> 10 segundos (múltiples muestras)</li>
+                <li><strong>Solicitudes máximas:</strong> 6 (no abruma)</li>
+            </ul>
+
+            <p><strong>Nota sobre el tiempo de espera:</strong> Si el pool de hilos está sin recursos, puedes ver un gran hueco en la traza antes de que empiece la solicitud. Esto es "Tiempo de cola" (esperar un hilo) frente a "Tiempo de ejecución" (ejecutar el código).</p>
+
+            <h3>Usando con <span class="notranslate">CLR Profiler</span></h3>
+            <ol>
+                <li>Establece el Tiempo de Ejecución de la Solicitud lo suficientemente largo para que la simulación total supere fácilmente los 60 segundos (por ejemplo, ejecución de 25 segundos, intervalo de 10 segundos, 6 solicitudes máximas)</li>
+                <li>Clic <strong>🐌 Iniciar solicitudes lentas</strong> en el salpicadero</li>
+                <li>Espera a que aparezca la primera petición lenta en el registro de eventos: esto confirma que la simulación está en funcionamiento y que la tasa de la sonda de salud se ha reducido</li>
+                <li>Iniciar un trazado CPU Profiler (60-120 segundos)</li>
+                <li>Espera a que el rastreo termine</li>
+                <li>Descargar y analizar — busca los nombres descriptivos de los métodos</li>
+            </ol>
+            <p><strong>¿Por qué empezar la simulación primero?</strong> La app ralentiza automáticamente las sondas de salud mientras las simulaciones de peticiones lentas están activas. Iniciar la simulación antes del perfilador mantiene el ruido de la sonda de salud fuera del rastreo, dándote un perfil más limpio enfocado en los patrones de bloqueo.</p>
+
+            <p>Véase el <a href="/azure-monitoring-guide.html#slowrequest">Azure Guía de diagnóstico</a> Para instrucciones detalladas de análisis del perfilador.</p>
+        </section>
+
+        <!-- Failed Requests Section -->
+        <section id="failedrequests" class="doc-section">
+            <h2>❌ Simulación de solicitudes fallidas</h2>
+            <p>El salpicadero incluye un <strong>Solicitudes fallidas</strong> función para generar HTTP errores 5xx para probar Azure herramientas de diagnóstico como AppLens y Application Insights.</p>
+
+            <h3>Propósito</h3>
+            <p>Esta simulación genera HTTP 500 respuestas de error interno del servidor que son visibles en:</p>
+            <ul>
+                <li><strong>AppLens</strong> - Azure Portal → Diagnosticar y resolver problemas</li>
+                <li><strong>Application Insights</strong> - Hoja de fallos</li>
+                <li><strong>Azure Monitor</strong> - Alertas de tasa de error</li>
+            </ul>
+
+            <h3>Cómo funciona</h3>
+            <ol>
+                <li>Genera un hilo en segundo plano para generar peticiones</li>
+                <li>Cada solicitud llama <code>/api/loadtest</code> con probabilidad de error del 100%</li>
+                <li>El endpoint de la prueba de carga genera un tipo de excepción aleatorio</li>
+                <li>Cada solicitud tarda ~1,5 segundos en visibilidad de latencia</li>
+            </ol>
+
+            <h3>Tipos de excepción</h3>
+            <p>La simulación lanza aleatoriamente uno de estos tipos de excepción por solicitud:</p>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Tipo de excepción</th>
+                        <th>Descripción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>NullReferenceException</code></td>
+                        <td>Referencia de objeto no asignada a una instancia</td>
+                    </tr>
+                    <tr>
+                        <td><code>TimeoutException</code></td>
+                        <td>Operación agotada</td>
+                    </tr>
+                    <tr>
+                        <td><code>InvalidOperationException</code></td>
+                        <td>Operación no válida para el estado actual</td>
+                    </tr>
+                    <tr>
+                        <td><code>ArgumentException</code></td>
+                        <td>Valor fuera del rango esperado</td>
+                    </tr>
+                    <tr>
+                        <td><code>HttpRequestException</code></td>
+                        <td>Error al enviar HTTP solicitud</td>
+                    </tr>
+                    <tr>
+                        <td><code>DivideByZeroException</code></td>
+                        <td>Intentó dividir por cero</td>
+                    </tr>
+                    <tr>
+                        <td><code>KeyNotFoundException</code></td>
+                        <td>Clave no presente en el diccionario</td>
+                    </tr>
+                    <tr>
+                        <td><code>IndexOutOfRangeException</code></td>
+                        <td>Índice fuera de los límites del array</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Registro de eventos del Panel</h3>
+            <p>Cada solicitud fallida aparece en el Registro de Eventos con:</p>
+            <ul>
+                <li><strong>Color marrón</strong> - Estilo distintivo para la visibilidad</li>
+                <li><strong>❌ Icono</strong> - Indicador de solicitud fallida</li>
+                <li><strong>Tipo de excepción</strong> - La excepción específica que se lanzó</li>
+                <li><strong>Latencia</strong> - Duración de la solicitud en milisegundos</li>
+            </ul>
+
+            <p>Véase el <a href="/azure-monitoring-guide.html#failedrequests">Azure Guía de diagnóstico</a> Para instrucciones detalladas de análisis AppLens .</p>
+        </section>
+
+        <!-- Crash Simulation Section -->
+        <section id="crash" class="doc-section">
+            <h2>💥 Simulación de accidentes</h2>
+            <p>El salpicadero incluye un <strong>Simulación de accidentes</strong> Función para probar Azure monitorización de fallos y recogida de volcado de memoria.</p>
+
+            <div class="warning-box">
+                <h4>⚠️ Advertencia: ¡Esto CANCELARÁ la solicitud!</h4>
+                <p>Las simulaciones de accidentes terminan inmediatamente el proceso. Azure App Service reiniciará automáticamente la aplicación tras un fallo. Asegúrate de tener activado Azure Monitorización de Bloqueos antes de activar un bloqueo.</p>
+            </div>
+
+            <h3>Tipos de accidentes disponibles</h3>
+            <table class="api-table">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Descripción</th>
+                        <th>Mejor para</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FailFast</strong></td>
+                        <td>Llamadas <code>Environment.FailFast()</code> que termina inmediatamente con un Informe de Error de Windows</td>
+                        <td>Pruebas generales de choque (recomendable)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>StackOverflow</strong></td>
+                        <td>Recursión infinita que causa desbordamiento de pila - no se puede detectar</td>
+                        <td>Práctica de análisis de trazas de pila</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UnhandledException</strong></td>
+                        <td>Lanza una excepción no gestionada en el hilo de segundo plano</td>
+                        <td>Educación en manejo de excepciones</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ViolaciónDeacceso</strong></td>
+                        <td>Escribe en memoria inválida (puntero nulo)</td>
+                        <td>Depuración de código nativo/inseguro</td>
+                    </tr>
+                    <tr>
+                        <td><strong>FueraMemoria</strong></td>
+                        <td>Asigna memoria hasta que el proceso se bloquea</td>
+                        <td>Análisis de volcado de memoria</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Azure Configuración de Monitorización de Fallos</h3>
+            <ol>
+                <li>En Azure Portal, ve a tu App Service</li>
+                <li>Navegar a <strong>Diagnosticar y resolver problemas</strong></li>
+                <li>Búsqueda de <strong>"Monitorización de caídas"</strong></li>
+                <li>Activar la monitorización de fallos con <strong>"Recoger volcado de memoria"</strong></li>
+                <li>Provoca un bloqueo usando el salpicadero o API</li>
+                <li>Descarga el volcado de fallos desde el portal Azure</li>
+                <li>Analizar con Visual Studio o WinDbg</li>
+            </ol>
+        </section>
+
+        <!-- Architecture Section -->
+        <section id="architecture" class="doc-section">
+            <h2>📐 Arquitectura</h2>
+            <div class="architecture-tree"><span class="folder">src/PerfProblemSimulator/</span>├── <span class="file">Program.cs</span>                <span class="comment"># Punto de entrada a la solicitud</span>├── <span class="file">appsettings.json</span>          <span class="comment"># Configuración</span>│
+├── <span class="folder">Controladores/</span>              <span class="comment"># API puntos finales</span>│   ├── <span class="file">AdminController.cs</span>│   ├── <span class="file">ConfigController.cs</span>       <span class="comment"># Punto final de configuración de aplicaciones</span>│   ├── <span class="file">CpuController.cs</span>│   ├── <span class="file">CrashController.cs</span>│   ├── <span class="file">FailedRequestController.cs</span>│   ├── <span class="file">HealthController.cs</span>│   ├── <span class="file">LoadTestController.cs</span>     <span class="comment"># Azure Endpoint de pruebas de carga</span>│   ├── <span class="file">MemoryController.cs</span>│   ├── <span class="file">MetricsController.cs</span>│   ├── <span class="file">SlowRequestController.cs</span>│   └── <span class="file">ThreadBlockController.cs</span>│
+├── <span class="folder">Servicios/</span>                 <span class="comment"># Lógica empresarial</span>│   ├── <span class="file">CpuStressService.cs</span>│   ├── <span class="file">CrashService.cs</span>│   ├── <span class="file">FailedRequestService.cs</span>│   ├── <span class="file">IdleStateService.cs</span>       <span class="comment"># Suspensión automática de las sondas de salud cuando está en reposo</span>│   ├── <span class="file">LatencyProbeService.cs</span>│   ├── <span class="file">LoadTestService.cs</span>        <span class="comment"># Prueba de carga con degradación de límite suave</span>│   ├── <span class="file">MemoryPressureService.cs</span>│   ├── <span class="file">MetricsBroadcastService.cs</span>│   ├── <span class="file">MetricsCollector.cs</span>│   ├── <span class="file">SimulationTracker.cs</span>│   ├── <span class="file">SlowRequestService.cs</span>│   ├── <span class="file">ThreadBlockService.cs</span>│   └── <span class="folder">Interfaces/</span>│       ├── <span class="file">ICpuStressService.cs</span>│       ├── <span class="file">ICrashService.cs</span>│       ├── <span class="file">IFailedRequestService.cs</span>│       ├── <span class="file">IIdleStateService.cs</span>│       ├── <span class="file">ILoadTestService.cs</span>│       ├── <span class="file">IMemoryPressureService.cs</span>│       ├── <span class="file">IMetricsCollector.cs</span>│       ├── <span class="file">ISlowRequestService.cs</span>│       └── <span class="file">IThreadBlockService.cs</span>│
+├── <span class="folder">Hubs/</span>                     <span class="comment"># SignalR para actualizaciones en tiempo real</span>│   ├── <span class="file">MetricsHub.cs</span>│   └── <span class="file">IMetricsClient.cs</span>│
+├── <span class="folder">Modelos/</span>                   <span class="comment"># Objetos de transferencia de datos</span>│   ├── <span class="file">AllocatedMemoryBlock.cs</span>│   ├── <span class="file">CpuStressRequest.cs</span>│   ├── <span class="file">CrashRequest.cs</span>│   ├── <span class="file">DetailedMetrics.cs</span>│   ├── <span class="file">ErrorResponse.cs</span>│   ├── <span class="file">LoadTestRequest.cs</span>│   ├── <span class="file">LoadTestResult.cs</span>│   ├── <span class="file">MemoryAllocationRequest.cs</span>│   ├── <span class="file">MemoryReleaseResult.cs</span>│   ├── <span class="file">MetricsSnapshot.cs</span>│   ├── <span class="file">ProblemSimulatorOptions.cs</span>│   ├── <span class="file">SimulationResult.cs</span>│   ├── <span class="file">SimulationType.cs</span>│   ├── <span class="file">SlowRequestRequest.cs</span>│   └── <span class="file">ThreadBlockRequest.cs</span>│
+└── <span class="folder">wwwroot/</span>                  <span class="comment"># Panel de control y documentación SPA</span>├── <span class="file">index.html</span>               <span class="comment"># Panel con métricas en directo</span>├── <span class="file">documentation.html</span>├── <span class="file">azure-deployment.html</span>    <span class="comment"># Guía de despliegue</span>├── <span class="file">azure-load-testing.html</span>  <span class="comment"># Guía de pruebas de carga</span>├── <span class="file">azure-monitoring-guide.html</span>├── <span class="file">favicon.svg</span>├── <span class="folder">CSS/</span>│   └── <span class="file">dashboard.css</span>└── <span class="folder">js/</span>└── <span class="file">dashboard.js</span></div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Performance Problem Simulator — Herramienta educativa para Azure App Service Diagnósticos</p>
+            <p id="pageFooterContent"></p>
+            <p>Construcción: <span id="buildTime">--</span></p>
+        </footer>
+        </div><!-- /.doc-container -->
+        </div><!-- /.doc-main -->
+
+        <!-- Right Sidebar Table of Contents -->
+        <aside class="doc-toc">
+            <div class="doc-toc-sticky">
+                <nav class="doc-toc-card">
+                    <div class="doc-toc-title">En esta página</div>
+                    <ul>
+                        <li class="doc-toc-item">
+                            <a href="#overview"><span class="toc-icon">🎯</span>Resumen</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#optional-config"><span class="toc-icon">⚙️</span>Configuración opcional</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#language-selection"><span class="toc-icon">🌐</span>Selección de idioma</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Características</li>
+                        <li class="doc-toc-item">
+                            <a href="#dashboard"><span class="toc-icon">🎮</span>Salpicadero</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#latency"><span class="toc-icon">⏱️</span>Monitor de latencia</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#cpu"><span class="toc-icon">🔥</span>CPU Estrés</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#memory"><span class="toc-icon">💾</span>Presión de memoria</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#threadpool"><span class="toc-icon">🧵</span>Escaseza de pozas de hilo</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#slowrequest"><span class="toc-icon">🐌</span>Solicitudes lentas</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#failedrequests"><span class="toc-icon">❌</span>Solicitudes fallidas</a>
+                        </li>
+                        <li class="doc-toc-item">
+                            <a href="#crash"><span class="toc-icon">💥</span>Simulación de accidentes</a>
+                        </li>
+                        <li class="doc-toc-divider-item" aria-hidden="true"></li>
+                        <li class="doc-toc-section-item">Referencia</li>
+                        <li class="doc-toc-item">
+                            <a href="#architecture"><span class="toc-icon">🏗️</span>Arquitectura</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+    </div><!-- /.doc-layout -->
+
+    <script>
+        // Fetch and display custom page footer and build info
+        (async function() {
+            // Fetch app config for footer
+            try {
+                const response = await fetch('/api/config');
+                if (response.ok) {
+                    const config = await response.json();
+                    const footerEl = document.getElementById('pageFooterContent');
+                    if (footerEl) {
+                        if (config.pageFooter && config.pageFooter.trim()) {
+                            footerEl.innerHTML = config.pageFooter;
+                        } else {
+                            footerEl.style.display = 'none';
+                        }
+                    }
+                    // Update GitHub repo link if provided in config
+                    const githubLink = document.getElementById('githubRepoLink');
+                    if (githubLink) {
+                        if (config.gitHubRepoUrl && config.gitHubRepoUrl.trim()) {
+                            githubLink.href = config.gitHubRepoUrl;
+                            githubLink.style.display = '';
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch config', e);
+            }
+            // Fetch build info
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    const buildTimeEl = document.getElementById('buildTime');
+                    if (buildTimeEl && data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        buildTimeEl.textContent = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to fetch build info', e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Sidebar drawer toggle
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        const sidebarDrawer = document.getElementById('sidebar-drawer');
+        const sidebarClose = document.getElementById('sidebar-close');
+
+        function openSidebar() {
+            hamburgerBtn.classList.remove('attention');
+            hamburgerBtn.classList.add('active');
+            sidebarOverlay.classList.add('active');
+            sidebarDrawer.classList.add('active');
+        }
+
+        function closeSidebar() {
+            hamburgerBtn.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            sidebarDrawer.classList.remove('active');
+        }
+
+        hamburgerBtn.addEventListener('click', openSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        sidebarClose.addEventListener('click', closeSidebar);
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // Scroll spy for TOC highlighting
+        const tocLinks = document.querySelectorAll('.doc-toc-item a');
+        const sections = document.querySelectorAll('.doc-section');
+
+        function updateActiveTocLink() {
+            const scrollPos = window.scrollY + 120;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                    tocLinks.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === '#' + sectionId) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        }
+
+        window.addEventListener('scroll', updateActiveTocLink);
+        updateActiveTocLink(); // Initial call
+
+        // Fetch and display SKU
+        async function fetchAzureSku() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                const skuElement = document.getElementById('skuDisplay');
+                if (skuElement && data.processInfo && data.processInfo.azureSku) {
+                    skuElement.textContent = `SKU: ${data.processInfo.azureSku}`;
+                    skuElement.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Failed to fetch Azure SKU', error);
+            }
+        }
+        fetchAzureSku();
+
+        // Fetch and display build info
+        async function fetchBuildInfo() {
+            try {
+                const response = await fetch('/api/health/build');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.buildTimestamp) {
+                        const buildDate = new Date(data.buildTimestamp);
+                        const formatted = buildDate.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+                        const sidebarBuildTime = document.getElementById('sidebarBuildTime');
+                        if (sidebarBuildTime) sidebarBuildTime.textContent = formatted;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch build info', error);
+            }
+        }
+        fetchBuildInfo();
+    </script>
+</body>
+</html>

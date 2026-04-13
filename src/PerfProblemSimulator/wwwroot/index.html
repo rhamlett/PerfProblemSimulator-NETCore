@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Performance Problem Simulator - .NET 10 on Windows - Dashboard</title>
+    <title data-i18n="page.title">Performance Problem Simulator - .NET 10 on Windows - Dashboard</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="stylesheet" href="css/dashboard.css?v=6">
     <!-- Chart.js for real-time graphs -->
@@ -50,16 +50,16 @@
                 <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3)"/>
                 <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
             </svg>
-            <h1>Performance Problem Simulator - .NET 10 on Windows</h1>
+            <h1 data-i18n="header.title">Performance Problem Simulator - .NET 10 on Windows</h1>
         </div>
-        <div id="skuDisplay" class="sku-display">SKU: Loading...</div>
+        <div id="skuDisplay" class="sku-display" data-i18n="header.skuLoading">SKU: Loading...</div>
         <div class="header-right">
             <button class="btn-panel-toggle" id="btnTogglePanel" title="Toggle Simulation Controls">
-                🎮 Simulation Controls
+                🎮 <span data-i18n="header.simControls">Simulation Controls</span>
             </button>
             <div class="connection-status">
                 <span id="connectionIndicator" class="indicator disconnected"></span>
-                <span id="connectionText">Disconnected</span>
+                <span id="connectionText" data-i18n="header.disconnected">Disconnected</span>
             </div>
         </div>
     </header>
@@ -99,38 +99,38 @@
                 <circle cx="14.18" cy="9.27" r="1.89" fill="url(#appservices-lin3-sb)"/>
                 <path d="M17.35,10.54,17,10.37l0,0-.3-.16-.06,0L16.38,10l-.07,0L16,9.8a1.76,1.76,0,0,1-.64.92c.12.08.25.15.38.22l.08.05.35.19,0,0,.86.45h0a8.63,8.63,0,0,0,.29-1.11Z" fill="#f2f2f2" opacity="0.55"/>
             </svg>
-            <h2>PerfSim .Net 10</h2>
+            <h2 data-i18n="nav.sidebarTitle">PerfSim .Net 10</h2>
             <button id="sidebar-close" class="sidebar-close" aria-label="Close navigation">&times;</button>
         </div>
         <nav class="sidebar-nav">
-            <div class="sidebar-section-label">Application</div>
+            <div class="sidebar-section-label" data-i18n="nav.sectionApp">Application</div>
             <a href="/" class="sidebar-nav-item active">
                 <span class="nav-icon">🎮</span>
-                <span class="nav-label">Dashboard<span class="nav-desc">Live metrics & controls</span></span>
+                <span class="nav-label"><span data-i18n="nav.dashboard">Dashboard</span><span class="nav-desc" data-i18n="nav.dashboardDesc">Live metrics & controls</span></span>
             </a>
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-label">Documentation</div>
+            <div class="sidebar-section-label" data-i18n="nav.sectionDocs">Documentation</div>
             <a href="/documentation.html" class="sidebar-nav-item">
                 <span class="nav-icon">📚</span>
-                <span class="nav-label">Documentation<span class="nav-desc">API reference & guides</span></span>
+                <span class="nav-label"><span data-i18n="nav.documentation">Documentation</span><span class="nav-desc" data-i18n="nav.documentationDesc">API reference & guides</span></span>
             </a>
             <a href="/azure-monitoring-guide.html" class="sidebar-nav-item">
                 <span class="nav-icon">☁️</span>
-                <span class="nav-label">Azure Diagnostics<span class="nav-desc">Diagnose issues in App Service</span></span>
+                <span class="nav-label"><span data-i18n="nav.diagnostics">Azure Diagnostics</span><span class="nav-desc" data-i18n="nav.diagnosticsDesc">Diagnose issues in App Service</span></span>
             </a>
             <a href="/azure-load-testing.html" class="sidebar-nav-item">
                 <span class="nav-icon">📈</span>
-                <span class="nav-label">Azure Load Testing<span class="nav-desc">Load test endpoint & parameters</span></span>
+                <span class="nav-label"><span data-i18n="nav.loadTesting">Azure Load Testing</span><span class="nav-desc" data-i18n="nav.loadTestingDesc">Load test endpoint & parameters</span></span>
             </a>
             <a href="/azure-deployment.html" class="sidebar-nav-item">
                 <span class="nav-icon">🚀</span>
-                <span class="nav-label">Deploy to Azure<span class="nav-desc">GitHub Actions + OIDC setup</span></span>
+                <span class="nav-label"><span data-i18n="nav.deploy">Deploy to Azure</span><span class="nav-desc" data-i18n="nav.deployDesc">GitHub Actions + OIDC setup</span></span>
             </a>
             <div class="sidebar-divider"></div>
-            <div class="sidebar-section-label">External</div>
+            <div class="sidebar-section-label" data-i18n="nav.sectionExternal">External</div>
             <a id="githubRepoLink" href="#" target="_blank" rel="noopener" class="sidebar-nav-item hidden">
                 <span class="nav-icon">🐙</span>
-                <span class="nav-label">GitHub Repository<span class="nav-desc">Source code & issues</span></span>
+                <span class="nav-label"><span data-i18n="nav.github">GitHub Repository</span><span class="nav-desc" data-i18n="nav.githubDesc">Source code & issues</span></span>
             </a>
             <a href="/swagger" target="_blank" rel="noopener" class="sidebar-nav-item">
                 <span class="nav-icon swagger-icon">
@@ -139,126 +139,126 @@
                         <text x="12" y="16" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#173647">{ }</text>
                     </svg>
                 </span>
-                <span class="nav-label">Swagger<span class="nav-desc">API documentation</span></span>
+                <span class="nav-label"><span data-i18n="nav.swagger">Swagger</span><span class="nav-desc" data-i18n="nav.swaggerDesc">API documentation</span></span>
             </a>
         </nav>
         <div class="sidebar-footer">
-            Build: <span id="sidebarBuildTime">--</span>
+            <span data-i18n="nav.build">Build:</span> <span id="sidebarBuildTime">--</span>
         </div>
     </aside>
 
     <!-- Side Panel for Simulation Controls -->
     <aside class="side-panel" id="sidePanel">
         <div class="side-panel-header">
-            <h2>🎮 Simulation Controls</h2>
+            <h2>🎮 <span data-i18n="sim.title">Simulation Controls</span></h2>
             <button class="btn-close-panel" id="btnClosePanel" title="Close Panel">✕</button>
         </div>
         <div class="side-panel-content">
             <div class="control-group cpu-group">
-                <h3>🔥 CPU Stress <span class="control-tooltip" data-tooltip="Spawns worker threads running intensive cryptographic operations to stress CPU cores">ⓘ</span></h3>
-                <p>Spawns worker threads running intensive cryptographic operations to stress CPU cores. Higher intensity uses more parallel threads.</p>
+                <h3>🔥 <span data-i18n="sim.cpu.title">CPU Stress</span> <span class="control-tooltip" data-tooltip="Spawns worker threads running intensive cryptographic operations to stress CPU cores" data-i18n-tooltip="sim.cpu.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.cpu.desc">Spawns worker threads running intensive cryptographic operations to stress CPU cores. Higher intensity uses more parallel threads.</p>
                 <div class="control-inputs">
-                    <label>Duration (s):
+                    <label><span data-i18n="sim.cpu.duration">Duration (s):</span>
                         <input type="number" id="cpuDuration" value="30" min="1" title="Duration in seconds (minimum 1 second)">
                     </label>
-                    <label>Intensity:
+                    <label><span data-i18n="sim.cpu.intensity">Intensity:</span>
                         <select id="cpuLevel" class="wide-input">
-                            <option value="moderate">Moderate</option>
-                            <option value="high" selected>High</option>
+                            <option value="moderate" data-i18n="sim.cpu.moderate">Moderate</option>
+                            <option value="high" selected data-i18n="sim.cpu.high">High</option>
                         </select>
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-cpu" id="btnTriggerCpu">🔥 Trigger CPU Stress</button>
-                    <button class="btn btn-stop" id="btnStopCpu">⬛ Stop</button>
+                    <button class="btn btn-trigger btn-cpu" id="btnTriggerCpu">🔥 <span data-i18n="sim.cpu.trigger">Trigger CPU Stress</span></button>
+                    <button class="btn btn-stop" id="btnStopCpu">⬛ <span data-i18n="sim.cpu.stop">Stop</span></button>
                 </div>
             </div>
 
             <div class="control-group memory-group">
-                <h3>📊 Memory Pressure <span class="control-tooltip" data-tooltip="Allocates pinned memory blocks filled with random data to increase working set">ⓘ</span></h3>
-                <p>Allocates pinned memory blocks filled with random data. Multiple allocations stack - mimics gradual memory leak.</p>
+                <h3>📊 <span data-i18n="sim.memory.title">Memory Pressure</span> <span class="control-tooltip" data-tooltip="Allocates pinned memory blocks filled with random data to increase working set" data-i18n-tooltip="sim.memory.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.memory.desc">Allocates pinned memory blocks filled with random data. Multiple allocations stack - mimics gradual memory leak.</p>
                 <div class="control-inputs">
-                    <label>Size (MB):
+                    <label><span data-i18n="sim.memory.size">Size (MB):</span>
                         <input type="number" id="memorySize" value="512" min="1" title="Memory size in megabytes (minimum 1 MB). Allocations are cumulative until released.">
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-memory" id="btnAllocateMemory">📈 Allocate</button>
-                    <button class="btn btn-trigger btn-release" id="btnReleaseMemory">🗑️ Release</button>
+                    <button class="btn btn-trigger btn-memory" id="btnAllocateMemory">📈 <span data-i18n="sim.memory.allocate">Allocate</span></button>
+                    <button class="btn btn-trigger btn-release" id="btnReleaseMemory">🗑️ <span data-i18n="sim.memory.release">Release</span></button>
                 </div>
             </div>
 
             <div class="control-group thread-group">
-                <h3>🧵 Thread Pool Starvation <span class="control-tooltip" data-tooltip="Blocks worker threads to simulate thread pool exhaustion">ⓘ</span></h3>
-                <p>Blocks worker threads using sync-over-async anti-pattern to simulate thread pool exhaustion. Server becomes unresponsive to new requests.</p>
-                <p class="info-note">⏱️ <strong>Duration Note:</strong> .NET thread pool starts with ~CPU cores (e.g., 4-8) and grows at only 1-2 threads/second when starved. Impact is visible almost immediately since the initial pool is small.</p>
+                <h3>🧵 <span data-i18n="sim.thread.title">Thread Pool Starvation</span> <span class="control-tooltip" data-tooltip="Blocks worker threads to simulate thread pool exhaustion" data-i18n-tooltip="sim.thread.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.thread.desc">Blocks worker threads using sync-over-async anti-pattern to simulate thread pool exhaustion. Server becomes unresponsive to new requests.</p>
+                <p class="info-note">⏱️ <strong data-i18n="sim.thread.durationNote">Duration Note:</strong> <span data-i18n="sim.thread.durationNoteText">.NET thread pool starts with ~CPU cores (e.g., 4-8) and grows at only 1-2 threads/second when starved. Impact is visible almost immediately since the initial pool is small.</span></p>
                 <div class="control-inputs">
-                    <label>Duration:
+                    <label><span data-i18n="sim.thread.duration">Duration:</span>
                         <input type="number" id="threadDelay" value="10" min="0.1" step="0.1" title="How long each blocking operation delays in seconds (minimum 0.1s)">
                     </label>
-                    <label>Threads:
+                    <label><span data-i18n="sim.thread.threads">Threads:</span>
                         <input type="number" id="threadConcurrent" value="100" min="1" title="Number of concurrent blocking operations (minimum 1)">
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-threadblock" id="btnTriggerThreadBlock">🧵 Block Threads</button>
-                    <button class="btn btn-stop" id="btnStopThreadBlock">⬛ Stop</button>
+                    <button class="btn btn-trigger btn-threadblock" id="btnTriggerThreadBlock">🧵 <span data-i18n="sim.thread.trigger">Block Threads</span></button>
+                    <button class="btn btn-stop" id="btnStopThreadBlock">⬛ <span data-i18n="sim.thread.stop">Stop</span></button>
                 </div>
             </div>
 
             <div class="control-group slowrequest-group">
-                <h3>🐌 Slow Requests <span class="control-tooltip" data-tooltip="Generates slow requests ideal for CLR Profiler diagnosis">ⓘ</span></h3>
-                <p>Generates requests using sync-over-async patterns that intentionally take a long time. Ideal for CLR Profiler diagnosis in Azure.</p>
-                <p class="timeout-warning">⚠️ Note: Requests exceeding 30 seconds total time (queue + execution) are flagged as critical</p>
+                <h3>🐌 <span data-i18n="sim.slow.title">Slow Requests</span> <span class="control-tooltip" data-tooltip="Generates slow requests ideal for CLR Profiler diagnosis" data-i18n-tooltip="sim.slow.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.slow.desc">Generates requests using sync-over-async patterns that intentionally take a long time. Ideal for CLR Profiler diagnosis in Azure.</p>
+                <p class="timeout-warning">⚠️ <span data-i18n="sim.slow.timeoutWarning">Note: Requests exceeding 30 seconds total time (queue + execution) are flagged as critical</span></p>
                 <div class="control-inputs">
-                    <label>Request Execution Time (s) <span class="help-icon" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time.">ⓘ</span>:
+                    <label><span data-i18n="sim.slow.execTime">Request Execution Time (s)</span> <span class="help-icon" title="This value controls only the processing time. Total Duration = Queue Time + Execution Time." data-i18n-title="sim.slow.execTimeHelp">ⓘ</span>:
                         <input type="number" id="slowRequestDuration" value="25" min="5" max="60">
                     </label>
-                    <label>Interval (s):
+                    <label><span data-i18n="sim.slow.interval">Interval (s):</span>
                         <input type="number" id="slowRequestInterval" value="2" min="1" max="30" title="Time between requests">
                     </label>
-                    <label>Max Requests:
+                    <label><span data-i18n="sim.slow.maxRequests">Max Requests:</span>
                         <input type="number" id="slowRequestMax" value="10" min="1" max="100" title="Total requests to generate">
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-slowrequest" id="btnStartSlowRequests">🐌 Start Slow Requests</button>
-                    <button class="btn btn-stop" id="btnStopSlowRequests">⬛ Stop</button>
+                    <button class="btn btn-trigger btn-slowrequest" id="btnStartSlowRequests">🐌 <span data-i18n="sim.slow.start">Start Slow Requests</span></button>
+                    <button class="btn btn-stop" id="btnStopSlowRequests">⬛ <span data-i18n="sim.slow.stop">Stop</span></button>
                 </div>
             </div>
 
             <div class="control-group failedrequest-group">
-                <h3>❌ Failed Requests <span class="control-tooltip" data-tooltip="Generates HTTP 500 errors visible in AppLens and Application Insights">ⓘ</span></h3>
-                <p>Generates HTTP 5xx errors by calling the load test endpoint with 100% failure rate. Creates authentic server errors for testing error monitoring.</p>
-                <p class="info-note">📊 <strong>Where to see:</strong> Azure Portal → AppLens, Application Insights → Failures blade</p>
+                <h3>❌ <span data-i18n="sim.failed.title">Failed Requests</span> <span class="control-tooltip" data-tooltip="Generates HTTP 500 errors visible in AppLens and Application Insights" data-i18n-tooltip="sim.failed.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.failed.desc">Generates HTTP 5xx errors by calling the load test endpoint with 100% failure rate. Creates authentic server errors for testing error monitoring.</p>
+                <p class="info-note">📊 <strong data-i18n="sim.failed.infoNote">Where to see:</strong> <span data-i18n="sim.failed.infoNoteText">Azure Portal → AppLens, Application Insights → Failures blade</span></p>
                 <div class="control-inputs">
-                    <label>Error Count:
+                    <label><span data-i18n="sim.failed.errorCount">Error Count:</span>
                         <input type="number" id="failedRequestCount" value="10" min="1" max="100" title="Number of HTTP 500 errors to generate">
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-failedrequest" id="btnStartFailedRequests">❌ Generate Failures</button>
+                    <button class="btn btn-trigger btn-failedrequest" id="btnStartFailedRequests">❌ <span data-i18n="sim.failed.trigger">Generate Failures</span></button>
                 </div>
             </div>
 
             <div class="control-group crash-group">
-                <h3>💥 Application Crash <span class="control-tooltip" data-tooltip="Triggers various types of fatal crashes for testing crash monitoring">ⓘ</span></h3>
-                <p>Triggers a fatal crash to test Azure crash monitoring and diagnostics. Choose from various crash types including stack overflow and access violations.</p>
+                <h3>💥 <span data-i18n="sim.crash.title">Application Crash</span> <span class="control-tooltip" data-tooltip="Triggers various types of fatal crashes for testing crash monitoring" data-i18n-tooltip="sim.crash.tooltip">ⓘ</span></h3>
+                <p data-i18n="sim.crash.desc">Triggers a fatal crash to test Azure crash monitoring and diagnostics. Choose from various crash types including stack overflow and access violations.</p>
                 <div class="control-inputs">
-                    <label>Type:
+                    <label><span data-i18n="sim.crash.type">Type:</span>
                         <select id="crashType" class="wide-input">
-                            <option value="FailFast">FailFast</option>
-                            <option value="AccessViolation">Access Violation</option>
-                            <option value="StackOverflow">Stack Overflow</option>
-                            <option value="UnhandledException">Unhandled Exception</option>
-                            <option value="OutOfMemory">Out of Memory</option>
+                            <option value="FailFast" data-i18n="sim.crash.failfast">FailFast</option>
+                            <option value="AccessViolation" data-i18n="sim.crash.accessViolation">Access Violation</option>
+                            <option value="StackOverflow" data-i18n="sim.crash.stackOverflow">Stack Overflow</option>
+                            <option value="UnhandledException" data-i18n="sim.crash.unhandledException">Unhandled Exception</option>
+                            <option value="OutOfMemory" data-i18n="sim.crash.outOfMemory">Out of Memory</option>
                         </select>
                     </label>
                 </div>
                 <div class="btn-group">
-                    <button class="btn btn-trigger btn-danger" id="btnTriggerCrash">💥 Trigger Crash</button>
+                    <button class="btn btn-trigger btn-danger" id="btnTriggerCrash">💥 <span data-i18n="sim.crash.trigger">Trigger Crash</span></button>
                 </div>
-                <p class="crash-warning">⚠️ This will TERMINATE the app!</p>
+                <p class="crash-warning">⚠️ <span data-i18n="sim.crash.warning">This will TERMINATE the app!</span></p>
             </div>
         </div>
     </aside>
@@ -269,11 +269,11 @@
             <div class="metric-card cpu">
                 <div class="metric-header">
                     <div class="metric-icon">⚡</div>
-                    <div class="metric-label">CPU Usage <span class="metric-tooltip" data-tooltip="System CPU usage percentage across all cores">ⓘ</span></div>
+                    <div class="metric-label"><span data-i18n="metrics.cpu.label">CPU Usage</span> <span class="metric-tooltip" data-tooltip="System CPU usage percentage across all cores" data-i18n-tooltip="metrics.cpu.tooltip">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="cpuValue">--</div>
-                    <div class="metric-unit">%</div>
+                    <div class="metric-unit" data-i18n="metrics.cpu.unit">%</div>
                 </div>
                 <div class="metric-bar">
                     <div class="metric-bar-fill" id="cpuBar"></div>
@@ -283,11 +283,11 @@
             <div class="metric-card memory">
                 <div class="metric-header">
                     <div class="metric-icon">📊</div>
-                    <div class="metric-label">Memory Working Set <span class="metric-tooltip" data-tooltip="Physical memory currently used by the process">ⓘ</span></div>
+                    <div class="metric-label"><span data-i18n="metrics.memory.label">Memory Working Set</span> <span class="metric-tooltip" data-tooltip="Physical memory currently used by the process" data-i18n-tooltip="metrics.memory.tooltip">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="memoryValue">--</div>
-                    <div class="metric-unit">MB</div>
+                    <div class="metric-unit" data-i18n="metrics.memory.unit">MB</div>
                     <div class="metric-total" id="memoryTotal"></div>
                 </div>
                 <div class="metric-bar">
@@ -298,11 +298,11 @@
             <div class="metric-card threads">
                 <div class="metric-header">
                     <div class="metric-icon">🧵</div>
-                    <div class="metric-label">Thread Pool <span class="metric-tooltip" data-tooltip="Active worker threads in the .NET thread pool">ⓘ</span></div>
+                    <div class="metric-label"><span data-i18n="metrics.threads.label">Thread Pool</span> <span class="metric-tooltip" data-tooltip="Active worker threads in the .NET thread pool" data-i18n-tooltip="metrics.threads.tooltip">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="threadsValue">--</div>
-                    <div class="metric-unit">threads</div>
+                    <div class="metric-unit" data-i18n="metrics.threads.unit">threads</div>
                 </div>
                 <div class="metric-bar">
                     <div class="metric-bar-fill" id="threadsBar"></div>
@@ -312,11 +312,11 @@
             <div class="metric-card queue">
                 <div class="metric-header">
                     <div class="metric-icon">📋</div>
-                    <div class="metric-label">Queue Length <span class="metric-tooltip" data-tooltip="Pending work items waiting for thread pool execution">ⓘ</span></div>
+                    <div class="metric-label"><span data-i18n="metrics.queue.label">Queue Length</span> <span class="metric-tooltip" data-tooltip="Pending work items waiting for thread pool execution" data-i18n-tooltip="metrics.queue.tooltip">ⓘ</span></div>
                 </div>
                 <div class="metric-info">
                     <div class="metric-value" id="queueValue">--</div>
-                    <div class="metric-unit">pending</div>
+                    <div class="metric-unit" data-i18n="metrics.queue.unit">pending</div>
                 </div>
                 <div class="metric-bar">
                     <div class="metric-bar-fill" id="queueBar"></div>
@@ -327,50 +327,50 @@
         <!-- Charts Section -->
         <section class="charts-section">
             <div class="chart-container">
-                <h3>📈 CPU & Memory Over Time</h3>
+                <h3>📈 <span data-i18n="charts.cpuMemory">CPU & Memory Over Time</span></h3>
                 <canvas id="resourceChart"></canvas>
             </div>
             <div class="chart-container">
-                <h3>🧵 Thread Pool Activity</h3>
+                <h3>🧵 <span data-i18n="charts.threadPool">Thread Pool Activity</span></h3>
                 <canvas id="threadChart"></canvas>
             </div>
         </section>
 
         <!-- Latency Monitor Section -->
         <section class="latency-section">
-            <h2>⏱️ Request Latency Monitor <span id="probe-visualization" class="probe-visualization-inline" title="Probe history: Green=good, Yellow=degraded, Orange=slow, Red=critical"></span></h2>
-            <p class="info-text">Measures response time to a lightweight probe endpoint. Times include both processing and queue time. During thread pool starvation, latency increases dramatically.</p>
+            <h2>⏱️ <span data-i18n="latency.title">Request Latency Monitor</span> <span id="probe-visualization" class="probe-visualization-inline" title="Probe history: Green=good, Yellow=degraded, Orange=slow, Red=critical"></span></h2>
+            <p class="info-text" data-i18n="latency.desc">Measures response time to a lightweight probe endpoint. Times include both processing and queue time. During thread pool starvation, latency increases dramatically.</p>
             
             <div class="latency-stats">
                 <div class="latency-stat current">
-                    <span class="latency-label">Current</span>
+                    <span class="latency-label" data-i18n="latency.current">Current</span>
                     <span class="latency-value" id="latencyCurrent">--</span>
                 </div>
                 <div class="latency-stat">
-                    <span class="latency-label">Avg (60s)</span>
+                    <span class="latency-label" data-i18n="latency.avg">Avg (60s)</span>
                     <span class="latency-value" id="latencyAverage">--</span>
                 </div>
                 <div class="latency-stat">
-                    <span class="latency-label">Max (60s)</span>
+                    <span class="latency-label" data-i18n="latency.max">Max (60s)</span>
                     <span class="latency-value" id="latencyMax">--</span>
                 </div>
                 <div class="latency-stat">
-                    <span class="latency-label">Critical (&gt;30s)</span>
+                    <span class="latency-label" data-i18n="latency.critical">Critical (&gt;30s)</span>
                     <span class="latency-value" id="latencyTimeouts">0</span>
                 </div>
             </div>
 
             <div class="latency-thresholds">
-                <span class="threshold-title">Thresholds:</span>
-                <span class="threshold-item good">● Good (&lt;150ms)</span>
-                <span class="threshold-item warning">● Degraded (150ms-1s)</span>
-                <span class="threshold-item danger">● Severe (&gt;1s)</span>
-                <span class="threshold-item timeout">● Critical (&gt;30s)</span>
+                <span class="threshold-title" data-i18n="latency.thresholds">Thresholds:</span>
+                <span class="threshold-item good">● <span data-i18n="latency.good">Good (&lt;150ms)</span></span>
+                <span class="threshold-item warning">● <span data-i18n="latency.degraded">Degraded (150ms-1s)</span></span>
+                <span class="threshold-item danger">● <span data-i18n="latency.severe">Severe (&gt;1s)</span></span>
+                <span class="threshold-item timeout">● <span data-i18n="latency.criticalThreshold">Critical (&gt;30s)</span></span>
             </div>
 
             <div class="chart-container latency-chart-container position-relative">
-                <h3>📊 Response Latency Over Time</h3>
-                <div id="latencySuspendedMsg" class="latency-suspended-msg">
+                <h3>📊 <span data-i18n="latency.chart">Response Latency Over Time</span></h3>
+                <div id="latencySuspendedMsg" class="latency-suspended-msg" data-i18n="latency.suspended">
                     Latency probes reduced during Slow Request testing to ensure clean CLR Profile diagnostics.
                 </div>
                 <canvas id="latencyChart"></canvas>
@@ -382,29 +382,30 @@
 
         <!-- Active Simulations -->
         <section class="active-simulations">
-            <h2>🏃 Active Simulations</h2>
+            <h2>🏃 <span data-i18n="activeSims.title">Active Simulations</span></h2>
             <div id="simulationsList" class="simulations-list">
-                <p class="no-simulations">No active simulations</p>
+                <p class="no-simulations" data-i18n="activeSims.none">No active simulations</p>
             </div>
         </section>
 
         <!-- Event Log -->
         <section class="event-log">
             <div class="event-log-header">
-                <h2>📜 Event Log</h2>
-                <button id="btnCopyEventLog" class="btn-copy-log" title="Copy event log to clipboard">📋 Copy</button>
+                <h2>📜 <span data-i18n="eventLog.title">Event Log</span></h2>
+                <button id="btnCopyEventLog" class="btn-copy-log" title="Copy event log to clipboard">📋 <span data-i18n="eventLog.copy">Copy</span></button>
             </div>
             <div id="eventLog" class="log-container"></div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>Performance Problem Simulator — Educational Tool for Azure App Service Diagnostics</p>
+        <p data-i18n="footer.tagline">Performance Problem Simulator — Educational Tool for Azure App Service Diagnostics</p>
         <p id="pageFooterContent"></p>
-        <p>Build: <span id="buildTime">--</span></p>
+        <p><span data-i18n="footer.build">Build:</span> <span id="buildTime">--</span></p>
     </footer>
 
-    <script src="js/dashboard.js?v=3"></script>
+    <script src="js/i18n.js?v=1"></script>
+    <script src="js/dashboard.js?v=4"></script>
     <script>
         // Sidebar drawer toggle
         const hamburgerBtn = document.getElementById('hamburger-btn');
